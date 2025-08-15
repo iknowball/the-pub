@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to the Pub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-attachment: fixed !important;
+      background-color: #451a03 !important;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+    .font-montserrat {
+      font-family: 'Montserrat', sans-serif;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen font-montserrat">
+  <header class="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
+    <p class="text-lg font-bold">Daily Pub Quiz at 9 PM</p>
+  </header>
+  <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
+    <div id="timer" class="absolute top-4 left-4 bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
+    <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Welcome to the Pub</h1>
+    <p class="text-center text-yellow-300 mb-2 text-lg">Level: <span id="currentLevel">1</span>/5</p>
+    <div class="relative w-full h-72 mb-4 rounded-lg overflow-hidden border-2 border-yellow-600">
+      <img id="playerImage" src="" alt="Athlete" class="w-full h-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+    </div>
+    <p id="imageError" class="text-center mb-4 text-red-500 hidden">Image failed to load. Keep guessing!</p>
+    <input id="guessInput" type="text" placeholder="Who's this athlete?" class="w-full p-3 bg-amber-800/90 text-white border-2 border-yellow-600 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-600" autocomplete="off">
+    <button id="submitAnswer" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md">Submit Answer</button>
+    <button id="nextLevel" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Next Level</button>
+    <button id="playAgain" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Play Again</button>
+    <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
+    <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
+    <p id="score" class="text-center mt-2 text-yellow-300">Score: <span id="scoreValue">0</span>/25</p>
+    <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
+  </div>
+
+  <!-- Stats Modal -->
+  <div id="statsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">
+    <div class="bg-amber-800/90 p-6 rounded-xl w-full max-w-md border-2 border-yellow-600 shadow-lg">
+      <h2 class="text-2xl font-bold text-center text-yellow-300 mb-4">Your Pub Quiz Stats</h2>
+      <p id="avgScore" class="text-center text-yellow-300 mb-4 text-lg"></p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-yellow-300 border-collapse">
+          <thead>
+            <tr class="bg-amber-700/90">
+              <th class="p-2 border border-yellow-600">Attempt</th>
+              <th class="p-2 border border-yellow-600">Score</th>
+              <th class="p-2 border border-yellow-600">Time</th>
+              <th class="p-2 border border-yellow-600">Date</th>
+            </tr>
+          </thead>
+          <tbody id="statsTableBody" class="text-center"></tbody>
+        </table>
+      </div>
+      <button id="closeStats" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Daily players data
+    const dailyPlayers = [
+      { name: "Rickey Henderson", image: "https://ktla.com/wp-content/uploads/sites/4/2024/06/66746fbb6da4e0.75476412.jpeg" },
+      { name: "Jalen Hurts", image: "https://www.nbcsportsphiladelphia.com/wp-content/uploads/sites/13/2023/10/Jalen-Hurts-2.jpg" },
+      { name: "Joel Embiid", image: "https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/3059318.png&w=350&h=254" },
+      { name: "Allen Iverson", image: "https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/366.png&w=350&h=254" },
+      { name: "Mike Schmidt", image: "https://www.nbcsportsphiladelphia.com/wp-content/uploads/sites/13/2020/04/mike-schmidt.jpg" }
+    ];
+
+    let currentLevel = 1;
+    let score = 0;
+    let incorrectAthletes = [];
+    let startTime = null;
+    let elapsedTime = 0;
+    let timerInterval;
+
+    // Levenshtein distance function
+    function getLevenshteinDistance(a, b) {
+      const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+      for (let j = 1; j <= b.length; j++) {
+        for (let i = 1; i <= a.length; i++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          matrix[j][i] = Math.min(
+            matrix[j - 1][i] + 1,
+            matrix[j][i - 1] + 1,
+            matrix[j - 1][i - 1] + cost
+          );
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    // Timer functions
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+      const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+      timerDisplay.textContent = `${minutes}:${seconds}`;
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      return elapsedTime;
+    }
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${secs}`;
+    }
+
+    // DOM elements
+    const gameContainer = document.getElementById('gameContainer');
+    const playerImage = document.getElementById('playerImage');
+    const imageError = document.getElementById('imageError');
+    const guessInput = document.getElementById('guessInput');
+    const submitAnswer = document.getElementById('submitAnswer');
+    const nextLevel = document.getElementById('nextLevel');
+    const playAgain = document.getElementById('playAgain');
+    const viewStats = document.getElementById('viewStats');
+    const feedback = document.getElementById('feedback');
+    const scoreDisplay = document.getElementById('scoreValue');
+    const currentLevelDisplay = document.getElementById('currentLevel');
+    const shareLink = document.getElementById('shareLink');
+    const shareUrl = document.getElementById('shareUrl');
+    const statsModal = document.getElementById('statsModal');
+    const avgScore = document.getElementById('avgScore');
+    const statsTableBody = document.getElementById('statsTableBody');
+    const closeStats = document.getElementById('closeStats');
+    const timerDisplay = document.getElementById('timer');
+
+    // Initialize score history
+    function getScoreHistory() {
+      return JSON.parse(localStorage.getItem('scoreHistory') || '[]');
+    }
+
+    function saveScoreHistory(score, time) {
+      const history = getScoreHistory();
+      history.push({
+        score: score,
+        time: time,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('scoreHistory', JSON.stringify(history));
+    }
+
+    function calculateAverageScore() {
+      const history = getScoreHistory();
+      if (history.length === 0) return 0;
+      const total = history.reduce((sum, entry) => sum + entry.score, 0);
+      return (total / history.length).toFixed(1);
+    }
+
+    function displayStats() {
+      const history = getScoreHistory();
+      avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+      statsTableBody.innerHTML = '';
+      history.forEach((entry, index) => {
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-amber-600');
+        row.innerHTML = `
+          <td class="p-2 border border-yellow-600">${index + 1}</td>
+          <td class="p-2 border border-yellow-600">${entry.score}/25</td>
+          <td class="p-2 border border-yellow-600">${formatTime(entry.time)}</td>
+          <td class="p-2 border border-yellow-600">${new Date(entry.timestamp).toLocaleString()}</td>
+        `;
+        statsTableBody.appendChild(row);
+      });
+      statsModal.classList.remove('hidden');
+    }
+
+    // Handle image load errors
+    playerImage.onerror = () => {
+      imageError.classList.remove('hidden');
+      submitAnswer.classList.remove('hidden');
+      nextLevel.classList.add('hidden');
+    };
+
+    playerImage.onload = () => {
+      imageError.classList.add('hidden');
+      submitAnswer.classList.remove('hidden');
+      nextLevel.classList.add('hidden');
+    };
+
+    // Generate shareable link
+    function generateShareLink(score, incorrectAthletes) {
+      const baseUrl = window.location.href.split('?')[0];
+      const incorrectParam = incorrectAthletes.map(name => encodeURIComponent(name)).join(',');
+      return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
+    }
+
+    // Display results from URL query params
+    function displayResultsFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const score = urlParams.get('score');
+      const incorrect = urlParams.get('incorrect');
+      if (score !== null) {
+        let incorrectMessage = "I knew all the athletes! 🏆";
+        if (incorrect) {
+          const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
+          incorrectMessage = `I did not know ${incorrectList}.`;
+        }
+        gameContainer.innerHTML = `
+          <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Pub Quiz Results</h1>
+          <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
+          <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
+          <p class="text-center"><a href="${window.location.href.split('?')[0]}" class="text-yellow-400 underline text-lg">Play again! 🏀</a></p>
+        `;
+      }
+    }
+
+    // Load current level
+    function loadLevel() {
+      playerImage.src = dailyPlayers[currentLevel - 1].image;
+      guessInput.value = '';
+      feedback.textContent = '';
+      submitAnswer.classList.remove('hidden');
+      guessInput.classList.remove('hidden');
+      nextLevel.classList.add('hidden');
+      playAgain.classList.add('hidden');
+      viewStats.classList.add('hidden');
+      imageError.classList.add('hidden');
+      scoreDisplay.textContent = score;
+      currentLevelDisplay.textContent = currentLevel;
+      shareLink.classList.add('hidden');
+      if (currentLevel === 1 && !startTime) {
+        startTimer();
+      }
+    }
+
+    // Move to next level
+    function moveToNextLevel() {
+      currentLevel++;
+      if (currentLevel <= dailyPlayers.length) {
+        loadLevel();
+      } else {
+        const finalTime = stopTimer();
+        saveScoreHistory(score, finalTime);
+        feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
+        feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+        feedback.classList.add('text-yellow-300');
+        submitAnswer.classList.add('hidden');
+        guessInput.classList.add('hidden');
+        nextLevel.classList.add('hidden');
+        playAgain.classList.remove('hidden');
+        viewStats.classList.remove('hidden');
+        const shareUrlLink = generateShareLink(score, incorrectAthletes);
+        shareUrl.href = shareUrlLink;
+        shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectAthletes.length ? '| Missed: ' + incorrectAthletes.join(', ') : '| Nailed all athletes!'}`;
+        shareLink.classList.remove('hidden');
+      }
+    }
+
+    // Check answer
+    submitAnswer.addEventListener('click', () => {
+      const guess = guessInput.value.trim().toLowerCase();
+      const correctName = dailyPlayers[currentLevel - 1].name.toLowerCase();
+
+      feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+      if (guess === correctName) {
+        score += 5;
+        feedback.textContent = `Nailed it! +5 points! 🏀`;
+        feedback.classList.add('text-green-500');
+        submitAnswer.classList.add('hidden');
+        guessInput.classList.add('hidden');
+        nextLevel.classList.remove('hidden');
+      } else {
+        const distance = getLevenshteinDistance(guess, correctName);
+        if (distance <= 2 && guess.length > 0) {
+          feedback.textContent = `So close! Try again, you're off by a letter or two!`;
+          feedback.classList.add('text-yellow-400');
+          guessInput.value = '';
+        } else {
+          incorrectAthletes.push(dailyPlayers[currentLevel - 1].name);
+          feedback.textContent = `Swing and a miss! It was ${dailyPlayers[currentLevel - 1].name}.`;
+          feedback.classList.add('text-red-500');
+          submitAnswer.classList.add('hidden');
+          guessInput.classList.add('hidden');
+          nextLevel.classList.remove('hidden');
+        }
+      }
+      scoreDisplay.textContent = score;
+      if (currentLevel === dailyPlayers.length && (guess === correctName || getLevenshteinDistance(guess, correctName) > 2)) {
+        stopTimer();
+      }
+    });
+
+    // Next level button
+    nextLevel.addEventListener('click', () => {
+      moveToNextLevel();
+    });
+
+    // Play again button
+    playAgain.addEventListener('click', () => {
+      currentLevel = 1;
+      score = 0;
+      incorrectAthletes = [];
+      startTime = null;
+      elapsedTime = 0;
+      timerDisplay.textContent = '00:00';
+      loadLevel();
+    });
+
+    // View stats button
+    viewStats.addEventListener('click', () => {
+      displayStats();
+    });
+
+    // Close stats modal
+    closeStats.addEventListener('click', () => {
+      statsModal.classList.add('hidden');
+    });
+
+    // Initialize game
+    loadLevel();
+
+    // Check for shared results on load
+    displayResultsFromUrl();
+  </script>
+</body>
+</html>
