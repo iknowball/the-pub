@@ -42,7 +42,7 @@
     <input id="guessInput" type="text" placeholder="Who's this athlete?" class="w-full p-3 bg-amber-800/90 text-white border-2 border-yellow-600 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-600" autocomplete="off">
     <button id="submitAnswer" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md">Submit Answer</button>
     <button id="nextLevel" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Next Level</button>
-    <button id="playAgain" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Play Again</button>
+    <a id="backToHome" href="index.html" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
     <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
     <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
     <p id="score" class="text-center mt-2 text-yellow-300">Score: <span id="scoreValue">0</span>/25</p>
@@ -137,7 +137,7 @@
     const guessInput = document.getElementById('guessInput');
     const submitAnswer = document.getElementById('submitAnswer');
     const nextLevel = document.getElementById('nextLevel');
-    const playAgain = document.getElementById('playAgain');
+    const backToHome = document.getElementById('backToHome');
     const viewStats = document.getElementById('viewStats');
     const feedback = document.getElementById('feedback');
     const scoreDisplay = document.getElementById('scoreValue');
@@ -205,7 +205,7 @@
 
     // Generate shareable link
     function generateShareLink(score, incorrectAthletes) {
-      const baseUrl = window.location.href.split('?')[0];
+      const baseUrl = 'https://thepub-sigma.vercel.app/game';
       const incorrectParam = incorrectAthletes.map(name => encodeURIComponent(name)).join(',');
       return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
     }
@@ -225,7 +225,7 @@
           <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Pub Quiz Results</h1>
           <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
           <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
-          <p class="text-center"><a href="${window.location.href.split('?')[0]}" class="text-yellow-400 underline text-lg">Play again! 🏀</a></p>
+          <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
         `;
       }
     }
@@ -238,7 +238,7 @@
       submitAnswer.classList.remove('hidden');
       guessInput.classList.remove('hidden');
       nextLevel.classList.add('hidden');
-      playAgain.classList.add('hidden');
+      backToHome.classList.add('hidden');
       viewStats.classList.add('hidden');
       imageError.classList.add('hidden');
       scoreDisplay.textContent = score;
@@ -263,7 +263,7 @@
         submitAnswer.classList.add('hidden');
         guessInput.classList.add('hidden');
         nextLevel.classList.add('hidden');
-        playAgain.classList.remove('hidden');
+        backToHome.classList.remove('hidden');
         viewStats.classList.remove('hidden');
         const shareUrlLink = generateShareLink(score, incorrectAthletes);
         shareUrl.href = shareUrlLink;
@@ -309,17 +309,6 @@
     // Next level button
     nextLevel.addEventListener('click', () => {
       moveToNextLevel();
-    });
-
-    // Play again button
-    playAgain.addEventListener('click', () => {
-      currentLevel = 1;
-      score = 0;
-      incorrectAthletes = [];
-      startTime = null;
-      elapsedTime = 0;
-      timerDisplay.textContent = '00:00';
-      loadLevel();
     });
 
     // View stats button
