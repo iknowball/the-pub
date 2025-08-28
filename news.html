@@ -3,47 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to the Pub</title>
+  <title>The Pub Times - Newsstand</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
   <style>
     body {
-      background-image: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') !important;
-      background-size: cover !important;
-      background-position: center !important;
-      background-attachment: fixed !important;
-      background-color: #451a03 !important;
+      background-color: #f3f4f6 !important;
+      font-family: 'Times New Roman', Times, serif !important;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+    img {
+      filter: grayscale(100%);
+    }
+    .masthead {
+      border-bottom: 4px double #1f2937;
     }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-  <div class="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg">
-    <h1 class="text-4xl font-bold text-yellow-300 mb-8">Welcome to the Pub</h1>
-    <h2 class="text-2xl font-bold text-yellow-300 mb-4">Pub Newsstand</h2>
-    <div class="text-left text-white mb-6">
-      <p class="mb-2"><strong>Ranking Potato types!</strong>
-
-Homemade mashed potatoes 
- Undisputed goat. Your mom whips these up with steak or thanksgiving food and it bangs every time. Play the hits
-
-2) steakhouse garlic mashed potatoes 
-
-Also bangs but more volatile. Debate a wall
-
-3) baked potato
-
-You may be thinking where are fries? Ok you fat fuck go stuff your face with McDonalds and come back and by the time you’re done fries will be on here
-
-4) sweet potato
-
-Shits so good. Yeah and its healthy this may be a contender for dark horse pick of the millennium. With a little salmon or some bullshit this jumps to the top of the list
-
-5) hashbrowns. Yup I’m taking this over fries. Fry category is way too large. A nice hash brown the day after a hangover, fuck yeah
-</p>
-      <p class="mb-2"><strong>Star Player Signs New Deal!</strong> The MVP has inked a multi-year contract, promising more action-packed seasons at the Pub.</p>
-      <p><strong>Upcoming Match Preview!</strong> Get ready for this weekend's clash—join us at the Pub to watch and cheer!</p>
+<body class="flex flex-col items-center min-h-screen bg-gray-100 text-gray-900">
+  <header class="w-full max-w-4xl bg-white p-6 border-b-4 border-gray-900 mb-4 masthead">
+    <h1 class="text-5xl font-bold text-center text-gray-900">The Pub Times</h1>
+    <p class="text-center text-lg text-gray-700 mt-2">August 28, 2025</p>
+  </header>
+  <nav class="w-full max-w-4xl bg-gray-200 p-4 mb-4 border-t-2 border-b-2 border-gray-900">
+    <div class="flex justify-between">
+      <a href="index.html" class="text-gray-900 hover:text-gray-700 font-bold">Home</a>
+      <a href="game.html" class="text-gray-900 hover:text-gray-700 font-bold">Player Quiz</a>
+      <a href="trivia-game.html" class="text-gray-900 hover:text-gray-700 font-bold">NFL Trivia</a>
+      <a href="bulletin.html" class="text-gray-900 hover:text-gray-700 font-bold">Bulletin</a>
     </div>
-    <a href="index.html" class="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md">Back to Home</a>
-  </div>
+  </nav>
+  <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+    <article class="bg-white p-4 border border-gray-900 shadow-md animate-fade-in">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Eagles’ Jalen Hurts Eyes Playoff Run</h2>
+      <p class="text-sm text-gray-700 mb-2">By Sports Desk | August 28, 2025</p>
+      <img src="https://www.nbcsportsphiladelphia.com/wp-content/uploads/2024/09/Jalen-Hurts-090924-1.jpg" alt="Jalen Hurts" class="w-full h-48 object-cover mb-4 border border-gray-900">
+      <p class="text-gray-900">Philadelphia Eagles quarterback Jalen Hurts is gearing up for a strong 2025 season, aiming to lead his team deep into the playoffs. After a solid 2024 campaign, Hurts has been focusing on improving his passing accuracy and leadership on the field.</p>
+      <p class="text-gray-700 mt-2 text-sm">Source: NBCSportsPhiladelphia</p>
+    </article>
+    <article class="bg-white p-4 border border-gray-900 shadow-md animate-fade-in">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Lakers Trade Rumors Heat Up</h2>
+      <p class="text-sm text-gray-700 mb-2">By Sports Desk | August 28, 2025</p>
+      <img src="https://ktla.com/wp-content/uploads/sites/4/2024/09/GettyImages-2169295549.jpg" alt="Lakers Game" class="w-full h-48 object-cover mb-4 border border-gray-900">
+      <p class="text-gray-900">The Los Angeles Lakers are reportedly exploring trade options to bolster their roster for the 2025-26 NBA season. Sources indicate the team is eyeing a star player to complement LeBron James and Anthony Davis in their championship pursuit.</p>
+      <p class="text-gray-700 mt-2 text-sm">Source: KTLA</p>
+    </article>
+    <article class="bg-white p-4 border border-gray-900 shadow-md animate-fade-in md:col-span-2">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">NFL Season Preview</h2>
+      <p class="text-sm text-gray-700 mb-2">By Sports Desk | August 28, 2025</p>
+      <img src="https://a.espncdn.com/photo/2024/0904/nfl_2024-preview_16x9.jpg" alt="NFL Preview" class="w-full h-48 object-cover mb-4 border border-gray-900">
+      <p class="text-gray-900">As the 2025 NFL season approaches, teams are finalizing their rosters and strategies. Key storylines include the Kansas City Chiefs’ quest for a three-peat and the emergence of young quarterbacks across the league.</p>
+      <p class="text-gray-700 mt-2 text-sm">Source: ESPN</p>
+    </article>
+  </main>
+  <footer class="w-full max-w-4xl bg-gray-200 p-4 text-center text-gray-700 border-t-2 border-gray-900">
+    <p>Published by The Pub Times</p>
+  </footer>
 </body>
 </html>
