@@ -32,6 +32,12 @@
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
     <div id="timer" class="absolute top-4 left-4 bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
+    <div class="flex flex-wrap gap-2 justify-center mb-4">
+      <a href="index.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
+      <a href="news.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Newsstand</a>
+      <a href="trivia-game.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Trivia</a>
+      <a href="college-game.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">College Game</a>
+    </div>
     <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Who is This?</h1>
     <p class="text-center text-yellow-300 mb-2 text-lg">Level: <span id="currentLevel">1</span>/5</p>
     <div class="relative w-full h-72 mb-4 rounded-lg overflow-hidden border-2 border-yellow-600">
@@ -48,7 +54,6 @@
     <p id="score" class="text-center mt-2 text-yellow-300">Score: <span id="scoreValue">0</span>/25</p>
     <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
   </div>
-
   <!-- Stats Modal -->
   <div id="statsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">
     <div class="bg-amber-800/90 p-6 rounded-xl w-full max-w-md border-2 border-yellow-600 shadow-lg">
@@ -70,7 +75,6 @@
       <button id="closeStats" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
     </div>
   </div>
-
   <script>
     // Daily players data
     const dailyPlayers = [
@@ -80,14 +84,12 @@
       { name: "Ryan Leaf", image: "https://qfm96.com/wp-content/blogs.dir/177/files/2021/01/AP20112190852387-1280x800.jpg" },
       { name: "Jason Terry", image: "https://legacymedia.sportsplatform.io/img/images/photos/003/828/654/hi-res-ffa2854f3a85b750dbb851b8ba700b5f_crop_north.jpg?1568757823&w=630&h=420" }
     ];
-
     let currentLevel = 1;
     let score = 0;
     let incorrectAthletes = [];
     let startTime = null;
     let elapsedTime = 0;
     let timerInterval;
-
     // Levenshtein distance function
     function getLevenshteinDistance(a, b) {
       const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
@@ -105,31 +107,26 @@
       }
       return matrix[b.length][a.length];
     }
-
     // Timer functions
     function startTimer() {
       startTime = Date.now();
       timerInterval = setInterval(updateTimer, 1000);
     }
-
     function updateTimer() {
       elapsedTime = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
       const seconds = (elapsedTime % 60).toString().padStart(2, '0');
       timerDisplay.textContent = `${minutes}:${seconds}`;
     }
-
     function stopTimer() {
       clearInterval(timerInterval);
       return elapsedTime;
     }
-
     function formatTime(seconds) {
       const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
       const secs = (seconds % 60).toString().padStart(2, '0');
       return `${minutes}:${secs}`;
     }
-
     // DOM elements
     const gameContainer = document.getElementById('gameContainer');
     const playerImage = document.getElementById('playerImage');
@@ -149,12 +146,10 @@
     const statsTableBody = document.getElementById('statsTableBody');
     const closeStats = document.getElementById('closeStats');
     const timerDisplay = document.getElementById('timer');
-
     // Initialize score history
     function getScoreHistory() {
       return JSON.parse(localStorage.getItem('scoreHistory') || '[]');
     }
-
     function saveScoreHistory(score, time) {
       const history = getScoreHistory();
       history.push({
@@ -164,14 +159,12 @@
       });
       localStorage.setItem('scoreHistory', JSON.stringify(history));
     }
-
     function calculateAverageScore() {
       const history = getScoreHistory();
       if (history.length === 0) return 0;
       const total = history.reduce((sum, entry) => sum + entry.score, 0);
       return (total / history.length).toFixed(1);
     }
-
     function displayStats() {
       const history = getScoreHistory();
       avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
@@ -189,27 +182,23 @@
       });
       statsModal.classList.remove('hidden');
     }
-
     // Handle image load errors
     playerImage.onerror = () => {
       imageError.classList.remove('hidden');
       submitAnswer.classList.remove('hidden');
       nextLevel.classList.add('hidden');
     };
-
     playerImage.onload = () => {
       imageError.classList.add('hidden');
       submitAnswer.classList.remove('hidden');
       nextLevel.classList.add('hidden');
     };
-
     // Generate shareable link
     function generateShareLink(score, incorrectAthletes) {
       const baseUrl = 'https://thepub-sigma.vercel.app/game';
       const incorrectParam = incorrectAthletes.map(name => encodeURIComponent(name)).join(',');
       return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
     }
-
     // Display results from URL query params
     function displayResultsFromUrl() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -229,7 +218,6 @@
         `;
       }
     }
-
     // Load current level
     function loadLevel() {
       playerImage.src = dailyPlayers[currentLevel - 1].image;
@@ -248,7 +236,6 @@
         startTimer();
       }
     }
-
     // Move to next level
     function moveToNextLevel() {
       currentLevel++;
@@ -271,12 +258,10 @@
         shareLink.classList.remove('hidden');
       }
     }
-
     // Check answer
     submitAnswer.addEventListener('click', () => {
       const guess = guessInput.value.trim().toLowerCase();
       const correctName = dailyPlayers[currentLevel - 1].name.toLowerCase();
-
       feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
       if (guess === correctName) {
         score += 5;
@@ -305,25 +290,20 @@
         stopTimer();
       }
     });
-
     // Next level button
     nextLevel.addEventListener('click', () => {
       moveToNextLevel();
     });
-
     // View stats button
     viewStats.addEventListener('click', () => {
       displayStats();
     });
-
     // Close stats modal
     closeStats.addEventListener('click', () => {
       statsModal.classList.add('hidden');
     });
-
     // Initialize game
     loadLevel();
-
     // Check for shared results on load
     displayResultsFromUrl();
   </script>
