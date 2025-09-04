@@ -1,0 +1,29 @@
+{
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/index-nfl", "dest": "/index-nfl.html" },
+    { "src": "/news", "dest": "/news.html" },
+    { "src": "/game", "dest": "/game.html" },
+    { "src": "/college-game", "dest": "/college-game.html" },
+    { "src": "/trivia-game", "dest": "/trivia-game.html" },
+    { "src": "/bulletin", "dest": "/bulletin.html" },
+    { "src": "/blog", "dest": "/blog.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "img-src 'self' https://awolvision.com https://images.pexels.com https://ktla.com https://www.nbcsportsphiladelphia.com https://a.espncdn.com https://legacymedia.sportsplatform.io; script-src 'self' https://cdn.tailwindcss.com https://www.gstatic.com;"
+        }
+      ]
+    }
+  ]
+}
