@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Pub - Sports Column</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-attachment: fixed !important;
+      background-color: #451a03 !important;
+    }
+    .font-montserrat {
+      font-family: 'Montserrat', sans-serif;
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"></script>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
+  <nav class="fixed top-0 left-0 w-full bg-amber-900/90 text-white p-4 shadow-lg z-10">
+    <div class="flex flex-wrap gap-2 justify-center">
+      <a href="index.html" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
+      <a href="news.html" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Newsstand</a>
+      <a href="trivia-game.html" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Trivia</a>
+      <a href="college-game.html" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">College Game</a>
+      <a href="index-nfl.html" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Games</a>
+    </div>
+  </nav>
+  <section class="w-full max-w-3xl mt-20 bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 mb-8 shadow-lg">
+    <h1 class="text-3xl font-bold text-yellow-300 text-center mb-6">Submit Your Post</h1>
+    <form id="postForm" class="space-y-4">
+      <div>
+        <label for="postTitle" class="block text-yellow-300 text-sm font-bold mb-2">Title</label>
+        <input id="postTitle" type="text" placeholder="Enter post title" class="w-full p-3 bg-amber-900/90 text-white border-2 border-yellow-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" required>
+      </div>
+      <div>
+        <label for="postContent" class="block text-yellow-300 text-sm font-bold mb-2">Content</label>
+        <textarea id="postContent" placeholder="Write your post here" rows="5" class="w-full p-3 bg-amber-900/90 text-white border-2 border-yellow-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-600" required></textarea>
+      </div>
+      <button type="submit" class="w-full bg-amber-600 text-white font-bold p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md">Submit Post</button>
+    </form>
+  </section>
+  <div id="postsContainer" class="w-full max-w-3xl">
+    <h1 class="text-4xl font-bold text-yellow-300 text-center mb-8">The Pub Sports Column</h1>
+    <!-- Posts will be dynamically inserted here -->
+  </div>
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+      storageBucket: "thepub-sigma.firebasestorage.app",
+      messagingSenderId: "108972507038",
+      appId: "1:108972507038:web:4503cbe63cb3f7a3e4e08f",
+      measurementId: "G-7QLS15ZLTP"
+      const firebaseConfig = {
+ 
+  
+};
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Render posts
+    async function renderPosts() {
+      const postsContainer = document.getElementById('postsContainer');
+      postsContainer.innerHTML = '<h1 class="text-4xl font-bold text-yellow-300 text-center mb-8">The Pub Sports Column</h1>';
+      try {
+        const querySnapshot = await db.collection('posts').orderBy('date', 'desc').get();
+        if (querySnapshot.empty) {
+          // Add sample posts if collection is empty
+          const samplePosts = [
+            {
+              title: "The Art of the Comeback: Analyzing Epic NFL Turnarounds",
+              date: "2025-09-04",
+              content: "Nothing gets the crowd at The Pub roaring like a good NFL comeback. Take last week’s thriller between the Eagles and Falcons: down 17 points in the third quarter, Philadelphia clawed back with a mix of Jalen Hurts’ dual-threat heroics and a relentless defense. The key? A 12-play, 98-yard drive capped by a Saquon Barkley touchdown. Comebacks like these remind us why we love the game—strategy, grit, and a bit of luck. What’s your favorite NFL comeback moment? Stop by The Pub and share your thoughts over a cold one."
+            },
+            {
+              title: "Why the Chiefs Remain Unstoppable",
+              date: "2025-09-03",
+              content: "The Kansas City Chiefs are once again the team to beat in 2025. Patrick Mahomes continues to dazzle, with 320 yards and three touchdowns in their opener against the Ravens. The addition of rookie speedster Xavier Worthy has given their offense new life. Meanwhile, the defense, led by Chris Jones, is suffocating opponents. At The Pub, fans are already predicting a third straight Super Bowl. Can anyone stop this dynasty? Join us to discuss!"
+            }
+          ];
+          for (const post of samplePosts) {
+            await db.collection('posts').add(post);
+          }
+          // Re-fetch after adding samples
+          querySnapshot = await db.collection('posts').orderBy('date', 'desc').get();
+        }
+        querySnapshot.forEach(doc => {
+          const post = doc.data();
+          const article = document.createElement('article');
+          article.className = 'bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 mb-4 shadow-lg';
+          article.innerHTML = `
+            <h2 class="text-2xl font-bold text-yellow-300 mb-2">${post.title}</h2>
+            <p class="text-sm text-yellow-300 mb-4">${post.date}</p>
+            <p class="text-base text-white leading-relaxed">${post.content}</p>
+          `;
+          postsContainer.appendChild(article);
+        });
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        postsContainer.innerHTML += '<p class="text-red-500 text-center">Error loading posts. Please try again later.</p>';
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('postTitle').value.trim();
+      const content = document.getElementById('postContent').value.trim();
+      if (!title || !content) {
+        alert('Please fill out both title and content.');
+        return;
+      }
+      const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      try {
+        await db.collection('posts').add({ title, date, content });
+        document.getElementById('postForm').reset();
+        await renderPosts();
+      } catch (error) {
+        console.error('Error submitting post:', error);
+        alert('Failed to submit post. Please try again.');
+      }
+    });
+
+    // Initialize and render posts on page load
+    renderPosts();
+  </script>
+</body>
+</html>
