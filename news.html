@@ -1,23 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Pub Times - Newsstand</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>The Pub - News</title>
   <!-- Tailwind CSS CDN (optional for styling) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f3f4f6 !important;
+      font-family: 'Times New Roman', Times, serif !important;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+    img {
+      filter: grayscale(100%);
+    }
+    .masthead {
+      border-bottom: 4px double #1f2937;
+    }
+  </style>
+  <!-- Firebase CDN scripts -->
   <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <!-- Add Firebase products that you want to use -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
+<body class="flex flex-col items-center min-h-screen bg-gray-100 text-gray-900">
+  <header class="w-full max-w-4xl bg-white p-6 border-b-4 border-gray-900 mb-4 masthead">
+    <h1 class="text-5xl font-bold text-center text-gray-900">The Pub Times</h1>
+    <p class="text-center text-lg text-gray-700 mt-2">August 28, 2025</p>
 <body class="bg-gray-100 text-gray-900">
   <header class="bg-gray-900 p-4 mb-6">
     <h1 class="text-3xl font-bold text-white">The Pub - News</h1>
   </header>
+  <nav class="w-full max-w-4xl bg-gray-200 p-4 mb-4 border-t-2 border-b-2 border-gray-900">
+    <div class="flex justify-between">
+      <a href="index.html" class="text-gray-900 hover:text-gray-700 font-bold">Home</a>
+      <a href="game.html" class="text-gray-900 hover:text-gray-700 font-bold">Player Quiz</a>
+      <a href="trivia-game.html" class="text-gray-900 hover:text-gray-700 font-bold">NFL Trivia</a>
+      <a href="bulletin.html" class="text-gray-900 hover:text-gray-700 font-bold">Bulletin</a>
+    </div>
+  </nav>
+  <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 p-6" id="news-list">
+    <!-- News articles injected by JS -->
   <main class="max-w-2xl mx-auto" id="news-list">
     <!-- News articles will be injected here by firebase-news.js -->
   </main>
+  <footer class="w-full max-w-4xl bg-gray-200 p-4 text-center text-gray-700 border-t-2 border-gray-900">
+    <p>Published by The Pub Times</p>
+  </footer>
 
   <!-- Your Firebase & news loading script -->
   <script src="firebase-news.js"></script>
