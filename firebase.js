@@ -3,7 +3,7 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  authDomain: "thepub-sigma.firebaseapp.com",
   projectId: "thepub-sigma",
   storageBucket: "thepub-sigma.appspot.com",
   messagingSenderId: "108972507038",
