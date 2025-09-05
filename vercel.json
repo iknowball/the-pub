@@ -5,15 +5,15 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/index-nfl", "dest": "/index-nfl.html" },
-    { "src": "/news", "dest": "/news.html" },
-    { "src": "/game", "dest": "/game.html" },
-    { "src": "/college-game", "dest": "/college-game.html" },
-    { "src": "/trivia-game", "dest": "/trivia-game.html" },
-    { "src": "/bulletin", "dest": "/bulletin.html" },
-    { "src": "/blog", "dest": "/blog.html" }
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/index-nfl", "destination": "/index-nfl.html" },
+    { "source": "/news", "destination": "/news.html" },
+    { "source": "/game", "destination": "/game.html" },
+    { "source": "/college-game", "destination": "/college-game.html" },
+    { "source": "/trivia-game", "destination": "/trivia-game.html" },
+    { "source": "/bulletin", "destination": "/bulletin.html" },
+    { "source": "/blog", "destination": "/blog.html" }
   ],
   "headers": [
     {
