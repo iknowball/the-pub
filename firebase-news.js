@@ -2,12 +2,12 @@
 
 // 2. Firebase config (replace with your own from Firebase Console)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+  authDomain: "thepub-sigma.firebaseapp.com",
+  projectId: "thepub-sigma",
+  storageBucket: "thepub-sigma.appspot.com",
+  messagingSenderId: "108972507038",
+  appId: "1:108972507038:web:4503cbe63cb3f7a3e4e08f"
 };
 
 // 3. Initialize Firebase
