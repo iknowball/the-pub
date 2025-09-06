@@ -24,43 +24,86 @@
       <input type="text" id="messageInput" class="w-full p-2 rounded-lg border-2 border-yellow-600 bg-amber-900/90 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-600" placeholder="Leave a message...">
       <button id="postMessage" class="w-full mt-2 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md">Post Message</button>
     </div>
+    <!-- Message List directly below the post UI -->
     <div id="messageList" class="max-h-60 overflow-y-auto bg-amber-900/90 p-4 rounded-lg border-2 border-yellow-600"></div>
     <a href="index.html" class="block w-full mt-4 bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
   </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+      // ...other config
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const messageInput = document.getElementById('messageInput');
     const postMessageBtn = document.getElementById('postMessage');
     const messageList = document.getElementById('messageList');
 
-    function loadMessages() {
-      const messages = JSON.parse(localStorage.getItem('pubMessages') || '[]');
+    // Render messages (helper function)
+    function renderMessages(docs) {
       messageList.innerHTML = '';
-      messages.forEach(msg => {
+      docs.forEach(doc => {
+        const msgData = doc.data();
         const div = document.createElement('div');
         div.className = 'p-2 mb-2 bg-amber-800/80 rounded-lg border border-yellow-600';
-        div.textContent = msg;
+        div.textContent = msgData.message;
+        // Optionally show timestamp
+        if (msgData.timestamp && msgData.timestamp.toDate) {
+          const ts = msgData.timestamp.toDate();
+          const tsSpan = document.createElement('span');
+          tsSpan.className = "block text-xs text-yellow-200 opacity-70";
+          tsSpan.textContent = " — " + ts.toLocaleString();
+          div.appendChild(tsSpan);
+        }
         messageList.appendChild(div);
       });
+      // Scroll to bottom to see the latest message
       messageList.scrollTop = messageList.scrollHeight;
     }
 
-    function saveMessage() {
+    // Load and listen for messages in real time from Firestore
+    let lastSnapshot = [];
+    function loadMessagesRealtime() {
+      db.collection('bulletin')
+        .orderBy('timestamp', 'desc')
+        .onSnapshot(snapshot => {
+          lastSnapshot = snapshot.docs;
+          renderMessages(lastSnapshot);
+        });
+    }
+
+    // Save message to Firestore
+    async function saveMessage() {
       const message = messageInput.value.trim();
       if (message) {
-        const messages = JSON.parse(localStorage.getItem('pubMessages') || '[]');
-        messages.push(message);
-        localStorage.setItem('pubMessages', JSON.stringify(messages));
+        await db.collection('bulletin').add({
+          message: message,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
         messageInput.value = '';
-        loadMessages();
+        // Optionally re-render immediately for instant feedback
+        // (Firestore will update in <1s anyway)
+        // renderMessages([{data:()=>({message, timestamp:{toDate:()=>new Date()}})}, ...lastSnapshot]);
       }
     }
 
     postMessageBtn.addEventListener('click', saveMessage);
     messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') saveMessage();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveMessage();
+      }
     });
 
-    loadMessages();
+    // Initial load
+    loadMessagesRealtime();
   </script>
 </body>
 </html>
