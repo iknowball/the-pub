@@ -75,237 +75,272 @@
       <button id="closeStats" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
     </div>
   </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
-    // Daily players data
-    const dailyPlayers = [
-      { name: "Julius Thomas", image: "https://a.espncdn.com/combiner/i?img=%2Fphoto%2F2014%2F0130%2Fnfl_u_jtte_cr_1296x729.jpg" },
-      { name: "Jon Beason", image: "https://www.gastongazette.com/gcdn/authoring/2012/10/24/NGAG/ghows-NC-638abf56-d6e5-49be-9af4-f15ee5f00eae-400ed137.jpeg?width=1200&disable=upscale&format=pjpg&auto=webp" },
-      { name: "Travon Walker", image: "https://static.www.nfl.com/image/upload/t_editorial_landscape_12_desktop/league/sbrrmq51yzfjfbttiuxy" },
-      { name: "Jonas Gray", image: "https://www.bostonherald.com/wp-content/uploads/migration/2014/11/16/111614patriotsmw034.jpg?w=1800&resize=1800,1800" },
-      { name: "Asante Samuel", image: "https://www.advisorhub.com/wp-content/uploads/2016/08/asante-samuel.jpg" }
-    ];
-    let currentLevel = 1;
-    let score = 0;
-    let incorrectAthletes = [];
-    let startTime = null;
-    let elapsedTime = 0;
-    let timerInterval;
-    // Levenshtein distance function
-    function getLevenshteinDistance(a, b) {
-      const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
-      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-      for (let j = 1; j <= b.length; j++) {
-        for (let i = 1; i <= a.length; i++) {
-          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          matrix[j][i] = Math.min(
-            matrix[j - 1][i] + 1,
-            matrix[j][i - 1] + 1,
-            matrix[j - 1][i - 1] + cost
-          );
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-    // Timer functions
-    function startTimer() {
-      startTime = Date.now();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-    function updateTimer() {
-      elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-      const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
-      const seconds = (elapsedTime % 60).toString().padStart(2, '0');
-      timerDisplay.textContent = `${minutes}:${seconds}`;
-    }
-    function stopTimer() {
-      clearInterval(timerInterval);
-      return elapsedTime;
-    }
-    function formatTime(seconds) {
-      const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const secs = (seconds % 60).toString().padStart(2, '0');
-      return `${minutes}:${secs}`;
-    }
-    // DOM elements
-    const gameContainer = document.getElementById('gameContainer');
-    const playerImage = document.getElementById('playerImage');
-    const imageError = document.getElementById('imageError');
-    const guessInput = document.getElementById('guessInput');
-    const submitAnswer = document.getElementById('submitAnswer');
-    const nextLevel = document.getElementById('nextLevel');
-    const backToHome = document.getElementById('backToHome');
-    const viewStats = document.getElementById('viewStats');
-    const feedback = document.getElementById('feedback');
-    const scoreDisplay = document.getElementById('scoreValue');
-    const currentLevelDisplay = document.getElementById('currentLevel');
-    const shareLink = document.getElementById('shareLink');
-    const shareUrl = document.getElementById('shareUrl');
-    const statsModal = document.getElementById('statsModal');
-    const avgScore = document.getElementById('avgScore');
-    const statsTableBody = document.getElementById('statsTableBody');
-    const closeStats = document.getElementById('closeStats');
-    const timerDisplay = document.getElementById('timer');
-    // Initialize score history
-    function getScoreHistory() {
-      return JSON.parse(localStorage.getItem('scoreHistory') || '[]');
-    }
-    function saveScoreHistory(score, time) {
-      const history = getScoreHistory();
-      history.push({
-        score: score,
-        time: time,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('scoreHistory', JSON.stringify(history));
-    }
-    function calculateAverageScore() {
-      const history = getScoreHistory();
-      if (history.length === 0) return 0;
-      const total = history.reduce((sum, entry) => sum + entry.score, 0);
-      return (total / history.length).toFixed(1);
-    }
-    function displayStats() {
-      const history = getScoreHistory();
-      avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
-      statsTableBody.innerHTML = '';
-      history.forEach((entry, index) => {
-        const row = document.createElement('tr');
-        row.classList.add('hover:bg-amber-600');
-        row.innerHTML = `
-          <td class="p-2 border border-yellow-600">${index + 1}</td>
-          <td class="p-2 border border-yellow-600">${entry.score}/25</td>
-          <td class="p-2 border border-yellow-600">${formatTime(entry.time)}</td>
-          <td class="p-2 border border-yellow-600">${new Date(entry.timestamp).toLocaleString()}</td>
-        `;
-        statsTableBody.appendChild(row);
-      });
-      statsModal.classList.remove('hidden');
-    }
-    // Handle image load errors
-    playerImage.onerror = () => {
-      imageError.classList.remove('hidden');
-      submitAnswer.classList.remove('hidden');
-      nextLevel.classList.add('hidden');
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
     };
-    playerImage.onload = () => {
-      imageError.classList.add('hidden');
-      submitAnswer.classList.remove('hidden');
-      nextLevel.classList.add('hidden');
-    };
-    // Generate shareable link
-    function generateShareLink(score, incorrectAthletes) {
-      const baseUrl = 'https://thepub-sigma.vercel.app/game';
-      const incorrectParam = incorrectAthletes.map(name => encodeURIComponent(name)).join(',');
-      return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
-    }
-    // Display results from URL query params
-    function displayResultsFromUrl() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const score = urlParams.get('score');
-      const incorrect = urlParams.get('incorrect');
-      if (score !== null) {
-        let incorrectMessage = "I knew all the athletes! 🏆";
-        if (incorrect) {
-          const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
-          incorrectMessage = `I did not know ${incorrectList}.`;
-        }
-        gameContainer.innerHTML = `
-          <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Pub Quiz Results</h1>
-          <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
-          <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
-          <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
-        `;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
+    function getTodayEST6AM() {
+      // Convert current UTC to EST
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      // EST is UTC-5, but account for DST if needed (this is a simple version, adjust if you want DST support)
+      const est = new Date(utc - 5 * 60 * 60 * 1000);
+      // If before 6am EST, return yesterday's date as "today"
+      if (est.getHours() < 6) {
+        est.setDate(est.getDate() - 1);
       }
+      return est.toISOString().slice(0, 10);
     }
-    // Load current level
-    function loadLevel() {
-      playerImage.src = dailyPlayers[currentLevel - 1].image;
-      guessInput.value = '';
-      feedback.textContent = '';
-      submitAnswer.classList.remove('hidden');
-      guessInput.classList.remove('hidden');
-      nextLevel.classList.add('hidden');
-      backToHome.classList.add('hidden');
-      viewStats.classList.add('hidden');
-      imageError.classList.add('hidden');
-      scoreDisplay.textContent = score;
-      currentLevelDisplay.textContent = currentLevel;
-      shareLink.classList.add('hidden');
-      if (currentLevel === 1 && !startTime) {
-        startTimer();
-      }
-    }
-    // Move to next level
-    function moveToNextLevel() {
-      currentLevel++;
-      if (currentLevel <= dailyPlayers.length) {
-        loadLevel();
-      } else {
-        const finalTime = stopTimer();
-        saveScoreHistory(score, finalTime);
-        feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
-        feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
-        feedback.classList.add('text-yellow-300');
-        submitAnswer.classList.add('hidden');
-        guessInput.classList.add('hidden');
-        nextLevel.classList.add('hidden');
-        backToHome.classList.remove('hidden');
-        viewStats.classList.remove('hidden');
-        const shareUrlLink = generateShareLink(score, incorrectAthletes);
-        shareUrl.href = shareUrlLink;
-        shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectAthletes.length ? '| Missed: ' + incorrectAthletes.join(', ') : '| Nailed all athletes!'}`;
-        shareLink.classList.remove('hidden');
-      }
-    }
-    // Check answer
-    submitAnswer.addEventListener('click', () => {
-      const guess = guessInput.value.trim().toLowerCase();
-      const correctName = dailyPlayers[currentLevel - 1].name.toLowerCase();
-      feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
-      if (guess === correctName) {
-        score += 5;
-        feedback.textContent = `Nailed it! +5 points! 🏀`;
-        feedback.classList.add('text-green-500');
-        submitAnswer.classList.add('hidden');
-        guessInput.classList.add('hidden');
-        nextLevel.classList.remove('hidden');
-      } else {
-        const distance = getLevenshteinDistance(guess, correctName);
-        if (distance <= 2 && guess.length > 0) {
-          feedback.textContent = `So close! Try again, you're off by a letter or two!`;
-          feedback.classList.add('text-yellow-400');
-          guessInput.value = '';
+
+    async function fetchDailyPlayers() {
+      const dateKey = getTodayEST6AM();
+      try {
+        const doc = await db.collection('dailyPlayers').doc(dateKey).get();
+        if (doc.exists && Array.isArray(doc.data().players)) {
+          return doc.data().players;
         } else {
-          incorrectAthletes.push(dailyPlayers[currentLevel - 1].name);
-          feedback.textContent = `Swing and a miss! It was ${dailyPlayers[currentLevel - 1].name}.`;
-          feedback.classList.add('text-red-500');
+          alert("No daily players found for today.");
+          return [];
+        }
+      } catch (err) {
+        alert("Error fetching today's players: " + err.message);
+        return [];
+      }
+    }
+
+    // All game logic is wrapped in startGame and runs after fetching players
+    async function startGame() {
+      const dailyPlayers = await fetchDailyPlayers();
+      if (!dailyPlayers.length) {
+        document.getElementById('gameContainer').innerHTML = "<p class='text-yellow-200'>No players available for today.</p>";
+        return;
+      }
+
+      let currentLevel = 1;
+      let score = 0;
+      let incorrectAthletes = [];
+      let startTime = null;
+      let elapsedTime = 0;
+      let timerInterval;
+
+      // Levenshtein distance function
+      function getLevenshteinDistance(a, b) {
+        const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
+        for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+        for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+        for (let j = 1; j <= b.length; j++) {
+          for (let i = 1; i <= a.length; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+              matrix[j - 1][i] + 1,
+              matrix[j][i - 1] + 1,
+              matrix[j - 1][i - 1] + cost
+            );
+          }
+        }
+        return matrix[b.length][a.length];
+      }
+      function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+      function updateTimer() {
+        elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+        const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+      }
+      function stopTimer() {
+        clearInterval(timerInterval);
+        return elapsedTime;
+      }
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+      }
+      // DOM elements
+      const gameContainer = document.getElementById('gameContainer');
+      const playerImage = document.getElementById('playerImage');
+      const imageError = document.getElementById('imageError');
+      const guessInput = document.getElementById('guessInput');
+      const submitAnswer = document.getElementById('submitAnswer');
+      const nextLevel = document.getElementById('nextLevel');
+      const backToHome = document.getElementById('backToHome');
+      const viewStats = document.getElementById('viewStats');
+      const feedback = document.getElementById('feedback');
+      const scoreDisplay = document.getElementById('scoreValue');
+      const currentLevelDisplay = document.getElementById('currentLevel');
+      const shareLink = document.getElementById('shareLink');
+      const shareUrl = document.getElementById('shareUrl');
+      const statsModal = document.getElementById('statsModal');
+      const avgScore = document.getElementById('avgScore');
+      const statsTableBody = document.getElementById('statsTableBody');
+      const closeStats = document.getElementById('closeStats');
+      const timerDisplay = document.getElementById('timer');
+      function getScoreHistory() {
+        return JSON.parse(localStorage.getItem('scoreHistory') || '[]');
+      }
+      function saveScoreHistory(score, time) {
+        const history = getScoreHistory();
+        history.push({
+          score: score,
+          time: time,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('scoreHistory', JSON.stringify(history));
+      }
+      function calculateAverageScore() {
+        const history = getScoreHistory();
+        if (history.length === 0) return 0;
+        const total = history.reduce((sum, entry) => sum + entry.score, 0);
+        return (total / history.length).toFixed(1);
+      }
+      function displayStats() {
+        const history = getScoreHistory();
+        avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+        statsTableBody.innerHTML = '';
+        history.forEach((entry, index) => {
+          const row = document.createElement('tr');
+          row.classList.add('hover:bg-amber-600');
+          row.innerHTML = `
+            <td class="p-2 border border-yellow-600">${index + 1}</td>
+            <td class="p-2 border border-yellow-600">${entry.score}/25</td>
+            <td class="p-2 border border-yellow-600">${formatTime(entry.time)}</td>
+            <td class="p-2 border border-yellow-600">${new Date(entry.timestamp).toLocaleString()}</td>
+          `;
+          statsTableBody.appendChild(row);
+        });
+        statsModal.classList.remove('hidden');
+      }
+      // Handle image load errors
+      playerImage.onerror = () => {
+        imageError.classList.remove('hidden');
+        submitAnswer.classList.remove('hidden');
+        nextLevel.classList.add('hidden');
+      };
+      playerImage.onload = () => {
+        imageError.classList.add('hidden');
+        submitAnswer.classList.remove('hidden');
+        nextLevel.classList.add('hidden');
+      };
+      function generateShareLink(score, incorrectAthletes) {
+        const baseUrl = 'https://thepub-sigma.vercel.app/game';
+        const incorrectParam = incorrectAthletes.map(name => encodeURIComponent(name)).join(',');
+        return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
+      }
+      function displayResultsFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const score = urlParams.get('score');
+        const incorrect = urlParams.get('incorrect');
+        if (score !== null) {
+          let incorrectMessage = "I knew all the athletes! 🏆";
+          if (incorrect) {
+            const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
+            incorrectMessage = `I did not know ${incorrectList}.`;
+          }
+          gameContainer.innerHTML = `
+            <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">Pub Quiz Results</h1>
+            <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
+            <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
+            <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
+          `;
+        }
+      }
+      function loadLevel() {
+        playerImage.src = dailyPlayers[currentLevel - 1].image;
+        guessInput.value = '';
+        feedback.textContent = '';
+        submitAnswer.classList.remove('hidden');
+        guessInput.classList.remove('hidden');
+        nextLevel.classList.add('hidden');
+        backToHome.classList.add('hidden');
+        viewStats.classList.add('hidden');
+        imageError.classList.add('hidden');
+        scoreDisplay.textContent = score;
+        currentLevelDisplay.textContent = currentLevel;
+        shareLink.classList.add('hidden');
+        if (currentLevel === 1 && !startTime) {
+          startTimer();
+        }
+      }
+      function moveToNextLevel() {
+        currentLevel++;
+        if (currentLevel <= dailyPlayers.length) {
+          loadLevel();
+        } else {
+          const finalTime = stopTimer();
+          saveScoreHistory(score, finalTime);
+          feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
+          feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+          feedback.classList.add('text-yellow-300');
+          submitAnswer.classList.add('hidden');
+          guessInput.classList.add('hidden');
+          nextLevel.classList.add('hidden');
+          backToHome.classList.remove('hidden');
+          viewStats.classList.remove('hidden');
+          const shareUrlLink = generateShareLink(score, incorrectAthletes);
+          shareUrl.href = shareUrlLink;
+          shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectAthletes.length ? '| Missed: ' + incorrectAthletes.join(', ') : '| Nailed all athletes!'}`;
+          shareLink.classList.remove('hidden');
+        }
+      }
+      submitAnswer.addEventListener('click', () => {
+        const guess = guessInput.value.trim().toLowerCase();
+        const correctName = dailyPlayers[currentLevel - 1].name.toLowerCase();
+        feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+        if (guess === correctName) {
+          score += 5;
+          feedback.textContent = `Nailed it! +5 points! 🏀`;
+          feedback.classList.add('text-green-500');
           submitAnswer.classList.add('hidden');
           guessInput.classList.add('hidden');
           nextLevel.classList.remove('hidden');
+        } else {
+          const distance = getLevenshteinDistance(guess, correctName);
+          if (distance <= 2 && guess.length > 0) {
+            feedback.textContent = `So close! Try again, you're off by a letter or two!`;
+            feedback.classList.add('text-yellow-400');
+            guessInput.value = '';
+          } else {
+            incorrectAthletes.push(dailyPlayers[currentLevel - 1].name);
+            feedback.textContent = `Swing and a miss! It was ${dailyPlayers[currentLevel - 1].name}.`;
+            feedback.classList.add('text-red-500');
+            submitAnswer.classList.add('hidden');
+            guessInput.classList.add('hidden');
+            nextLevel.classList.remove('hidden');
+          }
         }
-      }
-      scoreDisplay.textContent = score;
-      if (currentLevel === dailyPlayers.length && (guess === correctName || getLevenshteinDistance(guess, correctName) > 2)) {
-        stopTimer();
-      }
-    });
-    // Next level button
-    nextLevel.addEventListener('click', () => {
-      moveToNextLevel();
-    });
-    // View stats button
-    viewStats.addEventListener('click', () => {
-      displayStats();
-    });
-    // Close stats modal
-    closeStats.addEventListener('click', () => {
-      statsModal.classList.add('hidden');
-    });
-    // Initialize game
-    loadLevel();
-    // Check for shared results on load
-    displayResultsFromUrl();
+        scoreDisplay.textContent = score;
+        if (currentLevel === dailyPlayers.length && (guess === correctName || getLevenshteinDistance(guess, correctName) > 2)) {
+          stopTimer();
+        }
+      });
+      nextLevel.addEventListener('click', () => {
+        moveToNextLevel();
+      });
+      viewStats.addEventListener('click', () => {
+        displayStats();
+      });
+      closeStats.addEventListener('click', () => {
+        statsModal.classList.add('hidden');
+      });
+      loadLevel();
+      displayResultsFromUrl();
+    }
+
+    // Start game on DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", startGame);
   </script>
 </body>
 </html>
