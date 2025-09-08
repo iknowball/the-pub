@@ -75,268 +75,295 @@
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
-    const athletes = [
-      { name: "Allen Iverson", college: "Georgetown"},
-      { name: "Darrelle Revis", college: "Pittsburgh" },
-      { name: "AJ Brown", college: "Ole Miss" },
-      { name: "Steph Curry", college: "Davidson" },
-      { name: "Terrelle Pryor", college: "Ohio State" }
-    ];
+    // Firebase config (replace with your actual config if needed)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    let currentLevel = 1;
-    let score = 0;
-    let incorrectColleges = [];
-    let timeLeft = 30;
-    let timerInterval;
-
-    // Levenshtein distance function
-    function getLevenshteinDistance(a, b) {
-      const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
-      for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-      for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-      for (let j = 1; j <= b.length; j++) {
-        for (let i = 1; i <= a.length; i++) {
-          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-          matrix[j][i] = Math.min(
-            matrix[j - 1][i] + 1,
-            matrix[j][i - 1] + 1,
-            matrix[j - 1][i - 1] + cost
-          );
-        }
+    // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
+    function getTodayEST6AM() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const est = new Date(utc - 5 * 60 * 60 * 1000);
+      if (est.getHours() < 6) {
+        est.setDate(est.getDate() - 1);
       }
-      return matrix[b.length][a.length];
+      return est.toISOString().slice(0, 10);
     }
 
-    // Timer functions
-    function startTimer() {
-      timeLeft = 30;
-      timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        timeLeft--;
+    async function fetchDailyAthletes() {
+      const dateKey = getTodayEST6AM();
+      try {
+        const doc = await db.collection('dailyCollegeAthletes').doc(dateKey).get();
+        if (doc.exists && Array.isArray(doc.data().athletes)) {
+          return doc.data().athletes;
+        } else {
+          alert("No athletes found for today.");
+          return [];
+        }
+      } catch (err) {
+        alert("Error fetching today's athletes: " + err.message);
+        return [];
+      }
+    }
+
+    async function startGame() {
+      const athletes = await fetchDailyAthletes();
+      if (!athletes.length) {
+        document.getElementById('gameContainer').innerHTML = "<p class='text-yellow-200'>No athletes available for today.</p>";
+        return;
+      }
+
+      let currentLevel = 1;
+      let score = 0;
+      let incorrectColleges = [];
+      let timeLeft = 30;
+      let timerInterval;
+
+      function getLevenshteinDistance(a, b) {
+        const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
+        for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+        for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+        for (let j = 1; j <= b.length; j++) {
+          for (let i = 1; i <= a.length; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+              matrix[j - 1][i] + 1,
+              matrix[j][i - 1] + 1,
+              matrix[j - 1][i - 1] + cost
+            );
+          }
+        }
+        return matrix[b.length][a.length];
+      }
+
+      function startTimer() {
+        timeLeft = 30;
         timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          feedback.textContent = `Time's up! The college was ${athletes[currentLevel - 1].college}.`;
-          feedback.classList.add('text-red-500');
-          incorrectColleges.push(athletes[currentLevel - 1].college);
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            feedback.textContent = `Time's up! The college was ${athletes[currentLevel - 1].college}.`;
+            feedback.classList.add('text-red-500');
+            incorrectColleges.push(athletes[currentLevel - 1].college);
+            submitAnswer.classList.add('hidden');
+            guessInput.classList.add('hidden');
+            nextLevel.classList.remove('hidden');
+            showStats();
+          }
+        }, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerInterval);
+        return 30 * athletes.length - timeLeft;
+      }
+
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${secs}`;
+      }
+
+      // DOM elements
+      const gameContainer = document.getElementById('gameContainer');
+      const athleteName = document.getElementById('athleteName');
+      const guessInput = document.getElementById('guessInput');
+      const submitAnswer = document.getElementById('submitAnswer');
+      const nextLevel = document.getElementById('nextLevel');
+      const backToHome = document.getElementById('backToHome');
+      const viewStats = document.getElementById('viewStats');
+      const feedback = document.getElementById('feedback');
+      const scoreDisplay = document.getElementById('scoreValue');
+      const currentLevelDisplay = document.getElementById('currentLevel');
+      const shareLink = document.getElementById('shareLink');
+      const shareUrl = document.getElementById('shareUrl');
+      const statsModal = document.getElementById('statsModal');
+      const avgScore = document.getElementById('avgScore');
+      const statsTableBody = document.getElementById('statsTableBody');
+      const closeStats = document.getElementById('closeStats');
+      const timerDisplay = document.getElementById('timer');
+
+      function getScoreHistory() {
+        return JSON.parse(localStorage.getItem('collegeGameHistory') || '[]');
+      }
+
+      function saveScoreHistory(score, time) {
+        const history = getScoreHistory();
+        history.push({
+          score: score,
+          time: time,
+          timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('collegeGameHistory', JSON.stringify(history));
+      }
+
+      function calculateAverageScore() {
+        const history = getScoreHistory();
+        if (history.length === 0) return 0;
+        const total = history.reduce((sum, entry) => sum + entry.score, 0);
+        return (total / history.length).toFixed(1);
+      }
+
+      function displayStats() {
+        const history = getScoreHistory();
+        avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+        statsTableBody.innerHTML = '';
+        history.forEach((entry, index) => {
+          const row = document.createElement('tr');
+          row.classList.add('hover:bg-amber-600');
+          row.innerHTML = `
+            <td class="p-2 border border-yellow-600">${index + 1}</td>
+            <td class="p-2 border border-yellow-600">${entry.score}/25</td>
+            <td class="p-2 border border-yellow-600">${formatTime(entry.time)}</td>
+            <td class="p-2 border border-yellow-600">${new Date(entry.timestamp).toLocaleString()}</td>
+          `;
+          statsTableBody.appendChild(row);
+        });
+        statsModal.classList.remove('hidden');
+      }
+
+      function generateShareLink(score, incorrectColleges) {
+        const baseUrl = 'https://thepub-sigma.vercel.app/college-game';
+        const incorrectParam = incorrectColleges.map(name => encodeURIComponent(name)).join(',');
+        return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
+      }
+
+      function displayResultsFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const score = urlParams.get('score');
+        const incorrect = urlParams.get('incorrect');
+        if (score !== null) {
+          let incorrectMessage = "I knew all the colleges! 🏆";
+          if (incorrect) {
+            const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
+            incorrectMessage = `I missed ${incorrectList}.`;
+          }
+          gameContainer.innerHTML = `
+            <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">College Guess Results</h1>
+            <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
+            <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
+            <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
+          `;
+        }
+      }
+
+      function loadLevel() {
+        athleteName.textContent = athletes[currentLevel - 1].name;
+        guessInput.value = '';
+        feedback.textContent = '';
+        submitAnswer.classList.remove('hidden');
+        guessInput.classList.remove('hidden');
+        nextLevel.classList.add('hidden');
+        backToHome.classList.add('hidden');
+        viewStats.classList.add('hidden');
+        shareLink.classList.add('hidden');
+        scoreDisplay.textContent = score;
+        currentLevelDisplay.textContent = currentLevel;
+        startTimer();
+      }
+
+      function showStats() {
+        const stats = document.createElement('p');
+        stats.classList.add('text-yellow-300', 'text-center', 'mb-4');
+        stats.textContent = athletes[currentLevel - 1].stats;
+        statsModal.querySelector('div').insertBefore(stats, statsModal.querySelector('p#avgScore'));
+        statsModal.classList.remove('hidden');
+      }
+
+      function moveToNextLevel() {
+        currentLevel++;
+        statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
+        if (currentLevel <= athletes.length) {
+          loadLevel();
+        } else {
+          const finalTime = stopTimer();
+          saveScoreHistory(score, finalTime);
+          feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
+          feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+          feedback.classList.add('text-yellow-300');
           submitAnswer.classList.add('hidden');
           guessInput.classList.add('hidden');
-          nextLevel.classList.remove('hidden');
-          showStats();
+          nextLevel.classList.add('hidden');
+          backToHome.classList.remove('hidden');
+          viewStats.classList.remove('hidden');
+          const shareUrlLink = generateShareLink(score, incorrectColleges);
+          shareUrl.href = shareUrlLink;
+          shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectColleges.length ? '| Missed: ' + incorrectColleges.join(', ') : '| Nailed all colleges!'}`;
+          shareLink.classList.remove('hidden');
         }
-      }, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-      return 30 * athletes.length - timeLeft;
-    }
-
-    function formatTime(seconds) {
-      const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const secs = (seconds % 60).toString().padStart(2, '0');
-      return `${minutes}:${secs}`;
-    }
-
-    // DOM elements
-    const gameContainer = document.getElementById('gameContainer');
-    const athleteName = document.getElementById('athleteName');
-    const guessInput = document.getElementById('guessInput');
-    const submitAnswer = document.getElementById('submitAnswer');
-    const nextLevel = document.getElementById('nextLevel');
-    const backToHome = document.getElementById('backToHome');
-    const viewStats = document.getElementById('viewStats');
-    const feedback = document.getElementById('feedback');
-    const scoreDisplay = document.getElementById('scoreValue');
-    const currentLevelDisplay = document.getElementById('currentLevel');
-    const shareLink = document.getElementById('shareLink');
-    const shareUrl = document.getElementById('shareUrl');
-    const statsModal = document.getElementById('statsModal');
-    const avgScore = document.getElementById('avgScore');
-    const statsTableBody = document.getElementById('statsTableBody');
-    const closeStats = document.getElementById('closeStats');
-    const timerDisplay = document.getElementById('timer');
-
-    // Initialize score history
-    function getScoreHistory() {
-      return JSON.parse(localStorage.getItem('collegeGameHistory') || '[]');
-    }
-
-    function saveScoreHistory(score, time) {
-      const history = getScoreHistory();
-      history.push({
-        score: score,
-        time: time,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('collegeGameHistory', JSON.stringify(history));
-    }
-
-    function calculateAverageScore() {
-      const history = getScoreHistory();
-      if (history.length === 0) return 0;
-      const total = history.reduce((sum, entry) => sum + entry.score, 0);
-      return (total / history.length).toFixed(1);
-    }
-
-    function displayStats() {
-      const history = getScoreHistory();
-      avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
-      statsTableBody.innerHTML = '';
-      history.forEach((entry, index) => {
-        const row = document.createElement('tr');
-        row.classList.add('hover:bg-amber-600');
-        row.innerHTML = `
-          <td class="p-2 border border-yellow-600">${index + 1}</td>
-          <td class="p-2 border border-yellow-600">${entry.score}/25</td>
-          <td class="p-2 border border-yellow-600">${formatTime(entry.time)}</td>
-          <td class="p-2 border border-yellow-600">${new Date(entry.timestamp).toLocaleString()}</td>
-        `;
-        statsTableBody.appendChild(row);
-      });
-      statsModal.classList.remove('hidden');
-    }
-
-    // Generate shareable link
-    function generateShareLink(score, incorrectColleges) {
-      const baseUrl = 'https://thepub-sigma.vercel.app/college-game';
-      const incorrectParam = incorrectColleges.map(name => encodeURIComponent(name)).join(',');
-      return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
-    }
-
-    // Display results from URL query params
-    function displayResultsFromUrl() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const score = urlParams.get('score');
-      const incorrect = urlParams.get('incorrect');
-      if (score !== null) {
-        let incorrectMessage = "I knew all the colleges! 🏆";
-        if (incorrect) {
-          const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
-          incorrectMessage = `I missed ${incorrectList}.`;
-        }
-        gameContainer.innerHTML = `
-          <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">College Guess Results</h1>
-          <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
-          <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
-          <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
-        `;
       }
-    }
 
-    // Load current level
-    function loadLevel() {
-      athleteName.textContent = athletes[currentLevel - 1].name;
-      guessInput.value = '';
-      feedback.textContent = '';
-      submitAnswer.classList.remove('hidden');
-      guessInput.classList.remove('hidden');
-      nextLevel.classList.add('hidden');
-      backToHome.classList.add('hidden');
-      viewStats.classList.add('hidden');
-      shareLink.classList.add('hidden');
-      scoreDisplay.textContent = score;
-      currentLevelDisplay.textContent = currentLevel;
-      startTimer();
-    }
+      submitAnswer.addEventListener('click', () => {
+        const guess = guessInput.value.trim().toLowerCase();
+        const correctCollege = athletes[currentLevel - 1].college.toLowerCase();
 
-    // Show stats modal
-    function showStats() {
-      const stats = document.createElement('p');
-      stats.classList.add('text-yellow-300', 'text-center', 'mb-4');
-      stats.textContent = athletes[currentLevel - 1].stats;
-      statsModal.querySelector('div').insertBefore(stats, statsModal.querySelector('p#avgScore'));
-      statsModal.classList.remove('hidden');
-    }
-
-    // Move to next level
-    function moveToNextLevel() {
-      currentLevel++;
-      statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
-      if (currentLevel <= athletes.length) {
-        loadLevel();
-      } else {
-        const finalTime = stopTimer();
-        saveScoreHistory(score, finalTime);
-        feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
         feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
-        feedback.classList.add('text-yellow-300');
-        submitAnswer.classList.add('hidden');
-        guessInput.classList.add('hidden');
-        nextLevel.classList.add('hidden');
-        backToHome.classList.remove('hidden');
-        viewStats.classList.remove('hidden');
-        const shareUrlLink = generateShareLink(score, incorrectColleges);
-        shareUrl.href = shareUrlLink;
-        shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectColleges.length ? '| Missed: ' + incorrectColleges.join(', ') : '| Nailed all colleges!'}`;
-        shareLink.classList.remove('hidden');
-      }
-    }
-
-    // Check answer
-    submitAnswer.addEventListener('click', () => {
-      const guess = guessInput.value.trim().toLowerCase();
-      const correctCollege = athletes[currentLevel - 1].college.toLowerCase();
-
-      feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
-      if (guess === correctCollege) {
-        score += 5;
-        feedback.textContent = `Nailed it! +5 points! 🏀`;
-        feedback.classList.add('text-green-500');
-        submitAnswer.classList.add('hidden');
-        guessInput.classList.add('hidden');
-        nextLevel.classList.remove('hidden');
-        stopTimer();
-        showStats();
-      } else {
-        const distance = getLevenshteinDistance(guess, correctCollege);
-        if (distance <= 2 && guess.length > 0) {
-          feedback.textContent = `So close! Try again, you're off by a letter or two!`;
-          feedback.classList.add('text-yellow-400');
-          guessInput.value = '';
-        } else {
-          incorrectColleges.push(athletes[currentLevel - 1].college);
-          feedback.textContent = `Swing and a miss! It was ${athletes[currentLevel - 1].college}.`;
-          feedback.classList.add('text-red-500');
+        if (guess === correctCollege) {
+          score += 5;
+          feedback.textContent = `Nailed it! +5 points! 🏀`;
+          feedback.classList.add('text-green-500');
           submitAnswer.classList.add('hidden');
           guessInput.classList.add('hidden');
           nextLevel.classList.remove('hidden');
           stopTimer();
           showStats();
+        } else {
+          const distance = getLevenshteinDistance(guess, correctCollege);
+          if (distance <= 2 && guess.length > 0) {
+            feedback.textContent = `So close! Try again, you're off by a letter or two!`;
+            feedback.classList.add('text-yellow-400');
+            guessInput.value = '';
+          } else {
+            incorrectColleges.push(athletes[currentLevel - 1].college);
+            feedback.textContent = `Swing and a miss! It was ${athletes[currentLevel - 1].college}.`;
+            feedback.classList.add('text-red-500');
+            submitAnswer.classList.add('hidden');
+            guessInput.classList.add('hidden');
+            nextLevel.classList.remove('hidden');
+            stopTimer();
+            showStats();
+          }
         }
-      }
-      scoreDisplay.textContent = score;
-    });
+        scoreDisplay.textContent = score;
+      });
 
-    guessInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') submitAnswer.click();
-    });
+      guessInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') submitAnswer.click();
+      });
 
-    // Next level button
-    nextLevel.addEventListener('click', () => {
-      moveToNextLevel();
-    });
-
-    // View stats button
-    viewStats.addEventListener('click', () => {
-      displayStats();
-    });
-
-    // Close stats modal
-    closeStats.addEventListener('click', () => {
-      statsModal.classList.add('hidden');
-      if (currentLevel <= athletes.length) {
+      nextLevel.addEventListener('click', () => {
         moveToNextLevel();
-      }
-    });
+      });
 
-    // Initialize game
-    loadLevel();
+      viewStats.addEventListener('click', () => {
+        displayStats();
+      });
 
-    // Check for shared results on load
-    displayResultsFromUrl();
+      closeStats.addEventListener('click', () => {
+        statsModal.classList.add('hidden');
+        if (currentLevel <= athletes.length) {
+          moveToNextLevel();
+        }
+      });
+
+      loadLevel();
+
+      displayResultsFromUrl();
+    }
+
+    document.addEventListener("DOMContentLoaded", startGame);
   </script>
 </body>
 </html>
