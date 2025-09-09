@@ -15,9 +15,17 @@
       background-color: #451a03 !important;
     }
   </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-  <div class="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg">
+
+  <div class="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14">
+    <!-- Sign Up/Login Button (top right corner) -->
+    <button id="openSignUp" class="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition">
+      Sign Up/Login
+    </button>
     <h1 class="text-4xl font-bold text-yellow-300 mb-2">Welcome to the Pub</h1>
     <p class="text-sm text-yellow-300 mb-8">Your ultimate sports bar and media experience. Grab a seat.</p>
     <a href="index-nfl.html" class="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1">
@@ -33,5 +41,96 @@
       <p class="text-sm text-white">TALK YOUR SHIT!</p>
     </a>
   </div>
+
+  <!-- Sign Up/Login Modal -->
+  <div id="signupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
+      <button id="closeSignUp" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+      <h2 class="text-2xl font-bold mb-4 text-amber-900 text-center">Sign Up / Login</h2>
+      <form id="signupForm" class="space-y-4">
+        <input type="email" id="signupEmail" required placeholder="Email" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
+        <input type="password" id="signupPassword" required placeholder="Password" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
+        <button type="submit" class="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700">Create Account</button>
+      </form>
+      <div class="text-center text-sm my-2 text-gray-500">or</div>
+      <form id="loginForm" class="space-y-4">
+        <input type="email" id="loginEmail" required placeholder="Email" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
+        <input type="password" id="loginPassword" required placeholder="Password" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
+        <button type="submit" class="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400">Log In</button>
+      </form>
+      <p id="signupMsg" class="mt-4 text-center"></p>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config - replace with your actual config!
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // DOM elements
+    const openBtn = document.getElementById('openSignUp');
+    const modal = document.getElementById('signupModal');
+    const closeBtn = document.getElementById('closeSignUp');
+    const signupForm = document.getElementById('signupForm');
+    const loginForm = document.getElementById('loginForm');
+    const signupMsg = document.getElementById('signupMsg');
+    const signupEmail = document.getElementById('signupEmail');
+    const signupPassword = document.getElementById('signupPassword');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+
+    openBtn.onclick = () => {
+      modal.classList.remove('hidden');
+      signupMsg.textContent = '';
+      signupForm.reset();
+      loginForm.reset();
+    };
+    closeBtn.onclick = () => {
+      modal.classList.add('hidden');
+    };
+    window.onclick = function(event) {
+      if (event.target === modal) modal.classList.add('hidden');
+    };
+
+    signupForm.onsubmit = async (e) => {
+      e.preventDefault();
+      signupMsg.textContent = '';
+      signupMsg.className = 'mt-4 text-center';
+      const email = signupEmail.value;
+      const password = signupPassword.value;
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        signupMsg.textContent = "Account created successfully!";
+        signupMsg.classList.add('text-green-600');
+        signupForm.reset();
+        setTimeout(() => { modal.classList.add('hidden'); }, 1200);
+      } catch (err) {
+        signupMsg.textContent = err.message;
+        signupMsg.classList.add('text-red-600');
+      }
+    };
+
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      signupMsg.textContent = '';
+      signupMsg.className = 'mt-4 text-center';
+      const email = loginEmail.value;
+      const password = loginPassword.value;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        signupMsg.textContent = "Logged in successfully!";
+        signupMsg.classList.add('text-green-600');
+        loginForm.reset();
+        setTimeout(() => { modal.classList.add('hidden'); }, 1200);
+      } catch (err) {
+        signupMsg.textContent = err.message;
+        signupMsg.classList.add('text-red-600');
+      }
+    };
+  </script>
 </body>
 </html>
