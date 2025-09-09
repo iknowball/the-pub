@@ -22,8 +22,8 @@
 <body class="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
 
   <div class="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14">
-    <!-- Sign Up/Login Button (top right corner) -->
-    <button id="openSignUp" class="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition">
+    <!-- Sign Up/Login/Profile Button (top right corner) -->
+    <button id="userBtn" class="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition">
       Sign Up/Login
     </button>
     <h1 class="text-4xl font-bold text-yellow-300 mb-2">Welcome to the Pub</h1>
@@ -62,6 +62,16 @@
     </div>
   </div>
 
+  <!-- Simple Profile Modal -->
+  <div id="profileModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
+      <button id="closeProfile" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+      <h2 class="text-2xl font-bold mb-4 text-amber-900 text-center">My Profile</h2>
+      <div id="profileInfo" class="text-center mb-4"></div>
+      <button id="logoutBtn" class="w-full bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 mt-4">Log Out</button>
+    </div>
+  </div>
+
   <script>
     // Firebase config - replace with your actual config!
     const firebaseConfig = {
@@ -72,9 +82,11 @@
     firebase.initializeApp(firebaseConfig);
 
     // DOM elements
-    const openBtn = document.getElementById('openSignUp');
-    const modal = document.getElementById('signupModal');
-    const closeBtn = document.getElementById('closeSignUp');
+    const userBtn = document.getElementById('userBtn');
+    const signupModal = document.getElementById('signupModal');
+    const profileModal = document.getElementById('profileModal');
+    const closeSignUp = document.getElementById('closeSignUp');
+    const closeProfile = document.getElementById('closeProfile');
     const signupForm = document.getElementById('signupForm');
     const loginForm = document.getElementById('loginForm');
     const signupMsg = document.getElementById('signupMsg');
@@ -82,18 +94,43 @@
     const signupPassword = document.getElementById('signupPassword');
     const loginEmail = document.getElementById('loginEmail');
     const loginPassword = document.getElementById('loginPassword');
+    const profileInfo = document.getElementById('profileInfo');
+    const logoutBtn = document.getElementById('logoutBtn');
 
-    openBtn.onclick = () => {
-      modal.classList.remove('hidden');
-      signupMsg.textContent = '';
-      signupForm.reset();
-      loginForm.reset();
+    let currentUser = null;
+
+    // Listen for auth state changes to keep user logged in/out and update button
+    firebase.auth().onAuthStateChanged((user) => {
+      currentUser = user;
+      if (user) {
+        userBtn.textContent = "My Profile";
+      } else {
+        userBtn.textContent = "Sign Up/Login";
+      }
+    });
+
+    userBtn.onclick = () => {
+      if (currentUser) {
+        // Show profile modal
+        profileInfo.textContent = `Logged in as: ${currentUser.email}`;
+        profileModal.classList.remove('hidden');
+      } else {
+        // Show sign up/login modal
+        signupModal.classList.remove('hidden');
+        signupMsg.textContent = '';
+        signupForm.reset();
+        loginForm.reset();
+      }
     };
-    closeBtn.onclick = () => {
-      modal.classList.add('hidden');
+    closeSignUp.onclick = () => {
+      signupModal.classList.add('hidden');
+    };
+    closeProfile.onclick = () => {
+      profileModal.classList.add('hidden');
     };
     window.onclick = function(event) {
-      if (event.target === modal) modal.classList.add('hidden');
+      if (event.target === signupModal) signupModal.classList.add('hidden');
+      if (event.target === profileModal) profileModal.classList.add('hidden');
     };
 
     signupForm.onsubmit = async (e) => {
@@ -107,7 +144,7 @@
         signupMsg.textContent = "Account created successfully!";
         signupMsg.classList.add('text-green-600');
         signupForm.reset();
-        setTimeout(() => { modal.classList.add('hidden'); }, 1200);
+        setTimeout(() => { signupModal.classList.add('hidden'); }, 1200);
       } catch (err) {
         signupMsg.textContent = err.message;
         signupMsg.classList.add('text-red-600');
@@ -125,12 +162,19 @@
         signupMsg.textContent = "Logged in successfully!";
         signupMsg.classList.add('text-green-600');
         loginForm.reset();
-        setTimeout(() => { modal.classList.add('hidden'); }, 1200);
+        setTimeout(() => { signupModal.classList.add('hidden'); }, 1200);
       } catch (err) {
         signupMsg.textContent = err.message;
         signupMsg.classList.add('text-red-600');
       }
     };
+
+    if (logoutBtn) {
+      logoutBtn.onclick = async () => {
+        await firebase.auth().signOut();
+        profileModal.classList.add('hidden');
+      };
+    }
   </script>
 </body>
 </html>
