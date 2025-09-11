@@ -78,6 +78,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
     // Firebase config (replace with your actual config if needed)
     const firebaseConfig = {
@@ -87,6 +88,39 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    // STEP 3: College Guess Stats Integration for Firebase
+    async function recordCollegeStats({ gamesPlayedInc = 1, correctInc = 0, bestScore = null }) {
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) return; // Only record if logged in
+        const userRef = db.collection("users").doc(user.uid);
+
+        // Get existing stats
+        const userSnap = await userRef.get();
+        const stats = (userSnap.exists && userSnap.data().stats && userSnap.data().stats.guessCollege)
+          ? userSnap.data().stats.guessCollege
+          : { gamesPlayed: 0, correct: 0, bestScore: 0 };
+
+        // Update stats
+        const newStats = {
+          gamesPlayed: (stats.gamesPlayed || 0) + gamesPlayedInc,
+          correct: (stats.correct || 0) + correctInc,
+          bestScore:
+            bestScore !== null
+              ? Math.max(Number(stats.bestScore || 0), Number(bestScore))
+              : Number(stats.bestScore || 0)
+        };
+
+        // Write back to Firestore (merge so other stats aren't lost)
+        await userRef.set(
+          { stats: { guessCollege: newStats } },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error("Error recording College Guess stats:", err);
+      }
+    }
 
     // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
     function getTodayEST6AM() {
@@ -124,6 +158,7 @@
 
       let currentLevel = 1;
       let score = 0;
+      let correctAnswers = 0;
       let incorrectColleges = [];
       let timeLeft = 30;
       let timerInterval;
@@ -290,6 +325,10 @@
         } else {
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
+
+          // STEP 3: Record stats to Firestore for College Guess
+          recordCollegeStats({ gamesPlayedInc: 1, correctInc: correctAnswers, bestScore: score });
+
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
           feedback.classList.add('text-yellow-300');
@@ -312,6 +351,7 @@
         feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
         if (guess === correctCollege) {
           score += 5;
+          correctAnswers += 1;
           feedback.textContent = `Nailed it! +5 points! 🏀`;
           feedback.classList.add('text-green-500');
           submitAnswer.classList.add('hidden');
