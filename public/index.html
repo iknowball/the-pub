@@ -111,9 +111,8 @@
 
     userBtn.onclick = () => {
       if (currentUser) {
-        // Show profile modal
-        profileInfo.textContent = `Logged in as: ${currentUser.email}`;
-        profileModal.classList.remove('hidden');
+        // Redirect to myprofile.html when logged in
+        window.location.href = "myprofile.html";
       } else {
         // Show sign up/login modal
         signupModal.classList.remove('hidden');
