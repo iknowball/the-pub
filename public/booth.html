@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Pub Booth Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      font-family: 'Roboto', sans-serif;
+    }
+    .booth-bg {
+      background: rgba(56, 27, 0, 0.95);
+      border-radius: 2rem;
+      box-shadow: 0 4px 32px 0 rgba(0,0,0,0.4);
+      border: 5px solid #7c4700;
+      backdrop-filter: blur(2px);
+    }
+    .booth-top {
+      background: linear-gradient(90deg, #b76e21 0%, #f2c57c 50%, #b76e21 100%);
+      border-top-left-radius: 2rem;
+      border-top-right-radius: 2rem;
+      min-height: 48px;
+    }
+    .bar-stool {
+      width: 36px; height: 36px; background: #deb887; border-radius: 50%; margin: 6px;
+      border: 2px solid #7c4700;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.25);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+  <div class="flex flex-col items-center mt-8">
+    <div class="booth-bg w-full max-w-lg mx-auto">
+      <div class="booth-top flex items-center justify-between px-6 py-3">
+        <h1 class="text-2xl font-montserrat font-bold text-brown-900 drop-shadow">🍻 Booth Chat</h1>
+        <div id="barStools" class="flex"></div>
+      </div>
+      <div id="authSection" class="p-6 flex flex-col items-center space-y-3">
+        <button id="signInBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">Sign in with Google</button>
+      </div>
+      <div id="chatSection" class="hidden flex flex-col h-[60vh] px-6 pb-6">
+        <div class="flex flex-col items-center mb-3">
+          <label class="text-yellow-300 font-bold text-lg mb-2" for="boothSelect">Booth</label>
+          <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-40 text-center font-bold">
+            <option value="main-booth">Main Booth</option>
+            <option value="sports-booth">Sports Booth</option>
+            <option value="trivia-booth">Trivia Booth</option>
+            <option value="random-booth">Random Booth</option>
+          </select>
+        </div>
+        <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
+        <form id="messageForm" class="flex items-center gap-2">
+          <input id="messageInput" type="text" required maxlength="240"
+            class="flex-1 bg-white border-2 border-yellow-600 rounded-lg p-2 focus:outline-none focus:ring-yellow-800"
+            placeholder="Type your message..."/>
+          <button type="submit" class="bg-amber-700 hover:bg-amber-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+        </form>
+      </div>
+    </div>
+    <div class="flex items-end mt-4">
+      <div class="bar-stool"></div>
+      <div class="bar-stool"></div>
+      <div class="bar-stool"></div>
+      <div class="bar-stool"></div>
+    </div>
+    <p class="text-yellow-200 mt-2 text-sm">The Pub &mdash; Pull up a stool, join a booth, and chat!</p>
+  </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script>
+    // Firebase config (replace with your actual config if needed)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // DOM elements
+    const authSection = document.getElementById('authSection');
+    const signInBtn = document.getElementById('signInBtn');
+    const chatSection = document.getElementById('chatSection');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const messagesDiv = document.getElementById('messages');
+    const boothSelect = document.getElementById('boothSelect');
+    const barStools = document.getElementById('barStools');
+
+    let user = null;
+    let unsubscribe = null;
+    let currentBooth = boothSelect.value;
+
+    // Auth
+    firebase.auth().onAuthStateChanged(u => {
+      user = u;
+      if (user) {
+        authSection.classList.add('hidden');
+        chatSection.classList.remove('hidden');
+        joinBooth(currentBooth);
+      } else {
+        chatSection.classList.add('hidden');
+        authSection.classList.remove('hidden');
+      }
+    });
+
+    signInBtn.onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider);
+    };
+
+    boothSelect.onchange = () => {
+      currentBooth = boothSelect.value;
+      joinBooth(currentBooth);
+    };
+
+    function joinBooth(boothId) {
+      // Unsubscribe previous listener if any
+      if (unsubscribe) unsubscribe();
+      messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Loading messages...</div>';
+      // Listen for last 50 messages in this booth, ordered by time
+      unsubscribe = db.collection('booths')
+        .doc(boothId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .limitToLast(50)
+        .onSnapshot(snap => {
+          messagesDiv.innerHTML = "";
+          let usersInBooth = {};
+          snap.forEach(doc => {
+            const msg = doc.data();
+            usersInBooth[msg.uid] = msg.displayName || "Someone";
+            const isMine = user && msg.uid === user.uid;
+            const bubbleClasses = isMine
+              ? "bg-amber-400 text-right ml-10"
+              : "bg-yellow-100 text-left mr-10";
+            messagesDiv.innerHTML += `
+              <div class="mb-2">
+                <span class="block text-xs text-yellow-700 ${isMine ? 'text-right' : ''}">
+                  ${msg.displayName || "Someone"} 
+                  <span class="text-yellow-400">${msg.time || ""}</span>
+                </span>
+                <div class="inline-block px-3 py-2 rounded-lg shadow-sm ${bubbleClasses}">${msg.text}</div>
+              </div>
+            `;
+          });
+          // Update "bar stools" with avatars
+          barStools.innerHTML = Object.keys(usersInBooth).slice(0,4).map(uid => `
+            <img src="https://robohash.org/${uid}?set=set5&size=36x36" title="${usersInBooth[uid]}" class="rounded-full border-2 border-yellow-700 shadow bar-stool" />
+          `).join('');
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    }
+
+    messageForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = messageInput.value.trim();
+      if (!text) return;
+      await db.collection('booths')
+        .doc(currentBooth)
+        .collection('messages')
+        .add({
+          text: text,
+          uid: user.uid,
+          displayName: user.displayName,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        });
+      messageInput.value = "";
+    };
+  </script>
+</body>
+</html>
