@@ -89,14 +89,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Record score for every completed game (regardless of authentication)
+    async function recordGameScore(score, time) {
+      try {
+        // Use today as the key for daily scores, or you can use a timestamp or user id if you wish
+        const today = new Date().toISOString().slice(0, 10);
+        await db.collection('gameScores').add({
+          score: score,
+          time: time,
+          playedAt: new Date().toISOString()
+        });
+      } catch (err) {
+        console.error("Error recording game score:", err);
+      }
+    }
+
     // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
     function getTodayEST6AM() {
-      // Convert current UTC to EST
       const now = new Date();
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      // EST is UTC-5, but account for DST if needed (this is a simple version, adjust if you want DST support)
       const est = new Date(utc - 5 * 60 * 60 * 1000);
-      // If before 6am EST, return yesterday's date as "today"
       if (est.getHours() < 6) {
         est.setDate(est.getDate() - 1);
       }
@@ -119,42 +131,6 @@
       }
     }
 
-    // STEP 3: Guess Player JS Integration
-    // This will record stats to Firestore under users/[uid]/stats.guessPlayer
-    async function recordGuessPlayerStats({ gamesPlayedInc = 1, correctInc = 0, bestScore = null }) {
-      try {
-        // Use Firebase Auth to get user id
-        const user = firebase.auth().currentUser;
-        if (!user) return; // Only record if logged in
-        const userRef = db.collection("users").doc(user.uid);
-
-        // Get existing stats
-        const userSnap = await userRef.get();
-        const stats = (userSnap.exists && userSnap.data().stats && userSnap.data().stats.guessPlayer)
-          ? userSnap.data().stats.guessPlayer
-          : { gamesPlayed: 0, correct: 0, bestScore: 0 };
-
-        // Update stats
-        const newStats = {
-          gamesPlayed: (stats.gamesPlayed || 0) + gamesPlayedInc,
-          correct: (stats.correct || 0) + correctInc,
-          bestScore:
-            bestScore !== null
-              ? Math.max(Number(stats.bestScore || 0), Number(bestScore))
-              : Number(stats.bestScore || 0)
-        };
-
-        // Write back to Firestore (merge so other stats aren't lost)
-        await userRef.set(
-          { stats: { guessPlayer: newStats } },
-          { merge: true }
-        );
-      } catch (err) {
-        console.error("Error recording Guess Player stats:", err);
-      }
-    }
-
-    // All game logic is wrapped in startGame and runs after fetching players
     async function startGame() {
       const dailyPlayers = await fetchDailyPlayers();
       if (!dailyPlayers.length) {
@@ -170,7 +146,6 @@
       let elapsedTime = 0;
       let timerInterval;
 
-      // Levenshtein distance function
       function getLevenshteinDistance(a, b) {
         const matrix = Array(b.length + 1).fill().map(() => Array(a.length + 1).fill(0));
         for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
@@ -311,15 +286,16 @@
           startTimer();
         }
       }
-      function moveToNextLevel() {
+      async function moveToNextLevel() {
         currentLevel++;
         if (currentLevel <= dailyPlayers.length) {
           loadLevel();
         } else {
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
-          // STEP 3: Record stats to Firestore for Guess Player
-          recordGuessPlayerStats({ gamesPlayedInc: 1, correctInc: correctAnswers, bestScore: score });
+
+          // Record score in Firestore for every completed game
+          await recordGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
