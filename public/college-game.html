@@ -89,36 +89,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // STEP 3: College Guess Stats Integration for Firebase
-    async function recordCollegeStats({ gamesPlayedInc = 1, correctInc = 0, bestScore = null }) {
+    // Record score for every completed college game (regardless of authentication)
+    async function recordCollegeGameScore(score, time) {
       try {
-        const user = firebase.auth().currentUser;
-        if (!user) return; // Only record if logged in
-        const userRef = db.collection("users").doc(user.uid);
-
-        // Get existing stats
-        const userSnap = await userRef.get();
-        const stats = (userSnap.exists && userSnap.data().stats && userSnap.data().stats.guessCollege)
-          ? userSnap.data().stats.guessCollege
-          : { gamesPlayed: 0, correct: 0, bestScore: 0 };
-
-        // Update stats
-        const newStats = {
-          gamesPlayed: (stats.gamesPlayed || 0) + gamesPlayedInc,
-          correct: (stats.correct || 0) + correctInc,
-          bestScore:
-            bestScore !== null
-              ? Math.max(Number(stats.bestScore || 0), Number(bestScore))
-              : Number(stats.bestScore || 0)
-        };
-
-        // Write back to Firestore (merge so other stats aren't lost)
-        await userRef.set(
-          { stats: { guessCollege: newStats } },
-          { merge: true }
-        );
+        await db.collection('collegeGameScores').add({
+          score: score,
+          time: time,
+          playedAt: new Date().toISOString()
+        });
       } catch (err) {
-        console.error("Error recording College Guess stats:", err);
+        console.error("Error recording college game score:", err);
       }
     }
 
@@ -317,7 +297,7 @@
         statsModal.classList.remove('hidden');
       }
 
-      function moveToNextLevel() {
+      async function moveToNextLevel() {
         currentLevel++;
         statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
         if (currentLevel <= athletes.length) {
@@ -326,8 +306,8 @@
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
 
-          // STEP 3: Record stats to Firestore for College Guess
-          recordCollegeStats({ gamesPlayedInc: 1, correctInc: correctAnswers, bestScore: score });
+          // Record score in Firestore for every completed college game
+          await recordCollegeGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
