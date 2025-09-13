@@ -182,13 +182,37 @@
       border-color: #f6b509;
       background: #fffad1;
     }
+    /* Home button styling */
+    .home-btn-profile {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: bold;
+      font-size: 1.25rem;
+      background: #f9e38f;
+      color: #2b2007;
+      border: 3px solid #cfb467;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #cfb46777, 0 2px 0 #bb9846;
+      padding: 7px 26px 7px 26px;
+      margin: 0 18px;
+      text-shadow: 0 1px 5px #fffbe7a3;
+      display: inline-block;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .home-btn-profile:hover {
+      background: #fffbe7;
+      color: #b88340;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center">
 
-  <!-- Bar Top with Editable Sign -->
+  <!-- Bar Top with Editable Sign and Home Button -->
   <div class="bar-top w-full flex flex-col items-center py-2 relative z-10">
-    <span id="pubSign" class="pub-sign" title="Click to edit pub name">My Pub</span>
+    <div class="flex flex-row justify-center items-center gap-4">
+      <span id="pubSign" class="pub-sign" title="Click to edit pub name">My Pub</span>
+      <a href="index.html" class="home-btn-profile">Home</a>
+    </div>
   </div>
 
   <!-- TV Frame (centered) -->
@@ -205,43 +229,10 @@
     </div>
   </div>
 
-  <!-- Bar/Counter with Editable Cans -->
+  <!-- Bar/Counter with Customizable Red White and Blue Cans -->
   <div class="bar-surface pb-7 pt-5 z-30 gap-12" id="cansBar"></div>
 
   <script>
-    // Team color mapping
-    const TEAM_COLORS = {
-      packers:   {body: 'linear-gradient(180deg, #234c1d 60%, #f6b509 100%)', label: '#234c1d', labelText: '#fffde7', border: '#f6b509'},
-      mets:      {body: 'linear-gradient(180deg, #002d72 70%, #ff5910 100%)', label: '#002d72', labelText: '#fff', border: '#ff5910'},
-      knicks:    {body: 'linear-gradient(180deg, #006bb6 72%, #f58426 100%)', label: '#f58426', labelText: '#0a1c2e', border: '#fff'},
-      yankees:   {body: 'linear-gradient(180deg,#132448 60%, #f9f9f9 100%)', label: '#132448', labelText: '#f9f9f9', border: '#f9f9f9'},
-      lakers:    {body: 'linear-gradient(180deg, #552583 70%, #f9a01b 100%)', label: '#552583', labelText: '#fff', border: '#f9a01b'},
-      giants:    {body: 'linear-gradient(180deg, #0b2265 70%, #a71930 100%)', label: '#0b2265', labelText: '#fff', border: '#a71930'},
-      jets:      {body: 'linear-gradient(180deg, #125740 70%, #ffffff 100%)', label: '#125740', labelText: '#fff', border: '#ffffff'},
-      dodgers:   {body: 'linear-gradient(180deg, #005a9c 70%, #ffffff 100%)', label: '#005a9c', labelText: '#fff', border: '#fff'},
-      redsox:    {body: 'linear-gradient(180deg, #bd3039 70%, #0c2340 100%)', label: '#bd3039', labelText: '#fff', border: '#0c2340'},
-      cubs:      {body: 'linear-gradient(180deg, #0e3386 70%, #cc3433 100%)', label: '#0e3386', labelText: '#fff', border: '#cc3433'},
-      warriors:  {body: 'linear-gradient(180deg, #1d428a 70%, #ffc72c 100%)', label: '#1d428a', labelText: '#ffc72c', border: '#ffc72c'},
-      // Add more as desired!
-    };
-
-    // Try to match a team color for the can
-    function getTeamStyle(team) {
-      const t = team.trim().toLowerCase();
-      if (TEAM_COLORS[t]) return TEAM_COLORS[t];
-      // try partial match (e.g. "ny yankees" -> yankees)
-      for (const key in TEAM_COLORS) {
-        if (t.includes(key)) return TEAM_COLORS[key];
-      }
-      // fallback: gold/gray
-      return {
-        body: 'linear-gradient(180deg, #bca054 70%, #e9e2c7 100%)',
-        label: '#bca054',
-        labelText: '#fff',
-        border: '#fff'
-      };
-    }
-
     // ---- Pub Name Inline Edit Logic ----
     const pubSign = document.getElementById("pubSign");
     function enablePubSignEdit() {
@@ -269,34 +260,46 @@
 
     // ---- Bar Cans Inline Edit Logic ----
     const cansBar = document.getElementById("cansBar");
-    const defaultCans = ["MyTeam1", "MyTeam2", "MyTeam3"];
+    // Default: Red, White, Blue
+    const defaultCans = ["Red", "White", "Blue"];
     let cans = JSON.parse(localStorage.getItem("barCans")) || defaultCans;
+
+    // For each can, define fill color and text color
+    const CAN_COLORS = [
+      {body: 'linear-gradient(180deg, #ea2222 80%, #b51212 100%)', label: '#ea2222', labelText: '#fff', border: '#b51212'}, // Red, white text
+      {body: 'linear-gradient(180deg, #fff 90%, #e6e6e6 100%)', label: '#fff', labelText: '#000', border: '#ccc'},         // White, black text
+      {body: 'linear-gradient(180deg, #2a44a4 80%, #112366 100%)', label: '#2a44a4', labelText: '#fff', border: '#112366'}, // Blue, white text
+    ];
+
+    function getCanStyle(idx, name) {
+      // Always use the color order: red, white, blue, wrap if more than 3
+      const color = CAN_COLORS[idx % CAN_COLORS.length];
+      // Always use color.labelText, but allow user to override via storage if needed (not implemented here)
+      return color;
+    }
 
     function renderCans() {
       cansBar.innerHTML = "";
       cans.forEach((team, i) => {
-        const style = getTeamStyle(team);
+        const style = getCanStyle(i, team);
         const can = document.createElement("div");
         can.className = "can";
-        // Apply team color styles
         can.style.background = "#eee";
         can.querySelector = null;
         can.innerHTML = `
           <div class="can-top"></div>
           <div class="can-body"></div>
         `;
-        // Style can-body
         setTimeout(() => {
           const body = can.querySelector('.can-body');
           if (body) body.style.background = style.body;
-          // label styles below
         }, 0);
 
         // Inline edit on label click
         const canLabel = document.createElement("div");
         canLabel.className = "can-label";
         canLabel.textContent = team.toUpperCase();
-        canLabel.title = "Click to edit can name";
+        canLabel.title = "Click to edit beer name";
         canLabel.style.background = style.label;
         canLabel.style.color = style.labelText;
         canLabel.style.borderBottom = `4px solid ${style.border}`;
