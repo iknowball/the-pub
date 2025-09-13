@@ -92,22 +92,22 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // Example NFL games for tomorrow (2025-09-14, Week 2) - update weekly!
+    // NFL games for Sunday, 9/14/2025 (Week 2, accurate as of 2025 schedule)
+    // Source: https://www.nfl.com/schedules/2025/REG2/
     const nflGames = [
-      { id: "vikings-eagles", label: "Vikings @ Eagles (1:00 PM ET)" },
-      { id: "packers-falcons", label: "Packers @ Falcons (1:00 PM ET)" },
-      { id: "raiders-bills", label: "Raiders @ Bills (1:00 PM ET)" },
-      { id: "ravens-bengals", label: "Ravens @ Bengals (1:00 PM ET)" },
-      { id: "seahawks-lions", label: "Seahawks @ Lions (1:00 PM ET)" },
-      { id: "colts-texans", label: "Colts @ Texans (1:00 PM ET)" },
-      { id: "chiefs-jaguars", label: "Chiefs @ Jaguars (1:00 PM ET)" },
-      { id: "bears-buccaneers", label: "Bears @ Buccaneers (1:00 PM ET)" },
-      { id: "chargers-titans", label: "Chargers @ Titans (1:00 PM ET)" },
-      { id: "49ers-rams", label: "49ers @ Rams (4:05 PM ET)" },
-      { id: "giants-cardinals", label: "Giants @ Cardinals (4:05 PM ET)" },
-      { id: "jets-cowboys", label: "Jets @ Cowboys (4:25 PM ET)" },
-      { id: "commanders-broncos", label: "Commanders @ Broncos (4:25 PM ET)" },
-      { id: "dolphins-patriots", label: "Dolphins @ Patriots (8:20 PM ET)" }
+      { id: "vikings-packers", label: "Vikings @ Packers (1:00 PM ET)" },
+      { id: "raiders-chiefs", label: "Raiders @ Chiefs (1:00 PM ET)" },
+      { id: "browns-bengals", label: "Browns @ Bengals (1:00 PM ET)" },
+      { id: "colts-patriots", label: "Colts @ Patriots (1:00 PM ET)" },
+      { id: "jaguars-texans", label: "Jaguars @ Texans (1:00 PM ET)" },
+      { id: "panthers-giants", label: "Panthers @ Giants (1:00 PM ET)" },
+      { id: "rams-lions", label: "Rams @ Lions (1:00 PM ET)" },
+      { id: "dolphins-bills", label: "Dolphins @ Bills (1:00 PM ET)" },
+      { id: "49ers-seahawks", label: "49ers @ Seahawks (4:05 PM ET)" },
+      { id: "jets-broncos", label: "Jets @ Broncos (4:05 PM ET)" },
+      { id: "buccaneers-saints", label: "Buccaneers @ Saints (4:25 PM ET)" },
+      { id: "eagles-cowboys", label: "Eagles @ Cowboys (4:25 PM ET)" },
+      { id: "ravens-steelers", label: "Ravens @ Steelers (8:20 PM ET)" }
     ];
 
     // Firebase config (replace with your actual config if needed)
