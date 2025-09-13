@@ -9,29 +9,47 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background: url('https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
       background-size: cover;
       min-height: 100vh;
       font-family: 'Roboto', sans-serif;
     }
     .booth-bg {
-      background: rgba(56, 27, 0, 0.95);
+      background: rgba(30, 18, 7, 0.97);
       border-radius: 2rem;
-      box-shadow: 0 4px 32px 0 rgba(0,0,0,0.4);
-      border: 5px solid #7c4700;
-      backdrop-filter: blur(2px);
+      box-shadow: 0 8px 40px 0 rgba(0,0,0,0.7);
+      border: 5px solid #b1884b;
+      backdrop-filter: blur(3px);
     }
     .booth-top {
-      background: linear-gradient(90deg, #b76e21 0%, #f2c57c 50%, #b76e21 100%);
+      background: linear-gradient(90deg, #7b5a3b 0%, #a6743e 50%, #7b5a3b 100%);
       border-top-left-radius: 2rem;
       border-top-right-radius: 2rem;
       min-height: 48px;
     }
     .bar-stool {
       width: 36px; height: 36px; background: #deb887; border-radius: 50%; margin: 6px;
-      border: 2px solid #7c4700;
+      border: 2px solid #b1884b;
       box-shadow: 0 2px 8px 0 rgba(0,0,0,0.25);
       display: inline-block;
+    }
+    .booth-bg select,
+    .booth-bg input {
+      background: #2b2117 !important;
+      color: #ffe4b5 !important;
+      border-color: #b1884b !important;
+    }
+    .booth-bg input::placeholder {
+      color: #d0b57a !important;
+    }
+    .booth-bg label {
+      color: #ffe4b5 !important;
+    }
+    .booth-bg .bg-amber-50\/80 {
+      background-color: rgba(56, 27, 0, 0.5) !important;
+    }
+    .booth-bg .border-yellow-600 {
+      border-color: #b1884b !important;
     }
   </style>
 </head>
@@ -39,20 +57,17 @@
   <div class="flex flex-col items-center mt-8">
     <div class="booth-bg w-full max-w-lg mx-auto">
       <div class="booth-top flex items-center justify-between px-6 py-3">
-        <h1 class="text-2xl font-montserrat font-bold text-brown-900 drop-shadow">🍻 Booth Chat</h1>
+        <h1 class="text-2xl font-montserrat font-bold text-yellow-100 drop-shadow">🍻 Booth Chat</h1>
         <div id="barStools" class="flex"></div>
       </div>
       <div id="authSection" class="p-6 flex flex-col items-center space-y-3">
-        <button id="signInBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">Sign in with Google</button>
+        <button id="signInBtn" class="bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">Sign in with Google</button>
       </div>
       <div id="chatSection" class="hidden flex flex-col h-[60vh] px-6 pb-6">
         <div class="flex flex-col items-center mb-3">
-          <label class="text-yellow-300 font-bold text-lg mb-2" for="boothSelect">Booth</label>
-          <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-40 text-center font-bold">
-            <option value="main-booth">Main Booth</option>
-            <option value="sports-booth">Sports Booth</option>
-            <option value="trivia-booth">Trivia Booth</option>
-            <option value="random-booth">Random Booth</option>
+          <label class="text-yellow-100 font-bold text-lg mb-2" for="boothSelect">Booth (NFL Game)</label>
+          <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
+            <!-- NFL games will be injected here by JS -->
           </select>
         </div>
         <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -60,7 +75,7 @@
           <input id="messageInput" type="text" required maxlength="240"
             class="flex-1 bg-white border-2 border-yellow-600 rounded-lg p-2 focus:outline-none focus:ring-yellow-800"
             placeholder="Type your message..."/>
-          <button type="submit" class="bg-amber-700 hover:bg-amber-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+          <button type="submit" class="bg-yellow-800 hover:bg-yellow-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
         </form>
       </div>
     </div>
@@ -70,13 +85,31 @@
       <div class="bar-stool"></div>
       <div class="bar-stool"></div>
     </div>
-    <p class="text-yellow-200 mt-2 text-sm">The Pub &mdash; Pull up a stool, join a booth, and chat!</p>
+    <p class="text-yellow-200 mt-2 text-sm" style="text-shadow: 1px 1px 6px #000;">The Pub &mdash; Pull up a stool, pick a game, and chat football!</p>
   </div>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
+    // Example NFL games for tomorrow (2025-09-14, Week 2) - update weekly!
+    const nflGames = [
+      { id: "vikings-eagles", label: "Vikings @ Eagles (1:00 PM ET)" },
+      { id: "packers-falcons", label: "Packers @ Falcons (1:00 PM ET)" },
+      { id: "raiders-bills", label: "Raiders @ Bills (1:00 PM ET)" },
+      { id: "ravens-bengals", label: "Ravens @ Bengals (1:00 PM ET)" },
+      { id: "seahawks-lions", label: "Seahawks @ Lions (1:00 PM ET)" },
+      { id: "colts-texans", label: "Colts @ Texans (1:00 PM ET)" },
+      { id: "chiefs-jaguars", label: "Chiefs @ Jaguars (1:00 PM ET)" },
+      { id: "bears-buccaneers", label: "Bears @ Buccaneers (1:00 PM ET)" },
+      { id: "chargers-titans", label: "Chargers @ Titans (1:00 PM ET)" },
+      { id: "49ers-rams", label: "49ers @ Rams (4:05 PM ET)" },
+      { id: "giants-cardinals", label: "Giants @ Cardinals (4:05 PM ET)" },
+      { id: "jets-cowboys", label: "Jets @ Cowboys (4:25 PM ET)" },
+      { id: "commanders-broncos", label: "Commanders @ Broncos (4:25 PM ET)" },
+      { id: "dolphins-patriots", label: "Dolphins @ Patriots (8:20 PM ET)" }
+    ];
+
     // Firebase config (replace with your actual config if needed)
     const firebaseConfig = {
       apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
@@ -95,6 +128,14 @@
     const messagesDiv = document.getElementById('messages');
     const boothSelect = document.getElementById('boothSelect');
     const barStools = document.getElementById('barStools');
+
+    // Populate boothSelect with NFL games
+    function populateBooths() {
+      boothSelect.innerHTML = nflGames.map(game =>
+        `<option value="${game.id}">${game.label}</option>`
+      ).join('');
+    }
+    populateBooths();
 
     let user = null;
     let unsubscribe = null;
@@ -141,7 +182,7 @@
             usersInBooth[msg.uid] = msg.displayName || "Someone";
             const isMine = user && msg.uid === user.uid;
             const bubbleClasses = isMine
-              ? "bg-amber-400 text-right ml-10"
+              ? "bg-yellow-700 text-right ml-10"
               : "bg-yellow-100 text-left mr-10";
             messagesDiv.innerHTML += `
               <div class="mb-2">
