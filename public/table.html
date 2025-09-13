@@ -68,7 +68,10 @@
             <option value="prime-vs-longevity">Prime vs Longevity</option>
             <option value="custom">Custom Topic...</option>
           </select>
-          <input id="customTopicInput" type="text" placeholder="Enter custom topic..." class="hidden bg-yellow-50 border-2 border-yellow-700 rounded p-2 mb-2 w-64 text-center font-bold" maxlength="100">
+          <div class="flex w-full items-center gap-2">
+            <input id="customTopicInput" type="text" placeholder="Enter custom topic..." class="hidden bg-yellow-50 border-2 border-yellow-700 rounded p-2 mb-2 w-64 text-center font-bold" maxlength="100">
+            <button id="addCustomTopicBtn" class="hidden bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-1 px-3 rounded-lg mb-2">Add Topic</button>
+          </div>
         </div>
         <div id="topicDisplay" class="debate-topic"></div>
         <div id="debateMessages" class="flex-1 overflow-y-auto bg-yellow-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -110,6 +113,7 @@
     const debateSelect = document.getElementById('debateSelect');
     const debateAvatars = document.getElementById('debateAvatars');
     const customTopicInput = document.getElementById('customTopicInput');
+    const addCustomTopicBtn = document.getElementById('addCustomTopicBtn');
     const topicDisplay = document.getElementById('topicDisplay');
     const seat1 = document.getElementById('seat1');
     const seat2 = document.getElementById('seat2');
@@ -141,22 +145,59 @@
       currentDebateId = debateSelect.value;
       if (currentDebateId === "custom") {
         customTopicInput.classList.remove('hidden');
+        addCustomTopicBtn.classList.remove('hidden');
         customTopicInput.focus();
         topicDisplay.textContent = customTopicInput.value || "Enter your own debate topic!";
       } else {
         customTopicInput.classList.add('hidden');
+        addCustomTopicBtn.classList.add('hidden');
         debateTopic = debateSelect.options[debateSelect.selectedIndex].text;
         topicDisplay.textContent = debateTopic;
         joinDebate(currentDebateId, debateTopic);
       }
     };
 
-    customTopicInput.oninput = () => {
-      debateTopic = customTopicInput.value || "Enter your own debate topic!";
-      topicDisplay.textContent = debateTopic;
-      if (debateTopic.length > 0) {
-        joinDebate("custom-" + debateTopic.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase(), debateTopic);
+    // Add custom topic when pressing the button or Enter key
+    function addCustomTopic() {
+      const newTopic = customTopicInput.value.trim();
+      if (!newTopic) return;
+      // Prevent duplicates
+      let exists = false;
+      for (let i = 0; i < debateSelect.options.length; i++) {
+        if (debateSelect.options[i].text.toLowerCase() === newTopic.toLowerCase()) {
+          exists = true;
+          debateSelect.selectedIndex = i;
+          break;
+        }
       }
+      if (!exists) {
+        const option = document.createElement('option');
+        option.value = "custom-" + newTopic.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+        option.text = newTopic;
+        debateSelect.add(option, debateSelect.options.length - 1); // add before "Custom Topic..."
+        debateSelect.selectedIndex = debateSelect.options.length - 2;
+      }
+      debateTopic = newTopic;
+      topicDisplay.textContent = debateTopic;
+      currentDebateId = debateSelect.value;
+      joinDebate(currentDebateId, debateTopic);
+
+      // Hide input and button, reset input
+      customTopicInput.classList.add('hidden');
+      addCustomTopicBtn.classList.add('hidden');
+      customTopicInput.value = '';
+    }
+
+    addCustomTopicBtn.onclick = addCustomTopic;
+    customTopicInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addCustomTopic();
+      }
+    });
+
+    customTopicInput.oninput = () => {
+      topicDisplay.textContent = customTopicInput.value || "Enter your own debate topic!";
     };
 
     function joinDebate(debateId, topic) {
