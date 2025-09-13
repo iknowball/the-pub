@@ -33,13 +33,13 @@
   <nav class="w-full max-w-md bg-amber-900/90 p-4 rounded-lg mb-4 border-2 border-yellow-600 shadow-md">
     <div class="flex justify-between">
       <a href="index.html" class="text-yellow-300 hover:text-yellow-400 font-bold">Home</a>
-      <a href="news.html" class="text-yellow-300 hover:text-yellow-400 font-bold">Newsstand</a>
-      <a href="trivia-game.html" class="text-yellow-300 hover:text-yellow-400 font-bold">NFL Trivia</a>
-      <a href="game.html" class="text-yellow-300 hover:text-yellow-400 font-bold">Name That Player</a>
+      <a href="news.html" class="text-yellow-300 hover:text-yellow-400 font-bold">News</a>
+      <a href="trivia-game.html" class="text-yellow-300 hover:text-yellow-400 font-bold">Trivia</a>
+      <a href="game.html" class="text-yellow-300 hover:text-yellow-400 font-bold">Players</a>
     </div>
   </nav>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
-    <div id="timer" class="absolute top-4 left-4 bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:30</div>
+    <!-- Timer & Score at bottom, timer left of score -->
     <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">College Guess</h1>
     <p class="text-center text-yellow-300 mb-2 text-lg">Level: <span id="currentLevel">1</span>/5</p>
     <p class="text-center text-yellow-300 mb-4 text-lg">Guess the college for <span id="athleteName"></span></p>
@@ -49,7 +49,11 @@
     <a id="backToHome" href="index.html" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
     <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
     <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
-    <p id="score" class="text-center mt-2 text-yellow-300">Score: <span id="scoreValue">0</span>/25</p>
+    <!-- Timer & Score bar here -->
+    <div class="flex flex-row items-center justify-center gap-4 mt-4">
+      <div id="timer" class="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
+      <p id="score" class="text-yellow-300 text-center mb-0">Score: <span id="scoreValue">0</span>/25</p>
+    </div>
     <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
   </div>
 
@@ -140,7 +144,7 @@
       let score = 0;
       let correctAnswers = 0;
       let incorrectColleges = [];
-      let timeLeft = 30;
+      let elapsedTime = 0;
       let timerInterval;
 
       function getLevenshteinDistance(a, b) {
@@ -161,28 +165,20 @@
       }
 
       function startTimer() {
-        timeLeft = 30;
-        timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
+        elapsedTime = 0;
+        timerDisplay.textContent = `00:00`;
         clearInterval(timerInterval);
         timerInterval = setInterval(() => {
-          timeLeft--;
-          timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
-          if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            feedback.textContent = `Time's up! The college was ${athletes[currentLevel - 1].college}.`;
-            feedback.classList.add('text-red-500');
-            incorrectColleges.push(athletes[currentLevel - 1].college);
-            submitAnswer.classList.add('hidden');
-            guessInput.classList.add('hidden');
-            nextLevel.classList.remove('hidden');
-            showStats();
-          }
+          elapsedTime++;
+          const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+          const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+          timerDisplay.textContent = `${minutes}:${seconds}`;
         }, 1000);
       }
 
       function stopTimer() {
         clearInterval(timerInterval);
-        return 30 * athletes.length - timeLeft;
+        return elapsedTime;
       }
 
       function formatTime(seconds) {
