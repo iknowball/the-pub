@@ -57,7 +57,10 @@
   <div class="flex flex-col items-center mt-8">
     <div class="booth-bg w-full max-w-lg mx-auto">
       <div class="booth-top flex items-center justify-between px-6 py-3">
-        <h1 class="text-2xl font-montserrat font-bold text-yellow-100 drop-shadow">🍻 Booths</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-montserrat font-bold text-yellow-100 drop-shadow">🍻 Booths</h1>
+          <a href="index.html" class="ml-2 bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-yellow-300">Home</a>
+        </div>
         <div id="barStools" class="flex"></div>
       </div>
       <div id="authSection" class="p-6 flex flex-col items-center space-y-3">
@@ -67,7 +70,16 @@
         <div class="flex flex-col items-center mb-3">
           <label class="text-yellow-100 font-bold text-lg mb-2" for="boothSelect">Hop in a Group!</label>
           <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
-            <!-- NFL games will be injected here by JS -->
+            <option value="browns-ravens">Cleveland Browns @ Baltimore Ravens (1:00 PM ET)</option>
+            <option value="jaguars-bengals">Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)</option>
+            <option value="giants-cowboys">New York Giants @ Dallas Cowboys (1:00 PM ET)</option>
+            <option value="bears-lions">Chicago Bears @ Detroit Lions (1:00 PM ET)</option>
+            <option value="patriots-dolphins">New England Patriots @ Miami Dolphins (1:00 PM ET)</option>
+            <option value="49ers-saints">San Francisco 49ers @ New Orleans Saints (1:00 PM ET)</option>
+            <option value="bills-jets">Buffalo Bills @ New York Jets (1:00 PM ET)</option>
+            <option value="seahawks-steelers">Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)</option>
+            <option value="rams-titans">Los Angeles Rams @ Tennessee Titans (1:00 PM ET)</option>
+            <option value="panthers-cardinals">Carolina Panthers @ Arizona Cardinals (4:05 PM ET)</option>
           </select>
         </div>
         <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -92,22 +104,18 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // NFL games for Sunday, 9/14/2025 (Week 2, accurate as of 2025 schedule)
-    // Source: https://www.nfl.com/schedules/2025/REG2/
+    // NFL games for Sunday, 9/14/2025
     const nflGames = [
-      { id: "vikings-packers", label: "Vikings @ Packers (1:00 PM ET)" },
-      { id: "raiders-chiefs", label: "Raiders @ Chiefs (1:00 PM ET)" },
-      { id: "browns-bengals", label: "Browns @ Bengals (1:00 PM ET)" },
-      { id: "colts-patriots", label: "Colts @ Patriots (1:00 PM ET)" },
-      { id: "jaguars-texans", label: "Jaguars @ Texans (1:00 PM ET)" },
-      { id: "panthers-giants", label: "Panthers @ Giants (1:00 PM ET)" },
-      { id: "rams-lions", label: "Rams @ Lions (1:00 PM ET)" },
-      { id: "dolphins-bills", label: "Dolphins @ Bills (1:00 PM ET)" },
-      { id: "49ers-seahawks", label: "49ers @ Seahawks (4:05 PM ET)" },
-      { id: "jets-broncos", label: "Jets @ Broncos (4:05 PM ET)" },
-      { id: "buccaneers-saints", label: "Buccaneers @ Saints (4:25 PM ET)" },
-      { id: "eagles-cowboys", label: "Eagles @ Cowboys (4:25 PM ET)" },
-      { id: "ravens-steelers", label: "Ravens @ Steelers (8:20 PM ET)" }
+      { id: "browns-ravens", label: "Cleveland Browns @ Baltimore Ravens (1:00 PM ET)" },
+      { id: "jaguars-bengals", label: "Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)" },
+      { id: "giants-cowboys", label: "New York Giants @ Dallas Cowboys (1:00 PM ET)" },
+      { id: "bears-lions", label: "Chicago Bears @ Detroit Lions (1:00 PM ET)" },
+      { id: "patriots-dolphins", label: "New England Patriots @ Miami Dolphins (1:00 PM ET)" },
+      { id: "49ers-saints", label: "San Francisco 49ers @ New Orleans Saints (1:00 PM ET)" },
+      { id: "bills-jets", label: "Buffalo Bills @ New York Jets (1:00 PM ET)" },
+      { id: "seahawks-steelers", label: "Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)" },
+      { id: "rams-titans", label: "Los Angeles Rams @ Tennessee Titans (1:00 PM ET)" },
+      { id: "panthers-cardinals", label: "Carolina Panthers @ Arizona Cardinals (4:05 PM ET)" }
     ];
 
     // Firebase config (replace with your actual config if needed)
