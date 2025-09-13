@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Pub 1-on-1 Debate Table</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      font-family: 'Roboto', sans-serif;
+    }
+    .table-bg {
+      background: rgba(56, 27, 0, 0.97);
+      border-radius: 1.5rem;
+      box-shadow: 0 6px 40px 0 rgba(0,0,0,0.35);
+      border: 6px solid #b88340;
+      backdrop-filter: blur(2px);
+    }
+    .table-top {
+      background: linear-gradient(90deg, #e8b56b 0%, #f7e7ce 60%, #e8b56b 100%);
+      border-top-left-radius: 1.5rem;
+      border-top-right-radius: 1.5rem;
+      min-height: 40px;
+    }
+    .debate-seat {
+      width: 48px; height: 48px; background: #deb887; border-radius: 50%; margin: 6px;
+      border: 2px solid #b88340;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.25);
+      display: inline-block;
+      object-fit: cover;
+    }
+    .debate-topic {
+      background: #fff7e1;
+      border: 2px solid #b88340;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-weight: bold;
+      color: #9b5e15;
+      padding: 8px 18px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+  <div class="flex flex-col items-center mt-10">
+    <div class="table-bg w-full max-w-2xl mx-auto">
+      <div class="table-top flex items-center justify-between px-6 py-2">
+        <h1 class="text-2xl font-montserrat font-bold text-brown-900 drop-shadow">🗣️ 1-on-1 Debate Table</h1>
+        <div id="debateAvatars" class="flex"></div>
+      </div>
+      <div id="authSection" class="p-6 flex flex-col items-center space-y-3">
+        <button id="signInBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">Sign in with Google</button>
+      </div>
+      <div id="debateSection" class="hidden flex flex-col h-[65vh] px-6 pb-6">
+        <div class="flex flex-col items-center mb-2">
+          <label class="text-yellow-300 font-bold text-lg mb-1" for="debateSelect">Debate Table</label>
+          <select id="debateSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-48 text-center font-bold">
+            <option value="goat">Who's the GOAT?</option>
+            <option value="lebron-vs-mj">LeBron vs MJ</option>
+            <option value="brady-vs-manning">Brady vs Manning</option>
+            <option value="prime-vs-longevity">Prime vs Longevity</option>
+            <option value="custom">Custom Topic...</option>
+          </select>
+          <input id="customTopicInput" type="text" placeholder="Enter custom topic..." class="hidden bg-yellow-50 border-2 border-yellow-700 rounded p-2 mb-2 w-64 text-center font-bold" maxlength="100">
+        </div>
+        <div id="topicDisplay" class="debate-topic"></div>
+        <div id="debateMessages" class="flex-1 overflow-y-auto bg-yellow-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
+        <form id="debateMessageForm" class="flex items-center gap-2">
+          <input id="debateMessageInput" type="text" required maxlength="240"
+            class="flex-1 bg-white border-2 border-yellow-600 rounded-lg p-2 focus:outline-none focus:ring-yellow-800"
+            placeholder="Type your argument..."/>
+          <button type="submit" class="bg-amber-700 hover:bg-amber-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+        </form>
+      </div>
+    </div>
+    <div class="flex items-end mt-4 gap-10">
+      <div class="debate-seat" id="seat1"></div>
+      <div class="debate-seat" id="seat2"></div>
+    </div>
+    <p class="text-yellow-200 mt-2 text-sm">The Pub &mdash; Grab a seat and debate 1-on-1!</p>
+  </div>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script>
+    // Firebase config (replace with your actual config if needed)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // DOM elements
+    const authSection = document.getElementById('authSection');
+    const signInBtn = document.getElementById('signInBtn');
+    const debateSection = document.getElementById('debateSection');
+    const debateMessageForm = document.getElementById('debateMessageForm');
+    const debateMessageInput = document.getElementById('debateMessageInput');
+    const debateMessagesDiv = document.getElementById('debateMessages');
+    const debateSelect = document.getElementById('debateSelect');
+    const debateAvatars = document.getElementById('debateAvatars');
+    const customTopicInput = document.getElementById('customTopicInput');
+    const topicDisplay = document.getElementById('topicDisplay');
+    const seat1 = document.getElementById('seat1');
+    const seat2 = document.getElementById('seat2');
+
+    let user = null;
+    let unsubscribe = null;
+    let currentDebateId = debateSelect.value;
+    let debateTopic = debateSelect.options[debateSelect.selectedIndex].text;
+
+    // Auth
+    firebase.auth().onAuthStateChanged(u => {
+      user = u;
+      if (user) {
+        authSection.classList.add('hidden');
+        debateSection.classList.remove('hidden');
+        joinDebate(currentDebateId, debateTopic);
+      } else {
+        debateSection.classList.add('hidden');
+        authSection.classList.remove('hidden');
+      }
+    });
+
+    signInBtn.onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider);
+    };
+
+    debateSelect.onchange = () => {
+      currentDebateId = debateSelect.value;
+      if (currentDebateId === "custom") {
+        customTopicInput.classList.remove('hidden');
+        customTopicInput.focus();
+        topicDisplay.textContent = customTopicInput.value || "Enter your own debate topic!";
+      } else {
+        customTopicInput.classList.add('hidden');
+        debateTopic = debateSelect.options[debateSelect.selectedIndex].text;
+        topicDisplay.textContent = debateTopic;
+        joinDebate(currentDebateId, debateTopic);
+      }
+    };
+
+    customTopicInput.oninput = () => {
+      debateTopic = customTopicInput.value || "Enter your own debate topic!";
+      topicDisplay.textContent = debateTopic;
+      if (debateTopic.length > 0) {
+        joinDebate("custom-" + debateTopic.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase(), debateTopic);
+      }
+    };
+
+    function joinDebate(debateId, topic) {
+      // Unsubscribe previous listener if any
+      if (unsubscribe) unsubscribe();
+      debateMessagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Loading arguments...</div>';
+      topicDisplay.textContent = topic || "Debate topic";
+      // Listen for last 50 messages in this debate, ordered by time
+      unsubscribe = db.collection('debates')
+        .doc(debateId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .limitToLast(50)
+        .onSnapshot(snap => {
+          debateMessagesDiv.innerHTML = "";
+          let participants = {};
+          snap.forEach(doc => {
+            const msg = doc.data();
+            participants[msg.uid] = msg.displayName || "Someone";
+            const isMine = user && msg.uid === user.uid;
+            const bubbleClasses = isMine
+              ? "bg-yellow-300 text-right ml-10"
+              : "bg-yellow-50 text-left mr-10";
+            debateMessagesDiv.innerHTML += `
+              <div class="mb-1">
+                <span class="block text-xs text-yellow-700 ${isMine ? 'text-right' : ''}">
+                  ${msg.displayName || "Someone"}
+                  <span class="text-yellow-400">${msg.time || ""}</span>
+                </span>
+                <div class="inline-block px-3 py-2 rounded-lg shadow-sm ${bubbleClasses}">${msg.text}</div>
+              </div>
+            `;
+          });
+
+          // Update 1-on-1 avatars for the two most recent participants
+          const participantIds = Object.keys(participants);
+          seat1.innerHTML = participantIds[0]
+            ? `<img src="https://robohash.org/${participantIds[0]}?set=set5&size=48x48" title="${participants[participantIds[0]]}" class="debate-seat" />`
+            : `<div class="debate-seat bg-gray-200 flex items-center justify-center text-yellow-700 font-bold">?</div>`;
+          seat2.innerHTML = participantIds[1]
+            ? `<img src="https://robohash.org/${participantIds[1]}?set=set5&size=48x48" title="${participants[participantIds[1]]}" class="debate-seat" />`
+            : `<div class="debate-seat bg-gray-200 flex items-center justify-center text-yellow-700 font-bold">?</div>`;
+          debateAvatars.innerHTML = [seat1.innerHTML, seat2.innerHTML].join('');
+          debateMessagesDiv.scrollTop = debateMessagesDiv.scrollHeight;
+        });
+    }
+
+    debateMessageForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = debateMessageInput.value.trim();
+      if (!text) return;
+      await db.collection('debates')
+        .doc(currentDebateId)
+        .collection('messages')
+        .add({
+          text: text,
+          uid: user.uid,
+          displayName: user.displayName,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        });
+      debateMessageInput.value = "";
+    };
+  </script>
+</body>
+</html>
