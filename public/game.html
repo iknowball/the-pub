@@ -31,7 +31,7 @@
     <p class="text-lg font-bold">New Games Daily at 6 AM EST</p>
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
-    <div id="timer" class="absolute top-24 left-4 bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
+    <!-- TIMER MOVED: Remove the absolute-positioned timer above -->
     <div class="flex flex-wrap gap-2 justify-center mb-4">
       <a href="index.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
       <a href="news.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Newsstand</a>
@@ -51,7 +51,11 @@
     <a id="backToHome" href="index.html" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
     <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
     <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
-    <p id="score" class="text-center mt-2 text-yellow-300">Score: <span id="scoreValue">0</span>/25</p>
+    <!-- TIMER AND SCORE BAR (timer left of score) -->
+    <div class="flex flex-row items-center justify-center gap-4 mt-4">
+      <div id="timer" class="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
+      <p id="score" class="text-yellow-300 text-center mb-0">Score: <span id="scoreValue">0</span>/25</p>
+    </div>
     <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
   </div>
   <!-- Stats Modal -->
