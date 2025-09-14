@@ -152,7 +152,6 @@
       cursor: pointer;
       user-select: none;
     }
-    /* Responsive TV/bar */
     @media (max-width: 600px) {
       .tv-frame { max-width: 98vw; }
       .tv-screen { height: 62vw; min-height: 270px; }
@@ -182,7 +181,6 @@
       border-color: #f6b509;
       background: #fffad1;
     }
-    /* Home button styling */
     .home-btn-profile {
       font-family: 'Montserrat', sans-serif;
       font-weight: bold;
@@ -295,7 +293,7 @@
 
     // Default avatar
     const defaultAvatar = "https://randomuser.me/api/portraits/men/44.jpg";
-    let userProfile = { name: "My Pub", avatar: defaultAvatar };
+    let userProfile = { username: "User", pubname: "My Pub", avatar: defaultAvatar };
     let userUid = null;
 
     // Posts logic
@@ -304,16 +302,16 @@
     const postInput = document.getElementById("postInput");
     let myPosts = [];
 
-    // --- PROFILE LOAD/SAVE ---
+    // PROFILE LOAD/SAVE
     async function loadUserProfile(uid) {
       const doc = await db.collection('users').doc(uid).get();
       if (doc.exists) {
         userProfile = doc.data();
-        pubSign.textContent = userProfile.name || "My Pub";
+        pubSign.textContent = userProfile.pubname || "My Pub";
         profilePic.src = userProfile.avatar || defaultAvatar;
       } else {
-        userProfile = { name: "My Pub", avatar: defaultAvatar };
-        pubSign.textContent = userProfile.name;
+        userProfile = { username: "User", pubname: "My Pub", avatar: defaultAvatar };
+        pubSign.textContent = userProfile.pubname;
         profilePic.src = userProfile.avatar;
         await db.collection('users').doc(uid).set(userProfile);
       }
@@ -322,9 +320,8 @@
       return db.collection('users').doc(uid).set(userProfile, { merge: true });
     }
 
-    // --- POSTS LOAD/SAVE ---
+    // POSTS LOAD/SAVE
     async function loadMyPosts(uid) {
-      // Firestore collection: users/{uid}/posts
       const snapshot = await db.collection("users").doc(uid).collection("posts").orderBy("timestamp", "desc").get();
       myPosts = [];
       snapshot.forEach(doc => {
@@ -338,12 +335,12 @@
         time: "just now",
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         avatar: userProfile.avatar,
-        name: userProfile.name
+        username: userProfile.username
       };
       return db.collection("users").doc(uid).collection("posts").add(post);
     }
 
-    // --- POST RENDER ---
+    // POST RENDER
     function renderPosts() {
       tvFeed.innerHTML = "";
       myPosts.forEach(post => {
@@ -352,7 +349,7 @@
         postDiv.innerHTML = `
           <img src="${post.avatar || defaultAvatar}" class="rounded-full w-10 h-10 border-2 border-gray-300" alt="avatar" />
           <div>
-            <span class="font-semibold text-gray-900">${post.name || userProfile.name}</span>
+            <span class="font-semibold text-gray-900">${post.username || userProfile.username}</span>
             <p class="text-gray-700 mt-1">${post.text}</p>
             <span class="text-xs text-gray-400">${post.time || ''}</span>
           </div>
@@ -361,22 +358,21 @@
       });
     }
 
-    // --- PUB NAME ---
+    // PUB NAME (bar) CHANGE
     function enablePubSignEdit() {
       if (!userUid) return;
-      const currentName = pubSign.textContent;
+      const currentPub = pubSign.textContent;
       const input = document.createElement("input");
       input.type = "text";
-      input.value = currentName;
+      input.value = currentPub;
       input.maxLength = 36;
       input.className = "inline-edit-input";
       input.onblur = async () => {
         let value = input.value.trim() || "My Pub";
         pubSign.textContent = value;
-        userProfile.name = value;
+        userProfile.pubname = value;
         await saveUserProfile(userUid);
         pubSign.replaceWith(pubSign);
-        loadMyPosts(userUid); // update posts with new name
       };
       input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
       pubSign.replaceWith(input);
@@ -384,9 +380,19 @@
       input.select();
     }
     pubSign.onclick = enablePubSignEdit;
-    changeNameBtn.onclick = enablePubSignEdit;
 
-    // --- PROFILE PIC ---
+    // USERNAME CHANGE
+    changeNameBtn.onclick = async () => {
+      if (!userUid) return;
+      const name = prompt("Enter your username:", userProfile.username || "");
+      if (name && name.trim().length > 1) {
+        userProfile.username = name.trim();
+        await saveUserProfile(userUid);
+        loadMyPosts(userUid); // update posts to show new username
+      }
+    };
+
+    // PROFILE PIC
     changePicBtn.onclick = async () => {
       if (!userUid) return;
       const url = prompt("Enter the URL of your new profile picture:", userProfile.avatar);
@@ -398,7 +404,7 @@
       }
     };
 
-    // --- FORM POST ---
+    // FORM POST
     postForm.onsubmit = async (e) => {
       e.preventDefault();
       if (!userUid) return;
@@ -410,7 +416,7 @@
       tvFeed.scrollTop = 0;
     };
 
-    // --- CANS LOGIC (local, unchanged) ---
+    // CANS LOGIC (local)
     const cansBar = document.getElementById("cansBar");
     const defaultCans = ["Red", "White", "Blue"];
     let cans = JSON.parse(localStorage.getItem("barCans")) || defaultCans;
@@ -467,7 +473,7 @@
     }
     renderCans();
 
-    // --- AUTH LOGIC ---
+    // AUTH LOGIC
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         userUid = user.uid;
