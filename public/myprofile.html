@@ -203,6 +203,40 @@
       background: #fffbe7;
       color: #b88340;
     }
+    .profile-pic {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #cfb467;
+      margin-bottom: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      background: #fff;
+    }
+    .profile-btns {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 8px;
+    }
+    .profile-btns button {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 6px 16px;
+      border-radius: 8px;
+      border: 2px solid #cfb467;
+      background: #f9e38f;
+      color: #533e1f;
+      transition: background 0.2s, color 0.2s;
+      cursor: pointer;
+    }
+    .profile-btns button:hover {
+      background: #fffbe7;
+      color: #b88340;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center">
@@ -213,9 +247,15 @@
       <span id="pubSign" class="pub-sign" title="Click to edit pub name">My Pub</span>
       <a href="index.html" class="home-btn-profile">Home</a>
     </div>
+    <img id="profilePic" class="profile-pic" src="" alt="Profile Picture" />
+    <div class="profile-btns">
+      <button id="changeNameBtn">Change Name</button>
+      <button id="changePicBtn">Change Picture</button>
+    </div>
+    <button id="signInBtn" style="display:none" class="bg-amber-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign in with Google</button>
+    <button id="signOutBtn" style="display:none" class="bg-red-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign Out</button>
   </div>
 
-  <!-- TV Frame (centered) -->
   <div class="flex justify-center w-full mt-6 md:mt-12 z-20" style="min-height:400px;">
     <div class="tv-frame">
       <div class="tv-glare"></div>
@@ -229,55 +269,157 @@
     </div>
   </div>
 
-  <!-- Bar/Counter with Customizable Red White and Blue Cans -->
   <div class="bar-surface pb-7 pt-5 z-30 gap-12" id="cansBar"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // ---- Pub Name Inline Edit Logic ----
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // DOM
     const pubSign = document.getElementById("pubSign");
+    const changeNameBtn = document.getElementById("changeNameBtn");
+    const profilePic = document.getElementById("profilePic");
+    const changePicBtn = document.getElementById("changePicBtn");
+    const signInBtn = document.getElementById("signInBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+
+    // Default avatar
+    const defaultAvatar = "https://randomuser.me/api/portraits/men/44.jpg";
+    let userProfile = { name: "My Pub", avatar: defaultAvatar };
+    let userUid = null;
+
+    // Posts logic
+    const tvFeed = document.getElementById("tvFeed");
+    const postForm = document.getElementById("postForm");
+    const postInput = document.getElementById("postInput");
+    let myPosts = [];
+
+    // --- PROFILE LOAD/SAVE ---
+    async function loadUserProfile(uid) {
+      const doc = await db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        userProfile = doc.data();
+        pubSign.textContent = userProfile.name || "My Pub";
+        profilePic.src = userProfile.avatar || defaultAvatar;
+      } else {
+        userProfile = { name: "My Pub", avatar: defaultAvatar };
+        pubSign.textContent = userProfile.name;
+        profilePic.src = userProfile.avatar;
+        await db.collection('users').doc(uid).set(userProfile);
+      }
+    }
+    function saveUserProfile(uid) {
+      return db.collection('users').doc(uid).set(userProfile, { merge: true });
+    }
+
+    // --- POSTS LOAD/SAVE ---
+    async function loadMyPosts(uid) {
+      // Firestore collection: users/{uid}/posts
+      const snapshot = await db.collection("users").doc(uid).collection("posts").orderBy("timestamp", "desc").get();
+      myPosts = [];
+      snapshot.forEach(doc => {
+        myPosts.push(doc.data());
+      });
+      renderPosts();
+    }
+    function saveMyPost(uid, text) {
+      const post = {
+        text,
+        time: "just now",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        avatar: userProfile.avatar,
+        name: userProfile.name
+      };
+      return db.collection("users").doc(uid).collection("posts").add(post);
+    }
+
+    // --- POST RENDER ---
+    function renderPosts() {
+      tvFeed.innerHTML = "";
+      myPosts.forEach(post => {
+        let postDiv = document.createElement("div");
+        postDiv.className = "bg-white/95 rounded-lg px-4 py-3 shadow flex gap-3 items-start";
+        postDiv.innerHTML = `
+          <img src="${post.avatar || defaultAvatar}" class="rounded-full w-10 h-10 border-2 border-gray-300" alt="avatar" />
+          <div>
+            <span class="font-semibold text-gray-900">${post.name || userProfile.name}</span>
+            <p class="text-gray-700 mt-1">${post.text}</p>
+            <span class="text-xs text-gray-400">${post.time || ''}</span>
+          </div>
+        `;
+        tvFeed.appendChild(postDiv);
+      });
+    }
+
+    // --- PUB NAME ---
     function enablePubSignEdit() {
+      if (!userUid) return;
       const currentName = pubSign.textContent;
       const input = document.createElement("input");
       input.type = "text";
       input.value = currentName;
       input.maxLength = 36;
       input.className = "inline-edit-input";
-      input.onblur = () => finishPubSignEdit(input);
+      input.onblur = async () => {
+        let value = input.value.trim() || "My Pub";
+        pubSign.textContent = value;
+        userProfile.name = value;
+        await saveUserProfile(userUid);
+        pubSign.replaceWith(pubSign);
+        loadMyPosts(userUid); // update posts with new name
+      };
       input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
       pubSign.replaceWith(input);
       input.focus();
       input.select();
     }
-    function finishPubSignEdit(input) {
-      let value = input.value.trim() || "My Pub";
-      localStorage.setItem("pubSign", value);
-      pubSign.textContent = value;
-      input.replaceWith(pubSign);
-    }
     pubSign.onclick = enablePubSignEdit;
-    // Persist
-    if (localStorage.getItem("pubSign")) pubSign.textContent = localStorage.getItem("pubSign");
+    changeNameBtn.onclick = enablePubSignEdit;
 
-    // ---- Bar Cans Inline Edit Logic ----
+    // --- PROFILE PIC ---
+    changePicBtn.onclick = async () => {
+      if (!userUid) return;
+      const url = prompt("Enter the URL of your new profile picture:", userProfile.avatar);
+      if (url && url.trim().length > 5) {
+        userProfile.avatar = url.trim();
+        profilePic.src = userProfile.avatar;
+        await saveUserProfile(userUid);
+        loadMyPosts(userUid); // update posts with new avatar
+      }
+    };
+
+    // --- FORM POST ---
+    postForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!userUid) return;
+      const text = postInput.value.trim();
+      if (!text) return;
+      await saveMyPost(userUid, text);
+      postInput.value = "";
+      await loadMyPosts(userUid);
+      tvFeed.scrollTop = 0;
+    };
+
+    // --- CANS LOGIC (local, unchanged) ---
     const cansBar = document.getElementById("cansBar");
-    // Default: Red, White, Blue
     const defaultCans = ["Red", "White", "Blue"];
     let cans = JSON.parse(localStorage.getItem("barCans")) || defaultCans;
-
-    // For each can, define fill color and text color
     const CAN_COLORS = [
-      {body: 'linear-gradient(180deg, #ea2222 80%, #b51212 100%)', label: '#ea2222', labelText: '#fff', border: '#b51212'}, // Red, white text
-      {body: 'linear-gradient(180deg, #fff 90%, #e6e6e6 100%)', label: '#fff', labelText: '#000', border: '#ccc'},         // White, black text
-      {body: 'linear-gradient(180deg, #2a44a4 80%, #112366 100%)', label: '#2a44a4', labelText: '#fff', border: '#112366'}, // Blue, white text
+      {body: 'linear-gradient(180deg, #ea2222 80%, #b51212 100%)', label: '#ea2222', labelText: '#fff', border: '#b51212'},
+      {body: 'linear-gradient(180deg, #fff 90%, #e6e6e6 100%)', label: '#fff', labelText: '#000', border: '#ccc'},
+      {body: 'linear-gradient(180deg, #2a44a4 80%, #112366 100%)', label: '#2a44a4', labelText: '#fff', border: '#112366'},
     ];
-
-    function getCanStyle(idx, name) {
-      // Always use the color order: red, white, blue, wrap if more than 3
-      const color = CAN_COLORS[idx % CAN_COLORS.length];
-      // Always use color.labelText, but allow user to override via storage if needed (not implemented here)
-      return color;
-    }
-
+    function getCanStyle(idx, name) { return CAN_COLORS[idx % CAN_COLORS.length]; }
     function renderCans() {
       cansBar.innerHTML = "";
       cans.forEach((team, i) => {
@@ -285,17 +427,11 @@
         const can = document.createElement("div");
         can.className = "can";
         can.style.background = "#eee";
-        can.querySelector = null;
-        can.innerHTML = `
-          <div class="can-top"></div>
-          <div class="can-body"></div>
-        `;
+        can.innerHTML = `<div class="can-top"></div><div class="can-body"></div>`;
         setTimeout(() => {
           const body = can.querySelector('.can-body');
           if (body) body.style.background = style.body;
         }, 0);
-
-        // Inline edit on label click
         const canLabel = document.createElement("div");
         canLabel.className = "can-label";
         canLabel.textContent = team.toUpperCase();
@@ -311,7 +447,6 @@
         cansBar.appendChild(can);
       });
     }
-
     function enableCanEdit(idx, labelDiv, oldValue) {
       const input = document.createElement("input");
       input.type = "text";
@@ -332,55 +467,34 @@
     }
     renderCans();
 
-    // ---- Posts Logic ----
-    const tvFeed = document.getElementById("tvFeed");
-    const postForm = document.getElementById("postForm");
-    const postInput = document.getElementById("postInput");
-    let posts = JSON.parse(localStorage.getItem("tvPosts")) || [
-      {user: "daveybrew", avatar: "https://randomuser.me/api/portraits/men/12.jpg", text: "Packers defense is looking ELITE this year. 💪🧀", time: "2 min ago", repost: false},
-      {user: "robc", avatar: "https://randomuser.me/api/portraits/men/35.jpg", text: "Nothing beats a cold one and a Mets comeback win 🍺💙🧡", time: "6 min ago", repost: true},
-      {user: "sarahknicks", avatar: "https://randomuser.me/api/portraits/women/68.jpg", text: "Brunson for MVP this season, calling it now! 🏀🗽 #NewYorkForever", time: "13 min ago", repost: false}
-    ];
-    function renderPosts() {
-      tvFeed.innerHTML = "";
-      posts.slice().reverse().forEach(post => {
-        let postDiv = document.createElement("div");
-        postDiv.className = post.repost ? "bg-blue-50 rounded-lg px-4 py-3 shadow flex gap-3 items-start border-l-4 border-blue-400 relative" : "bg-white/95 rounded-lg px-4 py-3 shadow flex gap-3 items-start";
-        postDiv.innerHTML = `
-          ${post.repost ? `
-            <div class="absolute -top-3 left-9 text-xs text-blue-700 font-bold flex items-center">
-              <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 1l4 4-4 4"></path><path stroke-width="2" d="M21 5H9a7 7 0 00-7 7v6"></path><path stroke-width="2" d="M7 23l-4-4 4-4"></path><path stroke-width="2" d="M3 19h12a7 7 0 007-7V6"></path></svg>
-              repost
-            </div>
-          ` : ""}
-          <img src="${post.avatar}" class="rounded-full w-10 h-10 border-2 border-gray-300" alt="avatar" />
-          <div>
-            <span class="font-semibold text-gray-900">${post.user}</span>
-            <p class="text-gray-700 mt-1">${post.text}</p>
-            <span class="text-xs text-gray-400">${post.time}</span>
-          </div>
-        `;
-        tvFeed.appendChild(postDiv);
-      });
-    }
-    renderPosts();
-
-    postForm.onsubmit = (e) => {
-      e.preventDefault();
-      const text = postInput.value.trim();
-      if (!text) return;
-      posts.push({
-        user: "You",
-        avatar: "https://randomuser.me/api/portraits/men/44.jpg",
-        text: text,
-        time: "just now",
-        repost: false
-      });
-      localStorage.setItem("tvPosts", JSON.stringify(posts));
-      renderPosts();
-      postInput.value = "";
-      tvFeed.scrollTop = 0;
+    // --- AUTH LOGIC ---
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        userUid = user.uid;
+        signInBtn.style.display = "none";
+        signOutBtn.style.display = "";
+        pubSign.style.pointerEvents = "";
+        changeNameBtn.disabled = false;
+        changePicBtn.disabled = false;
+        await loadUserProfile(userUid);
+        await loadMyPosts(userUid);
+      } else {
+        userUid = null;
+        signInBtn.style.display = "";
+        signOutBtn.style.display = "none";
+        pubSign.textContent = "Sign in to edit profile";
+        profilePic.src = defaultAvatar;
+        pubSign.style.pointerEvents = "none";
+        changeNameBtn.disabled = true;
+        changePicBtn.disabled = true;
+        tvFeed.innerHTML = "";
+      }
+    });
+    signInBtn.onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
     };
+    signOutBtn.onclick = () => auth.signOut();
   </script>
 </body>
 </html>
