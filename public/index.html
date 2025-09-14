@@ -18,6 +18,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
 
@@ -47,9 +48,16 @@
     <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
       <button id="closeSignUp" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
       <h2 class="text-2xl font-bold mb-4 text-amber-900 text-center">Sign Up / Login</h2>
+      <div class="flex flex-col gap-2 mb-2">
+        <button id="googleSignInBtn" type="button" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google logo"> Sign in with Google
+        </button>
+      </div>
+      <div class="text-center text-sm my-2 text-gray-500">or</div>
       <form id="signupForm" class="space-y-4">
         <input type="email" id="signupEmail" required placeholder="Email" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
         <input type="password" id="signupPassword" required placeholder="Password" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
+        <input type="text" id="signupUsername" required placeholder="Choose a username" class="w-full border-2 border-amber-700 rounded-lg px-3 py-2">
         <button type="submit" class="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700">Create Account</button>
       </form>
       <div class="text-center text-sm my-2 text-gray-500">or</div>
@@ -62,16 +70,6 @@
     </div>
   </div>
 
-  <!-- Simple Profile Modal -->
-  <div id="profileModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
-      <button id="closeProfile" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
-      <h2 class="text-2xl font-bold mb-4 text-amber-900 text-center">My Profile</h2>
-      <div id="profileInfo" class="text-center mb-4"></div>
-      <button id="logoutBtn" class="w-full bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 mt-4">Log Out</button>
-    </div>
-  </div>
-
   <script>
     // Firebase config - replace with your actual config!
     const firebaseConfig = {
@@ -80,30 +78,48 @@
       projectId: "thepub-sigma",
     };
     firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     // DOM elements
     const userBtn = document.getElementById('userBtn');
     const signupModal = document.getElementById('signupModal');
-    const profileModal = document.getElementById('profileModal');
     const closeSignUp = document.getElementById('closeSignUp');
-    const closeProfile = document.getElementById('closeProfile');
     const signupForm = document.getElementById('signupForm');
     const loginForm = document.getElementById('loginForm');
     const signupMsg = document.getElementById('signupMsg');
     const signupEmail = document.getElementById('signupEmail');
     const signupPassword = document.getElementById('signupPassword');
+    const signupUsername = document.getElementById('signupUsername');
     const loginEmail = document.getElementById('loginEmail');
     const loginPassword = document.getElementById('loginPassword');
-    const profileInfo = document.getElementById('profileInfo');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
 
     let currentUser = null;
 
     // Listen for auth state changes to keep user logged in/out and update button
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       currentUser = user;
       if (user) {
         userBtn.textContent = "My Profile";
+        // Check Firestore for username, if missing and Google user, prompt to set it
+        const userRef = db.collection("users").doc(user.uid);
+        const doc = await userRef.get();
+        if (!doc.exists || !doc.data().username) {
+          // If Google, ask for username
+          let uname = "";
+          while (!uname || uname.length < 2) {
+            uname = prompt("Create a username for your account:");
+            if (uname === null) break;
+          }
+          if (uname) {
+            await userRef.set({
+              username: uname,
+              avatar: user.photoURL || "",
+              email: user.email,
+              provider: user.providerData[0]?.providerId || "google"
+            }, { merge: true });
+          }
+        }
       } else {
         userBtn.textContent = "Sign Up/Login";
       }
@@ -111,10 +127,8 @@
 
     userBtn.onclick = () => {
       if (currentUser) {
-        // Redirect to myprofile.html when logged in
         window.location.href = "myprofile.html";
       } else {
-        // Show sign up/login modal
         signupModal.classList.remove('hidden');
         signupMsg.textContent = '';
         signupForm.reset();
@@ -124,12 +138,8 @@
     closeSignUp.onclick = () => {
       signupModal.classList.add('hidden');
     };
-    closeProfile.onclick = () => {
-      profileModal.classList.add('hidden');
-    };
     window.onclick = function(event) {
       if (event.target === signupModal) signupModal.classList.add('hidden');
-      if (event.target === profileModal) profileModal.classList.add('hidden');
     };
 
     signupForm.onsubmit = async (e) => {
@@ -138,12 +148,25 @@
       signupMsg.className = 'mt-4 text-center';
       const email = signupEmail.value;
       const password = signupPassword.value;
+      const username = signupUsername.value.trim();
+      if (!username || username.length < 2) {
+        signupMsg.textContent = "Username must be at least 2 characters.";
+        signupMsg.classList.add('text-red-600');
+        return;
+      }
       try {
-        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        // Save username in Firestore
+        await db.collection("users").doc(cred.user.uid).set({
+          username,
+          email,
+          avatar: "",
+          provider: "password"
+        }, { merge: true });
         signupMsg.textContent = "Account created successfully!";
         signupMsg.classList.add('text-green-600');
         signupForm.reset();
-        setTimeout(() => { signupModal.classList.add('hidden'); }, 1200);
+        setTimeout(() => { signupModal.classList.add('hidden'); }, 1000);
       } catch (err) {
         signupMsg.textContent = err.message;
         signupMsg.classList.add('text-red-600');
@@ -161,19 +184,42 @@
         signupMsg.textContent = "Logged in successfully!";
         signupMsg.classList.add('text-green-600');
         loginForm.reset();
-        setTimeout(() => { signupModal.classList.add('hidden'); }, 1200);
+        setTimeout(() => { signupModal.classList.add('hidden'); }, 1000);
       } catch (err) {
         signupMsg.textContent = err.message;
         signupMsg.classList.add('text-red-600');
       }
     };
 
-    if (logoutBtn) {
-      logoutBtn.onclick = async () => {
-        await firebase.auth().signOut();
-        profileModal.classList.add('hidden');
-      };
-    }
+    // Google Sign In logic & force username on first login
+    googleSignInBtn.onclick = async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+        const userRef = db.collection("users").doc(user.uid);
+        const doc = await userRef.get();
+        if (!doc.exists || !doc.data().username) {
+          let uname = "";
+          while (!uname || uname.length < 2) {
+            uname = prompt("Create a username for your account:");
+            if (uname === null) break;
+          }
+          if (uname) {
+            await userRef.set({
+              username: uname,
+              avatar: user.photoURL || "",
+              email: user.email,
+              provider: "google"
+            }, { merge: true });
+          }
+        }
+        signupModal.classList.add('hidden');
+      } catch (err) {
+        signupMsg.textContent = err.message;
+        signupMsg.classList.add('text-red-600');
+      }
+    };
   </script>
 </body>
 </html>
