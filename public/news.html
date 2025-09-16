@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Pub Times - Newsstand</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>The Pub - News</title>
-  <!-- Tailwind CSS CDN (optional for styling) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
   <style>
@@ -29,10 +25,7 @@
       border-bottom: 4px double #1f2937;
     }
   </style>
-  <!-- Firebase CDN scripts -->
-  <!-- Firebase App (the core Firebase SDK) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <!-- Add Firebase products that you want to use -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body class="flex flex-col items-center min-h-screen bg-gray-100 text-gray-900">
@@ -44,7 +37,7 @@
     <script>
       document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
     </script>
-<body class="bg-gray-100 text-gray-900">
+  </header>
   <nav class="w-full max-w-4xl bg-gray-200 p-4 mb-4 border-t-2 border-b-2 border-gray-900">
     <div class="flex justify-between">
       <a href="index.html" class="text-gray-900 hover:text-gray-700 font-bold">Home</a>
@@ -52,16 +45,83 @@
       <a href="index-nfl.html" class="text-gray-900 hover:text-gray-700 font-bold">Games</a>
     </div>
   </nav>
-  <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 p-6" id="news-list">
+  <main class="w-full max-w-2xl mx-auto p-2" id="news-list">
     <!-- News articles injected by JS -->
-  <main class="max-w-2xl mx-auto" id="news-list">
-    <!-- News articles will be injected here by firebase-news.js -->
   </main>
   <footer class="w-full max-w-4xl bg-gray-200 p-4 text-center text-gray-700 border-t-2 border-gray-900">
     <p>Published by The Pub Times</p>
   </footer>
 
-  <!-- Your Firebase & news loading script -->
-  <script src="firebase-news.js"></script>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+      storageBucket: "thepub-sigma.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef",
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+
+    function loadNewsArticles() {
+      const newsList = document.getElementById('news-list');
+      newsList.innerHTML = '<div class="text-center text-gray-500">Loading...</div>';
+      db.collection("news").orderBy("createdAt", "desc").get().then(snapshot => {
+        if (snapshot.empty) {
+          newsList.innerHTML = '<div class="text-center text-gray-500">No news found.</div>';
+          return;
+        }
+        newsList.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+
+          // Create wrapper
+          const storyDiv = document.createElement('div');
+          storyDiv.className = "mb-4 animate-fade-in";
+
+          // Create button for title
+          const titleBtn = document.createElement('button');
+          titleBtn.className = "w-full text-lg font-bold text-blue-900 bg-white border border-blue-900 rounded px-4 py-2 hover:bg-blue-50 focus:bg-blue-100 transition";
+          titleBtn.textContent = data.title || "Untitled Story";
+
+          // Create hidden content div
+          const contentDiv = document.createElement('div');
+          contentDiv.className = "mt-2 px-2 py-2 rounded bg-gray-50 border border-gray-200 text-gray-800";
+          contentDiv.style.display = "none";
+          contentDiv.innerHTML = `
+            <div class="mb-2">${data.content || ""}</div>
+            ${data.author ? `<div class="text-sm text-gray-500">By ${data.author}</div>` : ""}
+            ${data.createdAt ? `<div class="text-xs text-gray-400 mt-1">Posted: ${formatDate(data.createdAt)}</div>` : ""}
+          `;
+
+          // Show/hide content when title button is clicked
+          titleBtn.onclick = () => {
+            contentDiv.style.display = contentDiv.style.display === "none" ? "block" : "none";
+          };
+
+          storyDiv.appendChild(titleBtn);
+          storyDiv.appendChild(contentDiv);
+          newsList.appendChild(storyDiv);
+        });
+      });
+    }
+
+    // Helper to format Firestore Timestamp or millis
+    function formatDate(ts) {
+      try {
+        if (ts.seconds) {
+          // Firestore Timestamp object
+          return new Date(ts.seconds * 1000).toLocaleDateString();
+        } else if (typeof ts === "number") {
+          // Milliseconds
+          return new Date(ts).toLocaleDateString();
+        }
+      } catch (e) {}
+      return "";
+    }
+
+    window.onload = loadNewsArticles;
+  </script>
 </body>
 </html>
