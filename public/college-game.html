@@ -89,17 +89,75 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Helper: get current user (anonymous if not signed in)
+    function getCurrentUserId() {
+      const user = auth.currentUser;
+      if (user) {
+        return user.uid;
+      }
+      // Fallback to localStorage for anonymous stats
+      let anonId = localStorage.getItem('anonUserId');
+      if (!anonId) {
+        anonId = 'anon-' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('anonUserId', anonId);
+      }
+      return anonId;
+    }
 
     // Record score for every completed college game (regardless of authentication)
     async function recordCollegeGameScore(score, time) {
       try {
+        const userId = getCurrentUserId();
         await db.collection('collegeGameScores').add({
+          userId: userId,
           score: score,
           time: time,
           playedAt: new Date().toISOString()
         });
+        // Update user's average score for college game in a separate collection
+        await updateCollegeAverageScore(userId);
       } catch (err) {
         console.error("Error recording college game score:", err);
+      }
+    }
+
+    // Update average score for a user for college game
+    async function updateCollegeAverageScore(userId) {
+      try {
+        // Get all scores for the user (college game only)
+        const scoresSnap = await db.collection('collegeGameScores').where('userId', '==', userId).get();
+        let total = 0;
+        let count = 0;
+        scoresSnap.forEach(doc => {
+          total += doc.data().score;
+          count += 1;
+        });
+        const avg = count === 0 ? 0 : (total / count);
+        // Store in collegeAverages collection
+        await db.collection('collegeAverages').doc(userId).set({
+          userId: userId,
+          averageScore: avg,
+          lastUpdated: new Date().toISOString(),
+          gamesPlayed: count
+        });
+      } catch (err) {
+        console.error("Error updating college average score:", err);
+      }
+    }
+
+    // Fetch user average score from Firestore (college game)
+    async function fetchCollegeAverageScore(userId) {
+      try {
+        const doc = await db.collection('collegeAverages').doc(userId).get();
+        if (doc.exists) {
+          return doc.data().averageScore;
+        }
+        return null;
+      } catch (err) {
+        console.error("Failed to fetch user college average score:", err);
+        return null;
       }
     }
 
@@ -224,9 +282,16 @@
         return (total / history.length).toFixed(1);
       }
 
-      function displayStats() {
+      // Fetch and display stats from Firestore (average score for college game)
+      async function displayStats() {
         const history = getScoreHistory();
-        avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+        const userId = getCurrentUserId();
+        let avgFromCloud = await fetchCollegeAverageScore(userId);
+        if (avgFromCloud !== null) {
+          avgScore.textContent = `Average Score (cloud): ${avgFromCloud.toFixed(1)}/25`;
+        } else {
+          avgScore.textContent = `Average Score (local): ${calculateAverageScore()}/25`;
+        }
         statsTableBody.innerHTML = '';
         history.forEach((entry, index) => {
           const row = document.createElement('tr');
@@ -299,7 +364,7 @@
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
 
-          // Record score in Firestore for every completed college game
+          // Record score in Firestore for every completed college game and update average
           await recordCollegeGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
@@ -376,7 +441,17 @@
       displayResultsFromUrl();
     }
 
-    document.addEventListener("DOMContentLoaded", startGame);
+    document.addEventListener("DOMContentLoaded", () => {
+      // Try to sign in anonymously for user tracking
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          auth.signInAnonymously()
+            .catch(() => {}); // Ignore errors; fallback to localStorage id
+        }
+        // Always start game after auth state checked
+        startGame();
+      });
+    });
   </script>
 </body>
 </html>
