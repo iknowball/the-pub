@@ -92,19 +92,76 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Helper: get current user (anonymous if not signed in)
+    function getCurrentUserId() {
+      const user = auth.currentUser;
+      if (user) {
+        return user.uid;
+      }
+      // Fallback to localStorage for anonymous stats
+      let anonId = localStorage.getItem('anonUserId');
+      if (!anonId) {
+        anonId = 'anon-' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('anonUserId', anonId);
+      }
+      return anonId;
+    }
 
     // Record score for every completed game (regardless of authentication)
     async function recordGameScore(score, time) {
       try {
-        // Use today as the key for daily scores, or you can use a timestamp or user id if you wish
+        const userId = getCurrentUserId();
         const today = new Date().toISOString().slice(0, 10);
         await db.collection('gameScores').add({
+          userId: userId,
           score: score,
           time: time,
           playedAt: new Date().toISOString()
         });
+        // Update user's average score in a separate collection
+        await updateUserAverageScore(userId);
       } catch (err) {
         console.error("Error recording game score:", err);
+      }
+    }
+
+    // Update average score for a user
+    async function updateUserAverageScore(userId) {
+      try {
+        // Get all scores for the user
+        const scoresSnap = await db.collection('gameScores').where('userId', '==', userId).get();
+        let total = 0;
+        let count = 0;
+        scoresSnap.forEach(doc => {
+          total += doc.data().score;
+          count += 1;
+        });
+        const avg = count === 0 ? 0 : (total / count);
+        // Store in userAverages collection
+        await db.collection('userAverages').doc(userId).set({
+          userId: userId,
+          averageScore: avg,
+          lastUpdated: new Date().toISOString(),
+          gamesPlayed: count
+        });
+      } catch (err) {
+        console.error("Error updating user average score:", err);
+      }
+    }
+
+    // Fetch user average score from Firestore
+    async function fetchUserAverageScore(userId) {
+      try {
+        const doc = await db.collection('userAverages').doc(userId).get();
+        if (doc.exists) {
+          return doc.data().averageScore;
+        }
+        return null;
+      } catch (err) {
+        console.error("Failed to fetch user average score:", err);
+        return null;
       }
     }
 
@@ -222,9 +279,17 @@
         const total = history.reduce((sum, entry) => sum + entry.score, 0);
         return (total / history.length).toFixed(1);
       }
-      function displayStats() {
+
+      // Fetch and display stats from Firestore (average score)
+      async function displayStats() {
         const history = getScoreHistory();
-        avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+        const userId = getCurrentUserId();
+        let avgFromCloud = await fetchUserAverageScore(userId);
+        if (avgFromCloud !== null) {
+          avgScore.textContent = `Average Score (cloud): ${avgFromCloud.toFixed(1)}/25`;
+        } else {
+          avgScore.textContent = `Average Score (local): ${calculateAverageScore()}/25`;
+        }
         statsTableBody.innerHTML = '';
         history.forEach((entry, index) => {
           const row = document.createElement('tr');
@@ -298,7 +363,7 @@
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
 
-          // Record score in Firestore for every completed game
+          // Record score in Firestore for every completed game and update average
           await recordGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
@@ -361,7 +426,17 @@
     }
 
     // Start game on DOMContentLoaded
-    document.addEventListener("DOMContentLoaded", startGame);
+    document.addEventListener("DOMContentLoaded", () => {
+      // Try to sign in anonymously for user tracking
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          auth.signInAnonymously()
+            .catch(() => {}); // Ignore errors; fallback to localStorage id
+        }
+        // Always start game after auth state checked
+        startGame();
+      });
+    });
   </script>
 </body>
 </html>
