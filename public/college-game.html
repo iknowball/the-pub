@@ -28,10 +28,9 @@
 </head>
 <body class="flex flex-col items-center min-h-screen font-montserrat">
   <header class="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-    <p class="text-lg font-bold">New Games Daily at Midnight EST</p>
+    <p class="text-lg font-bold">New Games Daily at Midnight Eastern</p>
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
-    <!-- Game style separated nav buttons, like game.html -->
     <div class="flex flex-wrap gap-2 justify-center mb-4">
       <a href="index.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
       <a href="news.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</a>
@@ -81,7 +80,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // Firebase config (replace with your actual config if needed)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
       authDomain: "thepub-sigma.firebaseapp.com",
@@ -91,13 +90,11 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Helper: get current user (anonymous if not signed in)
     function getCurrentUserId() {
       const user = auth.currentUser;
       if (user) {
         return user.uid;
       }
-      // Fallback to localStorage for anonymous stats
       let anonId = localStorage.getItem('anonUserId');
       if (!anonId) {
         anonId = 'anon-' + Math.random().toString(36).substring(2, 15);
@@ -106,7 +103,6 @@
       return anonId;
     }
 
-    // Record score for every completed college game (regardless of authentication)
     async function recordCollegeGameScore(score, time) {
       try {
         const userId = getCurrentUserId();
@@ -116,17 +112,14 @@
           time: time,
           playedAt: new Date().toISOString()
         });
-        // Update user's average score for college game in a separate collection
         await updateCollegeAverageScore(userId);
       } catch (err) {
         console.error("Error recording college game score:", err);
       }
     }
 
-    // Update average score for a user for college game
     async function updateCollegeAverageScore(userId) {
       try {
-        // Get all scores for the user (college game only)
         const scoresSnap = await db.collection('collegeGameScores').where('userId', '==', userId).get();
         let total = 0;
         let count = 0;
@@ -135,7 +128,6 @@
           count += 1;
         });
         const avg = count === 0 ? 0 : (total / count);
-        // Store in collegeAverages collection
         await db.collection('collegeAverages').doc(userId).set({
           userId: userId,
           averageScore: avg,
@@ -147,7 +139,6 @@
       }
     }
 
-    // Fetch user average score from Firestore (college game)
     async function fetchCollegeAverageScore(userId) {
       try {
         const doc = await db.collection('collegeAverages').doc(userId).get();
@@ -161,20 +152,18 @@
       }
     }
 
-    // Helper to get today's date in EST (YYYY-MM-DD) - 12am update
-    function getTodayESTMidnight() {
+    // Helper to get today's date in America/New_York, switching at 12am Eastern
+    function getTodayEasternMidnight() {
       const now = new Date();
-      const eastern = new Date(
-        now.toLocaleString("en-US", { timeZone: "America/New_York" })
-      );
-      if (eastern.getHours() > 0) {
-        eastern.setDate(eastern.getDate() - 1);
-      }
-      return eastern.toISOString().slice(0, 10);
+      // Get New York time (EST/EDT automatically handled)
+      const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nyString);
+      // Return YYYY-MM-DD for today's date in NY
+      return nyDate.toISOString().slice(0, 10);
     }
 
     async function fetchDailyAthletes() {
-      const dateKey = getTodayESTMidnight();
+      const dateKey = getTodayEasternMidnight();
       try {
         const doc = await db.collection('dailyCollegeAthletes').doc(dateKey).get();
         if (doc.exists && Array.isArray(doc.data().athletes)) {
@@ -283,7 +272,6 @@
         return (total / history.length).toFixed(1);
       }
 
-      // Fetch and display stats from Firestore (average score for college game)
       async function displayStats() {
         const history = getScoreHistory();
         const userId = getCurrentUserId();
@@ -348,26 +336,14 @@
         startTimer();
       }
 
-      function showStats() {
-        const stats = document.createElement('p');
-        stats.classList.add('text-yellow-300', 'text-center', 'mb-4');
-        stats.textContent = athletes[currentLevel - 1].stats;
-        statsModal.querySelector('div').insertBefore(stats, statsModal.querySelector('p#avgScore'));
-        statsModal.classList.remove('hidden');
-      }
-
       async function moveToNextLevel() {
         currentLevel++;
-        statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
         if (currentLevel <= athletes.length) {
           loadLevel();
         } else {
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
-
-          // Record score in Firestore for every completed college game and update average
           await recordCollegeGameScore(score, finalTime);
-
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
           feedback.classList.add('text-yellow-300');
@@ -397,7 +373,6 @@
           guessInput.classList.add('hidden');
           nextLevel.classList.remove('hidden');
           stopTimer();
-          showStats();
         } else {
           const distance = getLevenshteinDistance(guess, correctCollege);
           if (distance <= 2 && guess.length > 0) {
@@ -412,7 +387,6 @@
             guessInput.classList.add('hidden');
             nextLevel.classList.remove('hidden');
             stopTimer();
-            showStats();
           }
         }
         scoreDisplay.textContent = score;
@@ -438,18 +412,14 @@
       });
 
       loadLevel();
-
       displayResultsFromUrl();
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Try to sign in anonymously for user tracking
       auth.onAuthStateChanged(user => {
         if (!user) {
-          auth.signInAnonymously()
-            .catch(() => {}); // Ignore errors; fallback to localStorage id
+          auth.signInAnonymously().catch(() => {});
         }
-        // Always start game after auth state checked
         startGame();
       });
     });
