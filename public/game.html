@@ -179,7 +179,7 @@
     }
 
     async function fetchDailyPlayers() {
-      const dateKey = getTodayEST6AM();
+      const dateKey = getTodayEastern6AM();
       try {
         const doc = await db.collection('dailyPlayers').doc(dateKey).get();
         if (doc.exists && Array.isArray(doc.data().players)) {
