@@ -28,10 +28,9 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen font-montserrat">
   <header class="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-    <p class="text-lg font-bold">New Games Daily at Midnight EST</p>
+    <p class="text-lg font-bold">New Games Daily at Midnight Eastern</p>
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
-    <!-- TIMER MOVED: Remove the absolute-positioned timer above -->
     <div class="flex flex-wrap gap-2 justify-center mb-4">
       <a href="index.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
       <a href="news.html" class="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</a>
@@ -51,14 +50,12 @@
     <a id="backToHome" href="index.html" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
     <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
     <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
-    <!-- TIMER AND SCORE BAR (timer left of score) -->
     <div class="flex flex-row items-center justify-center gap-4 mt-4">
       <div id="timer" class="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
       <p id="score" class="text-yellow-300 text-center mb-0">Score: <span id="scoreValue">0</span>/25</p>
     </div>
     <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
   </div>
-  <!-- Stats Modal -->
   <div id="statsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">
     <div class="bg-amber-800/90 p-6 rounded-xl w-full max-w-md border-2 border-yellow-600 shadow-lg">
       <h2 class="text-2xl font-bold text-center text-yellow-300 mb-4">Your Pub Quiz Stats</h2>
@@ -79,7 +76,6 @@
       <button id="closeStats" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
     </div>
   </div>
-  <!-- Firebase SDKs (ORDER IS IMPORTANT!) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -100,7 +96,6 @@
       if (user) {
         return user.uid;
       }
-      // Fallback to localStorage for anonymous stats
       let anonId = localStorage.getItem('anonUserId');
       if (!anonId) {
         anonId = 'anon-' + Math.random().toString(36).substring(2, 15);
@@ -109,28 +104,23 @@
       return anonId;
     }
 
-    // Record score for every completed game (regardless of authentication)
     async function recordGameScore(score, time) {
       try {
         const userId = getCurrentUserId();
-        const today = new Date().toISOString().slice(0, 10);
         await db.collection('gameScores').add({
           userId: userId,
           score: score,
           time: time,
           playedAt: new Date().toISOString()
         });
-        // Update user's average score in a separate collection
         await updateUserAverageScore(userId);
       } catch (err) {
         console.error("Error recording game score:", err);
       }
     }
 
-    // Update average score for a user
     async function updateUserAverageScore(userId) {
       try {
-        // Get all scores for the user
         const scoresSnap = await db.collection('gameScores').where('userId', '==', userId).get();
         let total = 0;
         let count = 0;
@@ -139,7 +129,6 @@
           count += 1;
         });
         const avg = count === 0 ? 0 : (total / count);
-        // Store in userAverages collection
         await db.collection('userAverages').doc(userId).set({
           userId: userId,
           averageScore: avg,
@@ -151,7 +140,6 @@
       }
     }
 
-    // Fetch user average score from Firestore
     async function fetchUserAverageScore(userId) {
       try {
         const doc = await db.collection('userAverages').doc(userId).get();
@@ -165,17 +153,14 @@
       }
     }
 
-    // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
+    // Helper: get today's date in America/New_York, switching at 12am Eastern
     function getTodayEasternMidnight() {
-    // Get current time in America/New_York (EST/EDT depending on time of year)
       const now = new Date();
-      const eastern = new Date(
-        now.toLocaleString("en-US", { timeZone: "America/New_York" })
-      );
-      if (eastern.getHours() > 0) {
-        eastern.setDate(eastern.getDate() - 1);
-      }
-      return eastern.toISOString().slice(0, 10);
+      // Get New York time (EST/EDT automatically handled)
+      const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nyString);
+      // Return YYYY-MM-DD for today's date in NY
+      return nyDate.toISOString().slice(0, 10);
     }
 
     async function fetchDailyPlayers() {
@@ -244,7 +229,6 @@
         const secs = (seconds % 60).toString().padStart(2, '0');
         return `${minutes}:${secs}`;
       }
-      // DOM elements
       const gameContainer = document.getElementById('gameContainer');
       const playerImage = document.getElementById('playerImage');
       const imageError = document.getElementById('imageError');
@@ -281,8 +265,6 @@
         const total = history.reduce((sum, entry) => sum + entry.score, 0);
         return (total / history.length).toFixed(1);
       }
-
-      // Fetch and display stats from Firestore (average score)
       async function displayStats() {
         const history = getScoreHistory();
         const userId = getCurrentUserId();
@@ -306,7 +288,6 @@
         });
         statsModal.classList.remove('hidden');
       }
-      // Handle image load errors
       playerImage.onerror = () => {
         imageError.classList.remove('hidden');
         submitAnswer.classList.remove('hidden');
@@ -364,10 +345,7 @@
         } else {
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
-
-          // Record score in Firestore for every completed game and update average
           await recordGameScore(score, finalTime);
-
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
           feedback.classList.add('text-yellow-300');
@@ -427,15 +405,11 @@
       displayResultsFromUrl();
     }
 
-    // Start game on DOMContentLoaded
     document.addEventListener("DOMContentLoaded", () => {
-      // Try to sign in anonymously for user tracking
       auth.onAuthStateChanged(user => {
         if (!user) {
-          auth.signInAnonymously()
-            .catch(() => {}); // Ignore errors; fallback to localStorage id
+          auth.signInAnonymously().catch(() => {});
         }
-        // Always start game after auth state checked
         startGame();
       });
     });
