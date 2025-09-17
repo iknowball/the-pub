@@ -291,19 +291,14 @@
       const scoreDisplay = document.getElementById('scoreValue');
       const currentLevelDisplay = document.getElementById('currentLevel');
       const shareLink = document.getElementById('shareLink');
-      const sharePreview = document.createElement('div');
-      sharePreview.id = "sharePreview";
-      sharePreview.className = "share-preview";
-      const clipboardBtn = document.createElement('button');
-      clipboardBtn.id = "clipboardBtn";
-      clipboardBtn.className = "clipboard-btn";
-      clipboardBtn.textContent = "Copy to Clipboard";
-      const smsBtn = document.createElement('a');
-      smsBtn.id = "smsBtn";
-      smsBtn.className = "sms-btn";
-      smsBtn.textContent = "Send as SMS";
-      smsBtn.href = "#";
-      smsBtn.target = "_blank";
+      const sharePreview = document.getElementById('sharePreview');
+      const clipboardBtn = document.getElementById('clipboardBtn');
+      const smsBtn = document.getElementById('smsBtn');
+      const statsModal = document.getElementById('statsModal');
+      const avgScore = document.getElementById('avgScore');
+      const statsTableBody = document.getElementById('statsTableBody');
+      const closeStats = document.getElementById('closeStats');
+      const timerDisplay = document.getElementById('timer');
 
       function getScoreHistory() {
         return JSON.parse(localStorage.getItem('collegeGameHistory') || '[]');
@@ -464,7 +459,6 @@
         let result = false;
         if (guess === correctCollege) {
           score += 5;
-          correctAnswers += 1;
           feedback.textContent = `Nailed it! +5 points! 🏀`;
           feedback.classList.add('text-green-500');
           submitAnswer.classList.add('hidden');
@@ -479,7 +473,6 @@
             feedback.classList.add('text-yellow-400');
             guessInput.value = '';
           } else {
-            incorrectColleges.push(athletes[currentLevel - 1].college);
             feedback.textContent = `Swing and a miss! It was ${athletes[currentLevel - 1].college}.`;
             feedback.classList.add('text-red-500');
             submitAnswer.classList.add('hidden');
