@@ -235,6 +235,66 @@
       background: #fffbe7;
       color: #b88340;
     }
+    /* Stats Modal styles */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-box {
+      background: #342007;
+      border-radius: 18px;
+      border: 3px solid #cfb467;
+      color: #f9e38f;
+      padding: 28px 32px 22px 32px;
+      max-width: 98vw;
+      width: 370px;
+      box-shadow: 0 8px 44px #000a;
+    }
+    .modal-title {
+      font-size: 1.45rem;
+      font-family: 'Montserrat';
+      font-weight: bold;
+      margin-bottom: 17px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+    .modal-close {
+      margin-top: 22px;
+      background: #f9e38f;
+      color: #533e1f;
+      border: 2px solid #cfb467;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 1.08rem;
+      font-weight: bold;
+      padding: 7px 22px;
+      cursor: pointer;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      transition: background 0.2s,color 0.2s;
+    }
+    .modal-close:hover {
+      background: #fffbe7;
+      color: #b88340;
+    }
+    .modal-list {
+      list-style: none;
+      margin-top: 9px;
+      margin-bottom: 8px;
+      padding: 0;
+      font-size: 1.09rem;
+    }
+    .modal-list li {
+      margin-bottom: 11px;
+      text-align: left;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center">
@@ -249,6 +309,7 @@
     <div class="profile-btns">
       <button id="changeNameBtn">Change Name</button>
       <button id="changePicBtn">Change Picture</button>
+      <button id="myStatsBtn">My Stats</button>
     </div>
     <button id="signInBtn" style="display:none" class="bg-amber-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign in with Google</button>
     <button id="signOutBtn" style="display:none" class="bg-red-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign Out</button>
@@ -268,6 +329,19 @@
   </div>
 
   <div class="bar-surface pb-7 pt-5 z-30 gap-12" id="cansBar"></div>
+
+  <!-- Stats Modal -->
+  <div id="statsModal" class="modal-bg" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-title">Your Average Scores</div>
+      <ul class="modal-list" id="statsList">
+        <li>Players Game: <span id="playersAvg">...</span></li>
+        <li>College Game: <span id="collegeAvg">...</span></li>
+        <li>Trivia Game: <span id="triviaAvg">...</span></li>
+      </ul>
+      <button class="modal-close" id="closeStatsModal">Close</button>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -290,6 +364,12 @@
     const changePicBtn = document.getElementById("changePicBtn");
     const signInBtn = document.getElementById("signInBtn");
     const signOutBtn = document.getElementById("signOutBtn");
+    const myStatsBtn = document.getElementById("myStatsBtn");
+    const statsModal = document.getElementById("statsModal");
+    const closeStatsModal = document.getElementById("closeStatsModal");
+    const playersAvgSpan = document.getElementById("playersAvg");
+    const collegeAvgSpan = document.getElementById("collegeAvg");
+    const triviaAvgSpan = document.getElementById("triviaAvg");
 
     // Default avatar
     const defaultAvatar = "https://randomuser.me/api/portraits/men/44.jpg";
@@ -482,6 +562,7 @@
         pubSign.style.pointerEvents = "";
         changeNameBtn.disabled = false;
         changePicBtn.disabled = false;
+        myStatsBtn.disabled = false;
         await loadUserProfile(userUid);
         await loadMyPosts(userUid);
       } else {
@@ -493,6 +574,7 @@
         pubSign.style.pointerEvents = "none";
         changeNameBtn.disabled = true;
         changePicBtn.disabled = true;
+        myStatsBtn.disabled = true;
         tvFeed.innerHTML = "";
       }
     });
@@ -501,6 +583,45 @@
       auth.signInWithPopup(provider);
     };
     signOutBtn.onclick = () => auth.signOut();
+
+    // --- STATS BUTTON & MODAL LOGIC ---
+    myStatsBtn.onclick = async () => {
+      if (!userUid) return;
+      playersAvgSpan.textContent = '...';
+      collegeAvgSpan.textContent = '...';
+      triviaAvgSpan.textContent = '...';
+
+      // Fetch averages from each game
+      try {
+        // Players Game: userAverages
+        const playersDoc = await db.collection('userAverages').doc(userUid).get();
+        playersAvgSpan.textContent = (playersDoc.exists && typeof playersDoc.data().averageScore === 'number')
+          ? playersDoc.data().averageScore.toFixed(1)
+          : 'N/A';
+
+        // College Game: collegeAverages
+        const collegeDoc = await db.collection('collegeAverages').doc(userUid).get();
+        collegeAvgSpan.textContent = (collegeDoc.exists && typeof collegeDoc.data().averageScore === 'number')
+          ? collegeDoc.data().averageScore.toFixed(1)
+          : 'N/A';
+
+        // Trivia Game: triviaAverages
+        const triviaDoc = await db.collection('triviaAverages').doc(userUid).get();
+        triviaAvgSpan.textContent = (triviaDoc.exists && typeof triviaDoc.data().averageScore === 'number')
+          ? triviaDoc.data().averageScore.toFixed(1)
+          : 'N/A';
+      } catch (err) {
+        playersAvgSpan.textContent = 'Error';
+        collegeAvgSpan.textContent = 'Error';
+        triviaAvgSpan.textContent = 'Error';
+      }
+
+      statsModal.style.display = "";
+    };
+
+    closeStatsModal.onclick = () => {
+      statsModal.style.display = "none";
+    };
   </script>
 </body>
 </html>
