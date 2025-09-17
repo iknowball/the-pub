@@ -356,18 +356,18 @@
         return emojis.join('');
       }
       function generateShareText(results) {
-        const homepage = window.location.origin + "/index.html";
+        const homepage = window.location.origin + "/game.html";
         const emojiMsg = generateEmojiShareMessage(results);
         // Show "Do you know ball?" as clickable link
         return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">Do you know ball?</a>`;
       }
       function generateClipboardText(results) {
-        const homepage = window.location.origin + "/index.html";
+        const homepage = window.location.origin + "/game.html";
         const emojiMsg = generateEmojiShareMessage(results);
         return `${emojiMsg} Do you know ball? ${homepage}`;
       }
       function generateSmsLink(results) {
-        const homepage = window.location.origin + "/index.html";
+        const homepage = window.location.origin + "/game.html";
         const emojiMsg = generateEmojiShareMessage(results);
         const msg = `${emojiMsg} Do you know ball? ${homepage}`;
         return "sms:?body=" + encodeURIComponent(msg);
