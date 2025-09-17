@@ -24,6 +24,52 @@
     .font-montserrat {
       font-family: 'Montserrat', sans-serif;
     }
+    .share-buttons-row {
+      display: flex;
+      flex-direction: row;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+    }
+    .clipboard-btn, .sms-btn {
+      background: #f9e38f;
+      color: #533e1f;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 2px solid #cfb467;
+      padding: 7px 18px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #cfb46733;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      transition: background 0.2s, color 0.2s;
+      display: inline-block;
+    }
+    .clipboard-btn:hover, .sms-btn:hover {
+      background: #fffbe7;
+      color: #b88340;
+    }
+    .share-preview {
+      font-size: 1.15rem;
+      color: #f9e38f;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      text-align: center;
+      word-break: break-word;
+    }
+    .share-link-ball {
+      color: #ffd700;
+      text-decoration: underline;
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+    .share-link-ball:hover {
+      color: #ffbb33;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center min-h-screen font-montserrat">
@@ -50,7 +96,13 @@
       <div id="timer" class="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
       <p id="score" class="text-yellow-300 text-center mb-0">Score: <span id="scoreValue">0</span>/25</p>
     </div>
-    <p id="shareLink" class="text-center mt-4 hidden text-yellow-300">Share your results: <a id="shareUrl" href="#" class="text-yellow-400 underline"></a></p>
+    <div id="shareLink" class="text-center mt-4 hidden text-yellow-300">
+      <div class="share-buttons-row">
+        <button id="clipboardBtn" class="clipboard-btn">Copy to Clipboard</button>
+        <a id="smsBtn" class="sms-btn" href="#" target="_blank">Send as SMS</a>
+      </div>
+      <div id="sharePreview" class="share-preview"></div>
+    </div>
   </div>
 
   <!-- Stats Modal -->
@@ -152,13 +204,10 @@
       }
     }
 
-    // Helper to get today's date in America/New_York, switching at 12am Eastern
     function getTodayEasternMidnight() {
       const now = new Date();
-      // Get New York time (EST/EDT automatically handled)
       const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
       const nyDate = new Date(nyString);
-      // Return YYYY-MM-DD for today's date in NY
       return nyDate.toISOString().slice(0, 10);
     }
 
@@ -187,8 +236,7 @@
 
       let currentLevel = 1;
       let score = 0;
-      let correctAnswers = 0;
-      let incorrectAnswers = [];
+      let answerResults = [];
       let elapsedTime = 0;
       let timerInterval;
 
@@ -232,7 +280,6 @@
         return `${minutes}:${secs}`;
       }
 
-      // DOM elements
       const gameContainer = document.getElementById('gameContainer');
       const questionText = document.getElementById('questionText');
       const guessInput = document.getElementById('guessInput');
@@ -244,7 +291,9 @@
       const scoreDisplay = document.getElementById('scoreValue');
       const currentLevelDisplay = document.getElementById('currentLevel');
       const shareLink = document.getElementById('shareLink');
-      const shareUrl = document.getElementById('shareUrl');
+      const sharePreview = document.getElementById('sharePreview');
+      const clipboardBtn = document.getElementById('clipboardBtn');
+      const smsBtn = document.getElementById('smsBtn');
       const statsModal = document.getElementById('statsModal');
       const avgScore = document.getElementById('avgScore');
       const statsTableBody = document.getElementById('statsTableBody');
@@ -296,10 +345,27 @@
         statsModal.classList.remove('hidden');
       }
 
-      function generateShareLink(score, incorrectAnswers) {
-        const baseUrl = 'https://thepub-sigma.vercel.app/trivia-game';
-        const incorrectParam = incorrectAnswers.map(name => encodeURIComponent(name)).join(',');
-        return `${baseUrl}?score=${score}&incorrect=${incorrectParam}`;
+      // Emoji share logic
+      function generateEmojiShareMessage(results) {
+        const emojis = results.map(r => r ? '✅' : '❌');
+        while (emojis.length < 5) emojis.push('❓');
+        return emojis.join('');
+      }
+      function generateShareText(results) {
+        const homepage = window.location.origin + "/index.html";
+        const emojiMsg = generateEmojiShareMessage(results);
+        return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">Do you know ball?</a>`;
+      }
+      function generateClipboardText(results) {
+        const homepage = window.location.origin + "/index.html";
+        const emojiMsg = generateEmojiShareMessage(results);
+        return `${emojiMsg} Do you know ball? ${homepage}`;
+      }
+      function generateSmsLink(results) {
+        const homepage = window.location.origin + "/index.html";
+        const emojiMsg = generateEmojiShareMessage(results);
+        const msg = `${emojiMsg} Do you know ball? ${homepage}`;
+        return "sms:?body=" + encodeURIComponent(msg);
       }
 
       function displayResultsFromUrl() {
@@ -336,14 +402,6 @@
         startTimer();
       }
 
-      function showStats() {
-        const stats = document.createElement('p');
-        stats.classList.add('text-yellow-300', 'text-center', 'mb-4');
-        stats.textContent = questions[currentLevel - 1].stats || "";
-        statsModal.querySelector('div').insertBefore(stats, statsModal.querySelector('p#avgScore'));
-        statsModal.classList.remove('hidden');
-      }
-
       async function moveToNextLevel() {
         currentLevel++;
         statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
@@ -352,7 +410,6 @@
         } else {
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
-
           await recordTriviaGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
@@ -363,10 +420,36 @@
           nextLevel.classList.add('hidden');
           backToHome.classList.remove('hidden');
           viewStats.classList.remove('hidden');
-          const shareUrlLink = generateShareLink(score, incorrectAnswers);
-          shareUrl.href = shareUrlLink;
-          shareUrl.textContent = `🏈 My Score: ${score}/25 ${incorrectAnswers.length ? '| Missed: ' + incorrectAnswers.join(', ') : '| Nailed all answers!'}`;
           shareLink.classList.remove('hidden');
+
+          // Emoji result array for 5 answers (pad if needed)
+          while (answerResults.length < 5) answerResults.push(false);
+
+          // Clear any previous share preview/buttons
+          shareLink.innerHTML = "";
+          const shareButtonsRow = document.createElement('div');
+          shareButtonsRow.className = "share-buttons-row";
+          shareButtonsRow.appendChild(clipboardBtn);
+          shareButtonsRow.appendChild(smsBtn);
+          shareLink.appendChild(shareButtonsRow);
+
+          sharePreview.innerHTML = generateShareText(answerResults);
+          shareLink.appendChild(sharePreview);
+
+          clipboardBtn.onclick = function() {
+            const textToCopy = generateClipboardText(answerResults);
+            navigator.clipboard.writeText(textToCopy)
+              .then(() => {
+                clipboardBtn.textContent = "Copied!";
+                setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
+              })
+              .catch(() => {
+                clipboardBtn.textContent = "Copy Failed";
+                setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
+              });
+          };
+
+          smsBtn.href = generateSmsLink(answerResults);
         }
       }
 
@@ -375,6 +458,7 @@
         const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
 
         feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+        let result = false;
         if (guess === correctAnswer) {
           score += 5;
           correctAnswers += 1;
@@ -384,7 +468,7 @@
           guessInput.classList.add('hidden');
           nextLevel.classList.remove('hidden');
           stopTimer();
-          showStats();
+          result = true;
         } else {
           const distance = getLevenshteinDistance(guess, correctAnswer);
           if (distance <= 2 && guess.length > 0) {
@@ -392,16 +476,16 @@
             feedback.classList.add('text-yellow-400');
             guessInput.value = '';
           } else {
-            incorrectAnswers.push(questions[currentLevel - 1].answer);
             feedback.textContent = `Swing and a miss! The answer was ${questions[currentLevel - 1].answer}.`;
             feedback.classList.add('text-red-500');
             submitAnswer.classList.add('hidden');
             guessInput.classList.add('hidden');
             nextLevel.classList.remove('hidden');
             stopTimer();
-            showStats();
+            result = false;
           }
         }
+        answerResults.push(result);
         scoreDisplay.textContent = score;
       });
 
