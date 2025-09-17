@@ -28,7 +28,7 @@
 </head>
 <body class="flex flex-col items-center min-h-screen font-montserrat">
   <header class="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-    <p class="text-lg font-bold">New Games Daily at 6AM EST</p>
+    <p class="text-lg font-bold">New Games Daily at Midnight EST</p>
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
     <!-- Game style separated nav buttons, like game.html -->
@@ -161,19 +161,20 @@
       }
     }
 
-    // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
-    function getTodayEST6AM() {
+    // Helper to get today's date in EST (YYYY-MM-DD) - 12am update
+    function getTodayESTMidnight() {
       const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const est = new Date(utc - 5 * 60 * 60 * 1000);
-      if (est.getHours() < 6) {
-        est.setDate(est.getDate() - 1);
+      const eastern = new Date(
+        now.toLocaleString("en-US", { timeZone: "America/New_York" })
+      );
+      if (eastern.getHours() > 0) {
+        eastern.setDate(eastern.getDate() - 1);
       }
-      return est.toISOString().slice(0, 10);
+      return eastern.toISOString().slice(0, 10);
     }
 
     async function fetchDailyAthletes() {
-      const dateKey = getTodayEST6AM();
+      const dateKey = getTodayESTMidnight();
       try {
         const doc = await db.collection('dailyCollegeAthletes').doc(dateKey).get();
         if (doc.exists && Array.isArray(doc.data().athletes)) {
