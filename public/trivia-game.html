@@ -89,37 +89,75 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    // STEP 3: Trivia Stats Integration for Firebase
-    async function recordTriviaStats({ gamesPlayedInc = 1, correctInc = 0, bestScore = null }) {
+    // Helper: get current user (anonymous if not signed in)
+    function getCurrentUserId() {
+      const user = auth.currentUser;
+      if (user) {
+        return user.uid;
+      }
+      // Fallback to localStorage for anonymous stats
+      let anonId = localStorage.getItem('anonUserId');
+      if (!anonId) {
+        anonId = 'anon-' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('anonUserId', anonId);
+      }
+      return anonId;
+    }
+
+    // Record score for every completed trivia game
+    async function recordTriviaGameScore(score, time) {
       try {
-        const user = firebase.auth().currentUser;
-        if (!user) return; // Only record if logged in
-        const userRef = db.collection("users").doc(user.uid);
-
-        // Get existing stats
-        const userSnap = await userRef.get();
-        const stats = (userSnap.exists && userSnap.data().stats && userSnap.data().stats.trivia)
-          ? userSnap.data().stats.trivia
-          : { gamesPlayed: 0, correct: 0, bestScore: 0 };
-
-        // Update stats
-        const newStats = {
-          gamesPlayed: (stats.gamesPlayed || 0) + gamesPlayedInc,
-          correct: (stats.correct || 0) + correctInc,
-          bestScore:
-            bestScore !== null
-              ? Math.max(Number(stats.bestScore || 0), Number(bestScore))
-              : Number(stats.bestScore || 0)
-        };
-
-        // Write back to Firestore (merge so other stats aren't lost)
-        await userRef.set(
-          { stats: { trivia: newStats } },
-          { merge: true }
-        );
+        const userId = getCurrentUserId();
+        await db.collection('triviaGameScores').add({
+          userId: userId,
+          score: score,
+          time: time,
+          playedAt: new Date().toISOString()
+        });
+        // Update user's average score for trivia game in a separate collection
+        await updateTriviaAverageScore(userId);
       } catch (err) {
-        console.error("Error recording Trivia stats:", err);
+        console.error("Error recording trivia game score:", err);
+      }
+    }
+
+    // Update average score for a user for trivia game
+    async function updateTriviaAverageScore(userId) {
+      try {
+        // Get all scores for the user (trivia game only)
+        const scoresSnap = await db.collection('triviaGameScores').where('userId', '==', userId).get();
+        let total = 0;
+        let count = 0;
+        scoresSnap.forEach(doc => {
+          total += doc.data().score;
+          count += 1;
+        });
+        const avg = count === 0 ? 0 : (total / count);
+        // Store in triviaAverages collection
+        await db.collection('triviaAverages').doc(userId).set({
+          userId: userId,
+          averageScore: avg,
+          lastUpdated: new Date().toISOString(),
+          gamesPlayed: count
+        });
+      } catch (err) {
+        console.error("Error updating trivia average score:", err);
+      }
+    }
+
+    // Fetch user average score from Firestore (trivia game)
+    async function fetchTriviaAverageScore(userId) {
+      try {
+        const doc = await db.collection('triviaAverages').doc(userId).get();
+        if (doc.exists) {
+          return doc.data().averageScore;
+        }
+        return null;
+      } catch (err) {
+        console.error("Failed to fetch user trivia average score:", err);
+        return null;
       }
     }
 
@@ -246,9 +284,16 @@
         return (total / history.length).toFixed(1);
       }
 
-      function displayStats() {
+      // Fetch and display stats from Firestore (average score for trivia game)
+      async function displayStats() {
         const history = getScoreHistory();
-        avgScore.textContent = `Average Score: ${calculateAverageScore()}/25`;
+        const userId = getCurrentUserId();
+        let avgFromCloud = await fetchTriviaAverageScore(userId);
+        if (avgFromCloud !== null) {
+          avgScore.textContent = `Average Score (cloud): ${avgFromCloud.toFixed(1)}/25`;
+        } else {
+          avgScore.textContent = `Average Score (local): ${calculateAverageScore()}/25`;
+        }
         statsTableBody.innerHTML = '';
         history.forEach((entry, index) => {
           const row = document.createElement('tr');
@@ -312,7 +357,7 @@
         statsModal.classList.remove('hidden');
       }
 
-      function moveToNextLevel() {
+      async function moveToNextLevel() {
         currentLevel++;
         statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
         if (currentLevel <= questions.length) {
@@ -321,8 +366,8 @@
           const finalTime = stopTimer();
           saveScoreHistory(score, finalTime);
 
-          // STEP 3: Record stats to Firestore for Trivia
-          recordTriviaStats({ gamesPlayedInc: 1, correctInc: correctAnswers, bestScore: score });
+          // Record score in Firestore for every completed trivia game and update average
+          await recordTriviaGameScore(score, finalTime);
 
           feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
           feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
@@ -397,7 +442,17 @@
       displayResultsFromUrl();
     }
 
-    document.addEventListener("DOMContentLoaded", startGame);
+    document.addEventListener("DOMContentLoaded", () => {
+      // Try to sign in anonymously for user tracking
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          auth.signInAnonymously()
+            .catch(() => {}); // Ignore errors; fallback to localStorage id
+        }
+        // Always start game after auth state checked
+        startGame();
+      });
+    });
   </script>
 </body>
 </html>
