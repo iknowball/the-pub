@@ -166,20 +166,20 @@
     }
 
     // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
-    function getTodayEastern6AM() {
+    function getTodayEasternMidnight() {
     // Get current time in America/New_York (EST/EDT depending on time of year)
       const now = new Date();
       const eastern = new Date(
         now.toLocaleString("en-US", { timeZone: "America/New_York" })
       );
-      if (eastern.getHours() < 6) {
+      if (eastern.getHours() < 0) {
         eastern.setDate(eastern.getDate() - 1);
       }
       return eastern.toISOString().slice(0, 10);
     }
 
     async function fetchDailyPlayers() {
-      const dateKey = getTodayEastern6AM();
+      const dateKey = getTodayEasternMidnight();
       try {
         const doc = await db.collection('dailyPlayers').doc(dateKey).get();
         if (doc.exists && Array.isArray(doc.data().players)) {
