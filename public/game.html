@@ -28,7 +28,7 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen font-montserrat">
   <header class="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-    <p class="text-lg font-bold">New Games Daily at 6 AM EST</p>
+    <p class="text-lg font-bold">New Games Daily at Midnight EST</p>
   </header>
   <div id="gameContainer" class="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative">
     <!-- TIMER MOVED: Remove the absolute-positioned timer above -->
@@ -172,7 +172,7 @@
       const eastern = new Date(
         now.toLocaleString("en-US", { timeZone: "America/New_York" })
       );
-      if (eastern.getHours() < 0) {
+      if (eastern.getHours() > 0) {
         eastern.setDate(eastern.getDate() - 1);
       }
       return eastern.toISOString().slice(0, 10);
