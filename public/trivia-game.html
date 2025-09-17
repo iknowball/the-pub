@@ -161,19 +161,20 @@
       }
     }
 
-    // Helper to get today's date in EST (YYYY-MM-DD) - 6am update
-    function getTodayEST6AM() {
+    // Helper to get today's date in EST (YYYY-MM-DD) - 12am update
+    function getTodayESTMidnight() {
       const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const est = new Date(utc - 5 * 60 * 60 * 1000);
-      if (est.getHours() < 6) {
-        est.setDate(est.getDate() - 1);
+      const eastern = new Date(
+        now.toLocaleString("en-US", { timeZone: "America/New_York" })
+      );
+      if (eastern.getHours() > 0) {
+        eastern.setDate(eastern.getDate() - 1);
       }
-      return est.toISOString().slice(0, 10);
+      return eastern.toISOString().slice(0, 10);
     }
 
     async function fetchDailyQuestions() {
-      const dateKey = getTodayEST6AM();
+      const dateKey = getTodayESTMidnight();
       try {
         const doc = await db.collection('dailyTrivia').doc(dateKey).get();
         if (doc.exists && Array.isArray(doc.data().questions)) {
