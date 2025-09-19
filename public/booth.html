@@ -71,7 +71,21 @@
         <div class="flex flex-col items-center mb-3">
           <label class="text-yellow-100 font-bold text-lg mb-2" for="boothSelect">Hop in a Group!</label>
           <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
-            <option value="">Loading NFL games...</option>
+            <option value="falcons-panthers">Atlanta Falcons @ Carolina Panthers (1:00 PM EDT, FOX)</option>
+            <option value="packers-browns">Green Bay Packers @ Cleveland Browns (1:00 PM EDT, FOX)</option>
+            <option value="texans-jaguars">Houston Texans @ Jacksonville Jaguars (1:00 PM EDT, CBS)</option>
+            <option value="bengals-vikings">Cincinnati Bengals @ Minnesota Vikings (1:00 PM EDT, CBS)</option>
+            <option value="steelers-patriots">Pittsburgh Steelers @ New England Patriots (1:00 PM EDT, CBS)</option>
+            <option value="rams-eagles">Los Angeles Rams @ Philadelphia Eagles (1:00 PM EDT, FOX)</option>
+            <option value="jets-buccaneers">New York Jets @ Tampa Bay Buccaneers (1:00 PM EDT, FOX)</option>
+            <option value="colts-titans">Indianapolis Colts @ Tennessee Titans (1:00 PM EDT, CBS)</option>
+            <option value="raiders-commanders">Las Vegas Raiders @ Washington Commanders (1:00 PM EDT, FOX)</option>
+            <option value="broncos-chargers">Denver Broncos @ Los Angeles Chargers (4:05 PM EDT, CBS)</option>
+            <option value="saints-seahawks">New Orleans Saints @ Seattle Seahawks (4:05 PM EDT, CBS)</option>
+            <option value="cowboys-bears">Dallas Cowboys @ Chicago Bears (4:25 PM EDT, FOX)</option>
+            <option value="cardinals-49ers">Arizona Cardinals @ San Francisco 49ers (4:25 PM EDT, FOX)</option>
+            <option value="chiefs-giants">Kansas City Chiefs @ New York Giants (8:20 PM EDT, NBC/UNIVERSO)</option>
+            <option value="lions-ravens">Detroit Lions @ Baltimore Ravens (Monday, 8:15 PM EDT, ESPN/ABC/ESPN2/ESPN DEPORTES)</option>
           </select>
         </div>
         <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -96,6 +110,25 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
+    // NFL games for Sunday, 9/21/2025
+    const nflGames = [
+      { id: "falcons-panthers", label: "Atlanta Falcons @ Carolina Panthers (1:00 PM EDT, FOX)" },
+      { id: "packers-browns", label: "Green Bay Packers @ Cleveland Browns (1:00 PM EDT, FOX)" },
+      { id: "texans-jaguars", label: "Houston Texans @ Jacksonville Jaguars (1:00 PM EDT, CBS)" },
+      { id: "bengals-vikings", label: "Cincinnati Bengals @ Minnesota Vikings (1:00 PM EDT, CBS)" },
+      { id: "steelers-patriots", label: "Pittsburgh Steelers @ New England Patriots (1:00 PM EDT, CBS)" },
+      { id: "rams-eagles", label: "Los Angeles Rams @ Philadelphia Eagles (1:00 PM EDT, FOX)" },
+      { id: "jets-buccaneers", label: "New York Jets @ Tampa Bay Buccaneers (1:00 PM EDT, FOX)" },
+      { id: "colts-titans", label: "Indianapolis Colts @ Tennessee Titans (1:00 PM EDT, CBS)" },
+      { id: "raiders-commanders", label: "Las Vegas Raiders @ Washington Commanders (1:00 PM EDT, FOX)" },
+      { id: "broncos-chargers", label: "Denver Broncos @ Los Angeles Chargers (4:05 PM EDT, CBS)" },
+      { id: "saints-seahawks", label: "New Orleans Saints @ Seattle Seahawks (4:05 PM EDT, CBS)" },
+      { id: "cowboys-bears", label: "Dallas Cowboys @ Chicago Bears (4:25 PM EDT, FOX)" },
+      { id: "cardinals-49ers", label: "Arizona Cardinals @ San Francisco 49ers (4:25 PM EDT, FOX)" },
+      { id: "chiefs-giants", label: "Kansas City Chiefs @ New York Giants (8:20 PM EDT, NBC/UNIVERSO)" },
+      { id: "lions-ravens", label: "Detroit Lions @ Baltimore Ravens (Monday, 8:15 PM EDT, ESPN/ABC/ESPN2/ESPN DEPORTES)" }
+    ];
+
     // Firebase config (replace with your actual config if needed)
     const firebaseConfig = {
       apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
@@ -115,57 +148,25 @@
     const boothSelect = document.getElementById('boothSelect');
     const barStools = document.getElementById('barStools');
 
-    // Returns upcoming Sunday (next Sunday if today is Monday or later)
-    function getUpcomingSunday() {
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      let sunday = new Date(today);
-      if (dayOfWeek === 0) return sunday;
-      sunday.setDate(today.getDate() + (7 - dayOfWeek));
-      return sunday;
-    }
-
-    // Fetch NFL Sunday games from TheSportsDB (live, accurate, and free API)
-    async function fetchNflGamesFromSportsDB(sundayDate) {
-      const year = sundayDate.getFullYear();
-      const month = String(sundayDate.getMonth() + 1).padStart(2, '0');
-      const day = String(sundayDate.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      const resp = await fetch(`https://www.thesportsdb.com/api/v1/json/1/eventsday.php?d=${formattedDate}&s=American%20Football`);
-      const data = await resp.json();
-      if (!data.events) return [];
-      return data.events
-        .filter(ev => ev.strLeague && ev.strLeague.includes('NFL'))
-        .map(ev => ({
-          id: `${ev.idEvent}`,
-          label: `${ev.strAwayTeam} @ ${ev.strHomeTeam} (${ev.strTime} ET)`
-        }));
-    }
-
-    // Populate boothSelect with live NFL games for the upcoming Sunday
-    async function populateBooths() {
-      boothSelect.innerHTML = `<option value="">Loading NFL games...</option>`;
-      const sundayDate = getUpcomingSunday();
-      const nflGames = await fetchNflGamesFromSportsDB(sundayDate);
-      boothSelect.innerHTML = nflGames.length ?
-        nflGames.map(game =>
-          `<option value="${game.id}">${game.label}</option>`
-        ).join('')
-        : `<option value="">No NFL games found for this Sunday</option>`;
-      window.currentBooth = nflGames.length ? nflGames[0].id : null;
+    // Populate boothSelect with NFL games
+    function populateBooths() {
+      boothSelect.innerHTML = nflGames.map(game =>
+        `<option value="${game.id}">${game.label}</option>`
+      ).join('');
     }
     populateBooths();
 
     let user = null;
     let unsubscribe = null;
-    window.currentBooth = null;
+    let currentBooth = boothSelect.value;
 
+    // Auth
     firebase.auth().onAuthStateChanged(u => {
       user = u;
       if (user) {
         authSection.classList.add('hidden');
         chatSection.classList.remove('hidden');
-        if (window.currentBooth) joinBooth(window.currentBooth);
+        joinBooth(currentBooth);
       } else {
         chatSection.classList.add('hidden');
         authSection.classList.remove('hidden');
@@ -178,18 +179,15 @@
     };
 
     boothSelect.onchange = () => {
-      window.currentBooth = boothSelect.value;
-      if (window.currentBooth) joinBooth(window.currentBooth);
-      else messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Select a game to join the booth.</div>';
+      currentBooth = boothSelect.value;
+      joinBooth(currentBooth);
     };
 
     function joinBooth(boothId) {
-      if (!boothId) {
-        messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Select a game to join the booth.</div>';
-        return;
-      }
+      // Unsubscribe previous listener if any
       if (unsubscribe) unsubscribe();
       messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Loading messages...</div>';
+      // Listen for last 50 messages in this booth, ordered by time
       unsubscribe = db.collection('booths')
         .doc(boothId)
         .collection('messages')
@@ -215,6 +213,7 @@
               </div>
             `;
           });
+          // Update "bar stools" with avatars
           barStools.innerHTML = Object.keys(usersInBooth).slice(0,4).map(uid => `
             <img src="https://robohash.org/${uid}?set=set5&size=36x36" title="${usersInBooth[uid]}" class="rounded-full border-2 border-yellow-700 shadow bar-stool" />
           `).join('');
@@ -225,9 +224,9 @@
     messageForm.onsubmit = async (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
-      if (!text || !window.currentBooth) return;
+      if (!text) return;
       await db.collection('booths')
-        .doc(window.currentBooth)
+        .doc(currentBooth)
         .collection('messages')
         .add({
           text: text,
