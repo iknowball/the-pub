@@ -115,78 +115,51 @@
     const boothSelect = document.getElementById('boothSelect');
     const barStools = document.getElementById('barStools');
 
-    /**
-     * Returns the correct NFL Sunday date for this week's (or next week's) games.
-     * If it's Monday or later, uses next Sunday, otherwise uses this upcoming Sunday.
-     */
+    // Returns upcoming Sunday (next Sunday if today is Monday or later)
     function getUpcomingSunday() {
       const today = new Date();
-      const dayOfWeek = today.getDay(); // Sunday is 0, Monday is 1
+      const dayOfWeek = today.getDay();
       let sunday = new Date(today);
-      if (dayOfWeek === 0) {
-        // It's Sunday, use today
-        return sunday;
-      }
-      // If it's Monday or later, use next week's Sunday
-      if (dayOfWeek >= 1) {
-        sunday.setDate(today.getDate() + (7 - dayOfWeek));
-      }
+      if (dayOfWeek === 0) return sunday;
+      sunday.setDate(today.getDate() + (7 - dayOfWeek));
       return sunday;
     }
 
-    /**
-     * Fetches NFL games for the calculated Sunday.
-     * For 2025-09-21, uses a hardcoded list.
-     * For other dates, shows a placeholder option with a link to NFL.com.
-     */
-    async function fetchNflGames(sundayDate) {
+    // Fetch NFL Sunday games from TheSportsDB (live, accurate, and free API)
+    async function fetchNflGamesFromSportsDB(sundayDate) {
       const year = sundayDate.getFullYear();
       const month = String(sundayDate.getMonth() + 1).padStart(2, '0');
       const day = String(sundayDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-
-      // Hardcoded games for Sept 21, 2025
-      if (formattedDate === "2025-09-21") {
-        return [
-          { id: "browns-ravens", label: "Cleveland Browns @ Baltimore Ravens (1:00 PM ET)" },
-          { id: "jaguars-bengals", label: "Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)" },
-          { id: "giants-cowboys", label: "New York Giants @ Dallas Cowboys (1:00 PM ET)" },
-          { id: "bears-lions", label: "Chicago Bears @ Detroit Lions (1:00 PM ET)" },
-          { id: "patriots-dolphins", label: "New England Patriots @ Miami Dolphins (1:00 PM ET)" },
-          { id: "49ers-saints", label: "San Francisco 49ers @ New Orleans Saints (1:00 PM ET)" },
-          { id: "bills-jets", label: "Buffalo Bills @ New York Jets (1:00 PM ET)" },
-          { id: "seahawks-steelers", label: "Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)" },
-          { id: "rams-titans", label: "Los Angeles Rams @ Tennessee Titans (1:00 PM ET)" },
-          { id: "panthers-cardinals", label: "Carolina Panthers @ Arizona Cardinals (4:05 PM ET)" }
-        ];
-      }
-      // Fallback for other dates
-      return [
-        { id: "", label: `View full NFL schedule for ${formattedDate} on NFL.com`, url: `https://www.nfl.com/schedules/${year}/REG${month}/${day}/` }
-      ];
+      const resp = await fetch(`https://www.thesportsdb.com/api/v1/json/1/eventsday.php?d=${formattedDate}&s=American%20Football`);
+      const data = await resp.json();
+      if (!data.events) return [];
+      return data.events
+        .filter(ev => ev.strLeague && ev.strLeague.includes('NFL'))
+        .map(ev => ({
+          id: `${ev.idEvent}`,
+          label: `${ev.strAwayTeam} @ ${ev.strHomeTeam} (${ev.strTime} ET)`
+        }));
     }
 
-    // Populate boothSelect with NFL games for the upcoming Sunday
+    // Populate boothSelect with live NFL games for the upcoming Sunday
     async function populateBooths() {
       boothSelect.innerHTML = `<option value="">Loading NFL games...</option>`;
       const sundayDate = getUpcomingSunday();
-      const nflGames = await fetchNflGames(sundayDate);
-      boothSelect.innerHTML = nflGames.map(game =>
-        game.url ?
-          `<option value="">${game.label}</option>` :
+      const nflGames = await fetchNflGamesFromSportsDB(sundayDate);
+      boothSelect.innerHTML = nflGames.length ?
+        nflGames.map(game =>
           `<option value="${game.id}">${game.label}</option>`
-      ).join('');
-      // Set currentBooth to the first valid option
-      const firstValid = nflGames.find(g => g.id);
-      window.currentBooth = firstValid ? firstValid.id : null;
+        ).join('')
+        : `<option value="">No NFL games found for this Sunday</option>`;
+      window.currentBooth = nflGames.length ? nflGames[0].id : null;
     }
     populateBooths();
 
     let user = null;
     let unsubscribe = null;
-    window.currentBooth = null; // Use window-scoped to avoid scope issues
+    window.currentBooth = null;
 
-    // Auth
     firebase.auth().onAuthStateChanged(u => {
       user = u;
       if (user) {
@@ -215,10 +188,8 @@
         messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Select a game to join the booth.</div>';
         return;
       }
-      // Unsubscribe previous listener if any
       if (unsubscribe) unsubscribe();
       messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Loading messages...</div>';
-      // Listen for last 50 messages in this booth, ordered by time
       unsubscribe = db.collection('booths')
         .doc(boothId)
         .collection('messages')
@@ -244,7 +215,6 @@
               </div>
             `;
           });
-          // Update "bar stools" with avatars
           barStools.innerHTML = Object.keys(usersInBooth).slice(0,4).map(uid => `
             <img src="https://robohash.org/${uid}?set=set5&size=36x36" title="${usersInBooth[uid]}" class="rounded-full border-2 border-yellow-700 shadow bar-stool" />
           `).join('');
