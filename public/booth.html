@@ -119,7 +119,7 @@
      * Returns the correct NFL Sunday date for this week's (or next week's) games.
      * If it's Monday or later, uses next Sunday, otherwise uses this upcoming Sunday.
      */
-    function getSundayDate() {
+    function getUpcomingSunday() {
       const today = new Date();
       const dayOfWeek = today.getDay(); // Sunday is 0, Monday is 1
       let sunday = new Date(today);
@@ -136,18 +136,16 @@
 
     /**
      * Fetches NFL games for the calculated Sunday.
-     * This uses the NFL.com schedule page for the given date.
-     * Since NFL.com doesn't provide a free JSON API for schedules, we use a static list for Sept 21, 2025 as an example.
-     * For production, you could use a server-side proxy to fetch and parse NFL's schedule or use a sports API.
+     * For 2025-09-21, uses a hardcoded list.
+     * For other dates, shows a placeholder option with a link to NFL.com.
      */
     async function fetchNflGames(sundayDate) {
-      // Format the date for NFL.com (YYYYMMDD)
       const year = sundayDate.getFullYear();
       const month = String(sundayDate.getMonth() + 1).padStart(2, '0');
       const day = String(sundayDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
 
-      // Example: If the date is 2025-09-21, use a hardcoded list for demonstration
+      // Hardcoded games for Sept 21, 2025
       if (formattedDate === "2025-09-21") {
         return [
           { id: "browns-ravens", label: "Cleveland Browns @ Baltimore Ravens (1:00 PM ET)" },
@@ -162,28 +160,31 @@
           { id: "panthers-cardinals", label: "Carolina Panthers @ Arizona Cardinals (4:05 PM ET)" }
         ];
       }
-      // For other dates, fallback to a placeholder and link to nfl.com
+      // Fallback for other dates
       return [
-        { id: "nfl-schedule", label: `View full NFL schedule for ${formattedDate} on NFL.com`, url: `https://www.nfl.com/schedules/${year}/REG${month}/${day}/` }
+        { id: "", label: `View full NFL schedule for ${formattedDate} on NFL.com`, url: `https://www.nfl.com/schedules/${year}/REG${month}/${day}/` }
       ];
     }
 
     // Populate boothSelect with NFL games for the upcoming Sunday
     async function populateBooths() {
       boothSelect.innerHTML = `<option value="">Loading NFL games...</option>`;
-      const sundayDate = getSundayDate();
+      const sundayDate = getUpcomingSunday();
       const nflGames = await fetchNflGames(sundayDate);
       boothSelect.innerHTML = nflGames.map(game =>
         game.url ?
-          `<option value="${game.id}">${game.label}</option>` :
+          `<option value="">${game.label}</option>` :
           `<option value="${game.id}">${game.label}</option>`
       ).join('');
+      // Set currentBooth to the first valid option
+      const firstValid = nflGames.find(g => g.id);
+      window.currentBooth = firstValid ? firstValid.id : null;
     }
     populateBooths();
 
     let user = null;
     let unsubscribe = null;
-    let currentBooth = boothSelect.value;
+    window.currentBooth = null; // Use window-scoped to avoid scope issues
 
     // Auth
     firebase.auth().onAuthStateChanged(u => {
@@ -191,7 +192,7 @@
       if (user) {
         authSection.classList.add('hidden');
         chatSection.classList.remove('hidden');
-        joinBooth(currentBooth);
+        if (window.currentBooth) joinBooth(window.currentBooth);
       } else {
         chatSection.classList.add('hidden');
         authSection.classList.remove('hidden');
@@ -204,11 +205,16 @@
     };
 
     boothSelect.onchange = () => {
-      currentBooth = boothSelect.value;
-      joinBooth(currentBooth);
+      window.currentBooth = boothSelect.value;
+      if (window.currentBooth) joinBooth(window.currentBooth);
+      else messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Select a game to join the booth.</div>';
     };
 
     function joinBooth(boothId) {
+      if (!boothId) {
+        messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Select a game to join the booth.</div>';
+        return;
+      }
       // Unsubscribe previous listener if any
       if (unsubscribe) unsubscribe();
       messagesDiv.innerHTML = '<div class="text-center text-yellow-700 italic my-2">Loading messages...</div>';
@@ -249,9 +255,9 @@
     messageForm.onsubmit = async (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
-      if (!text) return;
+      if (!text || !window.currentBooth) return;
       await db.collection('booths')
-        .doc(currentBooth)
+        .doc(window.currentBooth)
         .collection('messages')
         .add({
           text: text,
