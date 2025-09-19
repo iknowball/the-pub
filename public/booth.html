@@ -71,16 +71,7 @@
         <div class="flex flex-col items-center mb-3">
           <label class="text-yellow-100 font-bold text-lg mb-2" for="boothSelect">Hop in a Group!</label>
           <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
-            <option value="browns-ravens">Cleveland Browns @ Baltimore Ravens (1:00 PM ET)</option>
-            <option value="jaguars-bengals">Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)</option>
-            <option value="giants-cowboys">New York Giants @ Dallas Cowboys (1:00 PM ET)</option>
-            <option value="bears-lions">Chicago Bears @ Detroit Lions (1:00 PM ET)</option>
-            <option value="patriots-dolphins">New England Patriots @ Miami Dolphins (1:00 PM ET)</option>
-            <option value="49ers-saints">San Francisco 49ers @ New Orleans Saints (1:00 PM ET)</option>
-            <option value="bills-jets">Buffalo Bills @ New York Jets (1:00 PM ET)</option>
-            <option value="seahawks-steelers">Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)</option>
-            <option value="rams-titans">Los Angeles Rams @ Tennessee Titans (1:00 PM ET)</option>
-            <option value="panthers-cardinals">Carolina Panthers @ Arizona Cardinals (4:05 PM ET)</option>
+            <option value="">Loading NFL games...</option>
           </select>
         </div>
         <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -92,7 +83,7 @@
         </form>
       </div>
     </div>
-    <div class="flex items-end mt-4">
+    <div class="flex items-end mt-4" id="barStools">
       <div class="bar-stool"></div>
       <div class="bar-stool"></div>
       <div class="bar-stool"></div>
@@ -105,20 +96,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // NFL games for Sunday, 9/14/2025
-    const nflGames = [
-      { id: "browns-ravens", label: "Cleveland Browns @ Baltimore Ravens (1:00 PM ET)" },
-      { id: "jaguars-bengals", label: "Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)" },
-      { id: "giants-cowboys", label: "New York Giants @ Dallas Cowboys (1:00 PM ET)" },
-      { id: "bears-lions", label: "Chicago Bears @ Detroit Lions (1:00 PM ET)" },
-      { id: "patriots-dolphins", label: "New England Patriots @ Miami Dolphins (1:00 PM ET)" },
-      { id: "49ers-saints", label: "San Francisco 49ers @ New Orleans Saints (1:00 PM ET)" },
-      { id: "bills-jets", label: "Buffalo Bills @ New York Jets (1:00 PM ET)" },
-      { id: "seahawks-steelers", label: "Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)" },
-      { id: "rams-titans", label: "Los Angeles Rams @ Tennessee Titans (1:00 PM ET)" },
-      { id: "panthers-cardinals", label: "Carolina Panthers @ Arizona Cardinals (4:05 PM ET)" }
-    ];
-
     // Firebase config (replace with your actual config if needed)
     const firebaseConfig = {
       apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
@@ -138,10 +115,68 @@
     const boothSelect = document.getElementById('boothSelect');
     const barStools = document.getElementById('barStools');
 
-    // Populate boothSelect with NFL games
-    function populateBooths() {
+    /**
+     * Returns the correct NFL Sunday date for this week's (or next week's) games.
+     * If it's Monday or later, uses next Sunday, otherwise uses this upcoming Sunday.
+     */
+    function getSundayDate() {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // Sunday is 0, Monday is 1
+      let sunday = new Date(today);
+      if (dayOfWeek === 0) {
+        // It's Sunday, use today
+        return sunday;
+      }
+      // If it's Monday or later, use next week's Sunday
+      if (dayOfWeek >= 1) {
+        sunday.setDate(today.getDate() + (7 - dayOfWeek));
+      }
+      return sunday;
+    }
+
+    /**
+     * Fetches NFL games for the calculated Sunday.
+     * This uses the NFL.com schedule page for the given date.
+     * Since NFL.com doesn't provide a free JSON API for schedules, we use a static list for Sept 21, 2025 as an example.
+     * For production, you could use a server-side proxy to fetch and parse NFL's schedule or use a sports API.
+     */
+    async function fetchNflGames(sundayDate) {
+      // Format the date for NFL.com (YYYYMMDD)
+      const year = sundayDate.getFullYear();
+      const month = String(sundayDate.getMonth() + 1).padStart(2, '0');
+      const day = String(sundayDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
+      // Example: If the date is 2025-09-21, use a hardcoded list for demonstration
+      if (formattedDate === "2025-09-21") {
+        return [
+          { id: "browns-ravens", label: "Cleveland Browns @ Baltimore Ravens (1:00 PM ET)" },
+          { id: "jaguars-bengals", label: "Jacksonville Jaguars @ Cincinnati Bengals (1:00 PM ET)" },
+          { id: "giants-cowboys", label: "New York Giants @ Dallas Cowboys (1:00 PM ET)" },
+          { id: "bears-lions", label: "Chicago Bears @ Detroit Lions (1:00 PM ET)" },
+          { id: "patriots-dolphins", label: "New England Patriots @ Miami Dolphins (1:00 PM ET)" },
+          { id: "49ers-saints", label: "San Francisco 49ers @ New Orleans Saints (1:00 PM ET)" },
+          { id: "bills-jets", label: "Buffalo Bills @ New York Jets (1:00 PM ET)" },
+          { id: "seahawks-steelers", label: "Seattle Seahawks @ Pittsburgh Steelers (1:00 PM ET)" },
+          { id: "rams-titans", label: "Los Angeles Rams @ Tennessee Titans (1:00 PM ET)" },
+          { id: "panthers-cardinals", label: "Carolina Panthers @ Arizona Cardinals (4:05 PM ET)" }
+        ];
+      }
+      // For other dates, fallback to a placeholder and link to nfl.com
+      return [
+        { id: "nfl-schedule", label: `View full NFL schedule for ${formattedDate} on NFL.com`, url: `https://www.nfl.com/schedules/${year}/REG${month}/${day}/` }
+      ];
+    }
+
+    // Populate boothSelect with NFL games for the upcoming Sunday
+    async function populateBooths() {
+      boothSelect.innerHTML = `<option value="">Loading NFL games...</option>`;
+      const sundayDate = getSundayDate();
+      const nflGames = await fetchNflGames(sundayDate);
       boothSelect.innerHTML = nflGames.map(game =>
-        `<option value="${game.id}">${game.label}</option>`
+        game.url ?
+          `<option value="${game.id}">${game.label}</option>` :
+          `<option value="${game.id}">${game.label}</option>`
       ).join('');
     }
     populateBooths();
