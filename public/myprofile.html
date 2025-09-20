@@ -546,7 +546,7 @@
         searchResults.style.display = "";
         searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
           btn.onclick = function() {
-            window.location.href = `profile.html?user=${encodeURIComponent(btn.getAttribute("data-username"))}`;
+            window.location.href = `myprofile.html?user=${encodeURIComponent(btn.getAttribute("data-username"))}`;
           }
         });
       } else {
