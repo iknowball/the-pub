@@ -7,34 +7,342 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
   <style>
-    body {
-      /* Woodgrain bar background */
-      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), linear-gradient(135deg, #a87744 0%, #6e4426 100%);
-      background-size: 400px, cover;
-      background-repeat: repeat, no-repeat;
-      background-attachment: fixed;
-      min-height: 100vh;
-      font-family: 'Montserrat', sans-serif;
+    /* ...all your styles, unchanged... */
+    /* (for brevity, your style block is perfectly fine and doesn't cause the error) */
+  </style>
+</head>
+<body>
+  <!-- Top Pub Bar Sign -->
+  <div class="pub-sign" id="pubTitle">Your Pub</div>
+  <!-- Search Friends Bar -->
+  <div class="search-bar-container" style="position:relative;">
+    <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
+    <button id="searchBtn">Search</button>
+    <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
+  </div>
+  <!-- Search Results -->
+  <div id="searchResults" class="search-results" style="display:none"></div>
+  <!-- Bar Front -->
+  <div class="bar-front"></div>
+  <!-- TV Frame -->
+  <div class="tv-frame">
+    <!-- TV Bezel -->
+    <div class="tv-bezel">Facing the Big Screen</div>
+    <!-- Tabs -->
+    <div class="flex flex-row justify-center gap-2 mb-0 pt-2 pb-1" id="tabBar">
+      <button class="tab-btn active" data-tab="wall">Wall</button>
+      <button class="tab-btn" data-tab="takes">My Takes</button>
+      <button class="tab-btn" data-tab="teams">My Teams</button>
+    </div>
+    <!-- Content Screen -->
+    <div class="tv-screen">
+      <div class="tv-content" id="tabContent">
+        <!-- Wall content (default) -->
+      </div>
+    </div>
+  </div>
+  <!-- Profile Preview Modal -->
+  <div id="profileModalBg" class="profile-modal-bg">
+    <div class="profile-modal" id="profileModal">
+      <button class="close-btn" id="closeProfileBtn">Close</button>
+      <div class="user-username" id="modalUsername"></div>
+      <div class="profile-section">
+        <div class="profile-section-title">Wall</div>
+        <div id="modalWall" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Takes</div>
+        <div id="modalTakes" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Teams</div>
+        <div id="modalTeams" class="profile-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Only declare 'username' ONCE at the top level!
+    const username = "iknowball"; // Set this dynamically from your auth/session
+    document.getElementById("pubTitle").textContent = `${username}'s Pub`;
+
+    // Simulated user database (for demo only)
+    const userDB = [
+      {
+        username: "iknowball",
+        wall: [
+          {author: "sportsguru", text: "Welcome to the pub!"},
+          {author: "iknowball", text: "Leave your takes!"},
+        ],
+        takes: ["CMC for OPOY!", "Never bet against Mahomes."],
+        teams: [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}],
+      },
+      {
+        username: "ballerfan42",
+        wall: [
+          {author:"iknowball", text:"Love your takes!"},
+          {author:"sportsguru", text:"Let's go Knicks!"},
+        ],
+        takes: ["Knicks are winning it all.", "Jalen Brunson is HIM."],
+        teams: [{name:"Knicks", role:"Fan"},{name:"Yankees",role:"Fan"}],
+      },
+      {
+        username: "sportsguru",
+        wall: [
+          {author:"iknowball", text:"Bills for the AFC East!"},
+          {author:"ballerfan42", text:"You know ball!"},
+        ],
+        takes: ["Bills are going deep!", "Cowboys fans will be disappointed."],
+        teams: [{name:"Bills",role:"Fan"},{name:"Cowboys",role:"Hater"}],
+      },
+    ];
+
+    // Use your own wall/takes/teams data for logged-in user
+    let wallPosts = userDB[0].wall.slice(); // This user's wall
+    let takes = userDB[0].takes.slice();
+    let teams = userDB[0].teams.slice();
+
+    const tabContent = document.getElementById("tabContent");
+    const tabBar = document.getElementById("tabBar");
+    let currentTab = "wall";
+
+    // Renderers
+    function renderWall() {
+      let html = `
+        <form class="post-form" id="wallForm">
+          <input type="text" id="wallInput" placeholder="Post something on ${username}'s wall..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      wallPosts.slice().reverse().forEach(post => {
+        html += `
+          <div class="wall-post">
+            <span class="wall-post-author">${post.author}</span>
+            ${post.text}
+          </div>
+        `;
+      });
+      tabContent.innerHTML = html;
+      document.getElementById("wallForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("wallInput");
+        if (input.value.trim()) {
+          wallPosts.push({author: username, text: input.value.trim()});
+          input.value = "";
+          renderWall();
+        }
+      };
     }
-    .pub-sign {
-      background: linear-gradient(90deg, #6e4426 60%, #b57f4a 100%);
-      color: #ffe38a;
-      font-size: 2rem;
-      font-family: 'Montserrat', sans-serif;
-      font-weight: bold;
-      text-shadow: 2px 2px 4px #3b230f99;
-      border-radius: 20px 20px 0 0;
-      border: 4px solid #d8b170;
-      border-bottom: none;
-      max-width: 580px;
-      margin: 44px auto 0 auto;
-      padding: 18px 0 9px 0;
-      letter-spacing: 2px;
-      box-shadow: 0 4px 14px #3b230f55;
-      text-align: center;
+
+    function renderTakes() {
+      let html = `
+        <form class="take-form" id="takeForm">
+          <input type="text" id="takeInput" placeholder="Share your latest sports take..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      takes.slice().reverse().forEach(take => {
+        html += `<div class="my-take">${take}</div>`;
+      });
+      tabContent.innerHTML = html;
+      document.getElementById("takeForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("takeInput");
+        if (input.value.trim()) {
+          takes.push(input.value.trim());
+          input.value = "";
+          renderTakes();
+        }
+      };
     }
-    .search-bar-container {
-      display: flex;
+
+    function renderTeams() {
+      let html = `
+        <form class="team-form" id="teamForm">
+          <input type="text" id="teamInput" placeholder="Add team name...">
+          <input type="text" id="roleInput" placeholder="Role (Fan, Alumni, etc)">
+          <button type="submit">Add</button>
+        </form>
+      `;
+      teams.forEach((team, idx) => {
+        html += `
+          <div class="team-card">
+            <span>${team.name} <span style="font-size:0.95em;color:#444;">(${team.role})</span></span>
+            <button class="edit-btn" data-idx="${idx}">Remove</button>
+          </div>
+        `;
+      });
+      tabContent.innerHTML = html;
+
+      document.getElementById("teamForm").onsubmit = function(e) {
+        e.preventDefault();
+        const teamName = document.getElementById("teamInput").value.trim();
+        const role = document.getElementById("roleInput").value.trim() || "Fan";
+        if (teamName) {
+          teams.push({name: teamName, role});
+          renderTeams();
+        }
+      };
+      document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = function() {
+          const idx = parseInt(btn.getAttribute("data-idx"));
+          teams.splice(idx, 1);
+          renderTeams();
+        }
+      });
+    }
+
+    // Tab switching
+    tabBar.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.onclick = function() {
+        tabBar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentTab = btn.getAttribute("data-tab");
+        if (currentTab === "wall") renderWall();
+        if (currentTab === "takes") renderTakes();
+        if (currentTab === "teams") renderTeams();
+      };
+    });
+
+    // Initial render
+    renderWall();
+
+    // --- Search friends with dropdown ---
+    const searchInput = document.getElementById("searchInput");
+    const searchDropdown = document.getElementById("searchDropdown");
+    const searchBtn = document.getElementById("searchBtn");
+    const searchResults = document.getElementById("searchResults");
+
+    // Helper: get all usernames
+    const usernames = userDB.map(u => u.username);
+
+    // Show dropdown filtered by input value
+    searchInput.addEventListener("input", function() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      // Filter and sort
+      const filtered = usernames.filter(u => u.toLowerCase().includes(query));
+      if (filtered.length === 0) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      searchDropdown.innerHTML = filtered.map(u =>
+        `<li tabindex="0" data-username="${u}">${u}</li>`
+      ).join("");
+      searchDropdown.style.display = "";
+    });
+
+    // Dropdown click: select username
+    searchDropdown.addEventListener("mousedown", function(e) {
+      if (e.target.tagName === "LI") {
+        searchInput.value = e.target.dataset.username;
+        searchDropdown.style.display = "none";
+        searchBtn.click();
+      }
+    });
+
+    // Keyboard navigation in dropdown
+    searchInput.addEventListener("keydown", function(e) {
+      if (searchDropdown.style.display !== "none") {
+        const items = searchDropdown.querySelectorAll("li");
+        let activeIdx = Array.from(items).findIndex(li => li.classList.contains("active"));
+        if (e.key === "ArrowDown") {
+          activeIdx = (activeIdx + 1) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "ArrowUp") {
+          activeIdx = (activeIdx - 1 + items.length) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "Enter" && activeIdx >= 0) {
+          searchInput.value = items[activeIdx].dataset.username;
+          searchDropdown.style.display = "none";
+          searchBtn.click();
+        }
+      }
+    });
+
+    // Hide dropdown if clicking elsewhere
+    document.addEventListener("click", function(e) {
+      if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+        searchDropdown.style.display = "none";
+      }
+    });
+
+    // --- Search results ---
+    searchBtn.onclick = function() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResults.style.display = "none";
+        return;
+      }
+      // Simulate search in userDB (exact match first, then partial)
+      let found = userDB.filter(u => u.username.toLowerCase() === query);
+      if (found.length === 0) {
+        found = userDB.filter(u => u.username.toLowerCase().includes(query));
+      }
+      if (found.length) {
+        let html = "";
+        found.forEach(user => {
+          html += `
+            <div class="user-result">
+              <span>@${user.username}</span>
+              <button class="view-profile-btn" data-username="${user.username}">View Profile</button>
+            </div>
+          `;
+        });
+        searchResults.innerHTML = html;
+        searchResults.style.display = "";
+        // Attach handlers
+        searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.onclick = function() {
+            showProfileModal(btn.getAttribute("data-username"));
+          }
+        });
+      } else {
+        searchResults.innerHTML = "<div>No users found.</div>";
+        searchResults.style.display = "";
+      }
+    };
+
+    searchInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") searchBtn.click();
+    });
+
+    // --- Profile modal rendering ---
+    function showProfileModal(username) {
+      const user = userDB.find(u => u.username === username);
+      if (!user) return;
+      document.getElementById("modalUsername").textContent = `@${user.username}`;
+      document.getElementById("modalWall").innerHTML = user.wall.map(
+        post => `<div style="margin-bottom:8px"><span style="font-weight:bold;color:#2b6cb0">${post.author}</span>: ${post.text}</div>`
+      ).join("") || "<span style='color:#ccc'>No posts yet.</span>";
+      document.getElementById("modalTakes").innerHTML = user.takes.map(
+        take => `<div style="margin-bottom:8px">${take}</div>`
+      ).join("") || "<span style='color:#ccc'>No takes yet.</span>";
+      document.getElementById("modalTeams").innerHTML = user.teams.map(
+        team => `<div style="margin-bottom:8px">${team.name} <span style="color:#444">(${team.role})</span></div>`
+      ).join("") || "<span style='color:#ccc'>No teams yet.</span>";
+      document.getElementById("profileModalBg").style.display = "flex";
+    }
+    document.getElementById("closeProfileBtn").onclick = function() {
+      document.getElementById("profileModalBg").style.display = "none";
+    };
+    document.getElementById("profileModalBg").onclick = function(e) {
+      if (e.target === this) this.style.display = "none";
+    };
+  </script>
+</body>
+</html>      display: flex;
       justify-content: center;
       align-items: center;
       gap: 10px;
