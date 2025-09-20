@@ -74,6 +74,10 @@
     .search-bar-container button:hover {
       background: #ffe38a;
     }
+    .home-btn {
+      padding: 8px 16px;
+      margin-left: 0;
+    }
     .search-dropdown {
       position: absolute;
       top: 48px;
@@ -292,102 +296,29 @@
     .post-form button:hover, .take-form button:hover, .team-form button:hover {
       background: #ffe38a;
     }
-    .profile-modal-bg {
-      display: none;
-      position: fixed;
-      z-index: 50;
-      left: 0; top: 0; right: 0; bottom: 0;
-      background: #0008;
-      justify-content: center;
-      align-items: center;
-    }
-    .profile-modal {
-      background: #222a32;
-      color: #ffd700;
-      border-radius: 24px;
-      max-width: 440px;
-      width: 95vw;
-      box-shadow: 0 8px 32px #000b;
-      padding: 36px 28px 24px 28px;
-      position: relative;
-      text-align: center;
-      font-size: 1.13rem;
-      border: 6px solid #ffd700;
-    }
-    .profile-modal .close-btn {
-      position: absolute;
-      right: 18px; top: 14px;
-      background: #ffd700;
-      color: #222a32;
-      border-radius: 10px;
-      border: none;
-      font-weight: bold;
-      font-size: 1.12em;
-      padding: 4px 12px;
-      cursor: pointer;
-    }
-    .profile-modal .close-btn:hover {
-      background: #ffe38a;
-    }
-    .profile-modal .user-username {
-      font-size: 1.25em;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #ffe38a;
-    }
-    .profile-modal .profile-section {
-      margin-bottom: 18px;
-      text-align: left;
-    }
-    .profile-modal .profile-section-title {
-      font-weight: bold;
-      color: #ffd700;
-      margin-bottom: 5px;
-      font-size: 1.07em;
-    }
-    .profile-modal .profile-list {
-      background: #ffe38a22;
+    .error-message {
+      color: #b91c1c;
+      background: #ffe5e5;
+      border-left: 4px solid #b91c1c;
+      padding: 11px 18px;
+      font-size: 1.1em;
       border-radius: 8px;
-      padding: 6px 12px;
-      margin-bottom: 8px;
-      color: #222a32;
-      font-size: 0.98em;
+      margin: 18px auto;
+      max-width: 580px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="pub-sign" id="pubTitle">Your Pub</div>
-  <div id="loginArea" style="max-width:580px;margin:12px auto 0 auto;">
-    <div id="loginFormArea">
-      <div style="margin-bottom:8px;">
-        <input id="loginEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="loginPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <button id="loginBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Login</button>
-        <button id="registerBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Register</button>
-      </div>
-    </div>
-    <div id="userWelcome" style="display:none;">
-      <span id="welcomeText"></span>
-      <button id="logoutBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:4px 14px;font-weight:bold;float:right;">Logout</button>
-    </div>
-    <div id="registerArea" style="display:none;">
-      <div>
-        <input id="registerEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="registerPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="registerUsername" type="text" placeholder="Username" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <button id="registerConfirmBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Confirm Register</button>
-        <button id="registerCancelBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Cancel</button>
-      </div>
-      <div id="registerError" style="color:red;margin-top:7px;"></div>
-    </div>
-    <div id="loginError" style="color:red;margin-top:7px;"></div>
-  </div>
   <div class="search-bar-container" style="position:relative;">
     <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
     <button id="searchBtn">Search</button>
+    <button class="home-btn" id="homeBtn">Home</button>
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
   <div id="searchResults" class="search-results" style="display:none"></div>
+  <div id="profileError" class="error-message" style="display:none;"></div>
   <div class="bar-front"></div>
   <div class="tv-frame">
     <div class="tv-bezel">Facing the Big Screen</div>
@@ -441,6 +372,22 @@
     let viewedUid = null;
     let viewedUser = null;
     let ownProfile = true; // If viewing own profile
+    let userNotFound = false;
+
+    // HOME BUTTON
+    document.getElementById("homeBtn").onclick = function() {
+      window.location.href = "index.html";
+    };
+
+    function showProfileError(msg) {
+      document.getElementById("profileError").textContent = msg;
+      document.getElementById("profileError").style.display = "";
+      document.getElementById("pubTitle").textContent = "Unknown's Pub";
+      document.getElementById("tabContent").innerHTML = "";
+    }
+    function hideProfileError() {
+      document.getElementById("profileError").style.display = "none";
+    }
 
     // --- SEARCH FUNCTIONALITY ---
     async function fetchAllUsernames() {
@@ -455,9 +402,13 @@
     }
 
     async function fetchProfileDocByUsername(username) {
-      const snapshot = await db.collection("users").where("username", "==", username).get();
-      if (snapshot.empty) return null;
-      return snapshot.docs[0];
+      try {
+        const snapshot = await db.collection("users").where("username", "==", username).get();
+        if (snapshot.empty) return null;
+        return snapshot.docs[0];
+      } catch (err) {
+        return null;
+      }
     }
 
     const searchInput = document.getElementById("searchInput");
@@ -568,17 +519,26 @@
     let teams = [];
 
     auth.onAuthStateChanged(async function(user) {
+      hideProfileError();
+      userNotFound = false;
       if (user) {
         loggedInUid = user.uid;
-        const loggedInDoc = await db.collection("users").doc(loggedInUid).get();
+        let loggedInDoc;
+        try {
+          loggedInDoc = await db.collection("users").doc(loggedInUid).get();
+        } catch (err) {
+          showProfileError("Error loading your profile. Try again later.");
+          return;
+        }
         loggedInUsername = loggedInDoc.data().username;
 
         let loadedUserDoc;
         if (viewedUsername && viewedUsername !== loggedInUsername) {
           loadedUserDoc = await fetchProfileDocByUsername(viewedUsername);
           if (!loadedUserDoc) {
-            loadedUserDoc = loggedInDoc;
-            ownProfile = true;
+            showProfileError(`User "${viewedUsername}" not found.`);
+            userNotFound = true;
+            return;
           } else {
             ownProfile = false;
           }
@@ -594,17 +554,24 @@
         teams = viewedUser.teams || [];
         renderWall();
       } else {
-        document.getElementById("pubTitle").textContent = `Unknown's Pub`;
-        tabContent.innerHTML = "<div>Please log in to view profiles.</div>";
+        showProfileError("Please log in to view profiles.");
       }
     });
 
     async function updateViewedUserField(field, value) {
       if (!viewedUid) return;
-      await db.collection("users").doc(viewedUid).update({ [field]: value });
+      try {
+        await db.collection("users").doc(viewedUid).update({ [field]: value });
+      } catch (err) {
+        showProfileError("Failed to post. Please try again.");
+      }
     }
 
     function renderWall() {
+      if (userNotFound) {
+        tabContent.innerHTML = "";
+        return;
+      }
       let html = "";
       // Show post form only when viewing someone else's profile
       if (!ownProfile) {
@@ -614,6 +581,9 @@
             <button type="submit">Post</button>
           </form>
         `;
+      }
+      if (!wallPosts.length) {
+        html += `<div style="color:#aaa;text-align:center;">No posts yet.</div>`;
       }
       wallPosts.slice().reverse().forEach(post => {
         html += `
@@ -632,16 +602,27 @@
             wallPosts.push({author: loggedInUsername, text: input.value.trim()});
             await updateViewedUserField("wall", wallPosts);
             input.value = "";
-            const userDoc = await db.collection("users").doc(viewedUid).get();
-            wallPosts = userDoc.data().wall || [];
-            renderWall();
+            try {
+              const userDoc = await db.collection("users").doc(viewedUid).get();
+              wallPosts = userDoc.data().wall || [];
+              renderWall();
+            } catch (err) {
+              showProfileError("Could not refresh wall after posting.");
+            }
           }
         };
       }
     }
 
     function renderTakes() {
+      if (userNotFound) {
+        tabContent.innerHTML = "";
+        return;
+      }
       let html = "";
+      if (!takes.length) {
+        html += `<div style="color:#aaa;text-align:center;">No takes yet.</div>`;
+      }
       takes.slice().reverse().forEach(take => {
         html += `<div class="my-take">${take}</div>`;
       });
@@ -649,7 +630,14 @@
     }
 
     function renderTeams() {
+      if (userNotFound) {
+        tabContent.innerHTML = "";
+        return;
+      }
       let html = "";
+      if (!teams.length) {
+        html += `<div style="color:#aaa;text-align:center;">No teams yet.</div>`;
+      }
       teams.forEach(team => {
         html += `
           <div class="team-card">
