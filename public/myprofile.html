@@ -45,6 +45,7 @@
       margin: 0 auto 0 auto;
       box-shadow: 0 2px 10px #3b230f22;
       padding: 10px 18px 12px 18px;
+      position: relative;
     }
     .search-bar-container input {
       flex: 1;
@@ -69,6 +70,38 @@
     }
     .search-bar-container button:hover {
       background: #ffe38a;
+    }
+    .search-dropdown {
+      position: absolute;
+      top: 48px;
+      left: 18px;
+      right: 18px;
+      background: #fff8e1ee;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 12px #3b230f33;
+      z-index: 10;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      border: 1px solid #e3b46c;
+      font-size: 1.07rem;
+      color: #3b230f;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .search-dropdown li {
+      padding: 9px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid #f4e3c1;
+      transition: background 0.12s;
+    }
+    .search-dropdown li:last-child {
+      border-bottom: none;
+    }
+    .search-dropdown li:hover,
+    .search-dropdown li.active {
+      background: #ffe38a;
+      color: #222a32;
     }
     .search-results {
       max-width: 580px;
@@ -254,7 +287,7 @@
       transition: background 0.2s;
     }
     .post-form button:hover, .take-form button:hover, .team-form button:hover {
-      background: #ffe58a;
+      background: #ffe38a;
     }
     /* Profile preview modal */
     .profile-modal-bg {
@@ -324,9 +357,10 @@
   <!-- Top Pub Bar Sign -->
   <div class="pub-sign" id="pubTitle">Your Pub</div>
   <!-- Search Friends Bar -->
-  <div class="search-bar-container">
-    <input type="text" id="searchInput" placeholder="Search friends by username...">
+  <div class="search-bar-container" style="position:relative;">
+    <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
     <button id="searchBtn">Search</button>
+    <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
   <!-- Search Results -->
   <div id="searchResults" class="search-results" style="display:none"></div>
@@ -370,51 +404,22 @@
   </div>
 
   <script>
-    // Simulated username (replace with actual username from backend/auth)
-    const username = "iknowball"; // For demo, update dynamically in actual app
+    // Your own profile data logic remains the same...
+    const username = "iknowball"; // Set this dynamically from your auth/session
     document.getElementById("pubTitle").textContent = `${username}'s Pub`;
 
-    // Simulated user database (for demo only)
-    const userDB = [
-      {
-        username: "iknowball",
-        wall: [
-          {author: "sportsguru", text: "Welcome to the pub!"},
-          {author: "iknowball", text: "Leave your takes!"},
-        ],
-        takes: ["CMC for OPOY!", "Never bet against Mahomes."],
-        teams: [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}],
-      },
-      {
-        username: "ballerfan42",
-        wall: [
-          {author:"iknowball", text:"Love your takes!"},
-          {author:"sportsguru", text:"Let's go Knicks!"},
-        ],
-        takes: ["Knicks are winning it all.", "Jalen Brunson is HIM."],
-        teams: [{name:"Knicks", role:"Fan"},{name:"Yankees",role:"Fan"}],
-      },
-      {
-        username: "sportsguru",
-        wall: [
-          {author:"iknowball", text:"Bills for the AFC East!"},
-          {author:"ballerfan42", text:"You know ball!"},
-        ],
-        takes: ["Bills are going deep!", "Cowboys fans will be disappointed."],
-        teams: [{name:"Bills",role:"Fan"},{name:"Cowboys",role:"Hater"}],
-      },
+    // Simulated personal wall/takes/teams for logged-in user:
+    let wallPosts = [
+      {author: "sportsguru", text: "Welcome to the pub!"},
+      {author: "iknowball", text: "Leave your takes!"},
     ];
-
-    // Use your own wall/takes/teams data for logged-in user
-    let wallPosts = userDB[0].wall.slice(); // This user's wall
-    let takes = userDB[0].takes.slice();
-    let teams = userDB[0].teams.slice();
+    let takes = ["CMC for OPOY!", "Never bet against Mahomes."];
+    let teams = [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}];
 
     const tabContent = document.getElementById("tabContent");
     const tabBar = document.getElementById("tabBar");
     let currentTab = "wall";
 
-    // Renderers
     function renderWall() {
       let html = `
         <form class="post-form" id="wallForm">
@@ -500,7 +505,6 @@
       });
     }
 
-    // Tab switching
     tabBar.querySelectorAll(".tab-btn").forEach(btn => {
       btn.onclick = function() {
         tabBar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -512,35 +516,116 @@
       };
     });
 
-    // Initial render
     renderWall();
 
-    // --- Search friends functionality ---
+    // --- Backend integration for username dropdown and profiles ---
     const searchInput = document.getElementById("searchInput");
+    const searchDropdown = document.getElementById("searchDropdown");
     const searchBtn = document.getElementById("searchBtn");
     const searchResults = document.getElementById("searchResults");
 
-    searchBtn.onclick = function() {
-      const query = searchInput.value.trim().toLowerCase();
+    async function fetchUsernames(query) {
+      if (!query) return [];
+      try {
+        const resp = await fetch(`/api/search-users?query=${encodeURIComponent(query)}`);
+        if (!resp.ok) return [];
+        const data = await resp.json(); // array of usernames
+        return data;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function fetchProfile(username) {
+      try {
+        const resp = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
+        if (!resp.ok) return null;
+        const data = await resp.json(); // {username, wall, takes, teams}
+        return data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    let lastDropdownQuery = "";
+    searchInput.addEventListener("input", async function() {
+      const query = searchInput.value.trim();
+      if (!query) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      lastDropdownQuery = query;
+      const usernames = await fetchUsernames(query);
+      if (searchInput.value.trim() !== lastDropdownQuery) return;
+      if (usernames.length === 0) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      searchDropdown.innerHTML = usernames.map(u =>
+        `<li tabindex="0" data-username="${u}">${u}</li>`
+      ).join("");
+      searchDropdown.style.display = "";
+    });
+
+    searchDropdown.addEventListener("mousedown", function(e) {
+      if (e.target.tagName === "LI") {
+        searchInput.value = e.target.dataset.username;
+        searchDropdown.style.display = "none";
+        searchBtn.click();
+      }
+    });
+
+    searchInput.addEventListener("keydown", function(e) {
+      if (searchDropdown.style.display !== "none") {
+        const items = searchDropdown.querySelectorAll("li");
+        let activeIdx = Array.from(items).findIndex(li => li.classList.contains("active"));
+        if (e.key === "ArrowDown") {
+          activeIdx = (activeIdx + 1) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "ArrowUp") {
+          activeIdx = (activeIdx - 1 + items.length) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "Enter" && activeIdx >= 0) {
+          searchInput.value = items[activeIdx].dataset.username;
+          searchDropdown.style.display = "none";
+          searchBtn.click();
+        }
+      }
+    });
+
+    document.addEventListener("click", function(e) {
+      if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+        searchDropdown.style.display = "none";
+      }
+    });
+
+    searchBtn.onclick = async function() {
+      const query = searchInput.value.trim();
       if (!query) {
         searchResults.style.display = "none";
         return;
       }
-      // Simulate search in userDB
-      const found = userDB.filter(u => u.username.toLowerCase().includes(query));
-      if (found.length) {
+      const usernames = await fetchUsernames(query);
+      if (usernames.length) {
         let html = "";
-        found.forEach(user => {
+        usernames.forEach(user => {
           html += `
             <div class="user-result">
-              <span>@${user.username}</span>
-              <button class="view-profile-btn" data-username="${user.username}">View Profile</button>
+              <span>@${user}</span>
+              <button class="view-profile-btn" data-username="${user}">View Profile</button>
             </div>
           `;
         });
         searchResults.innerHTML = html;
         searchResults.style.display = "";
-        // Attach handlers
         searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
           btn.onclick = function() {
             showProfileModal(btn.getAttribute("data-username"));
@@ -556,18 +641,17 @@
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // --- Profile modal rendering ---
-    function showProfileModal(username) {
-      const user = userDB.find(u => u.username === username);
+    async function showProfileModal(username) {
+      const user = await fetchProfile(username);
       if (!user) return;
       document.getElementById("modalUsername").textContent = `@${user.username}`;
-      document.getElementById("modalWall").innerHTML = user.wall.map(
+      document.getElementById("modalWall").innerHTML = (user.wall || []).map(
         post => `<div style="margin-bottom:8px"><span style="font-weight:bold;color:#2b6cb0">${post.author}</span>: ${post.text}</div>`
       ).join("") || "<span style='color:#ccc'>No posts yet.</span>";
-      document.getElementById("modalTakes").innerHTML = user.takes.map(
+      document.getElementById("modalTakes").innerHTML = (user.takes || []).map(
         take => `<div style="margin-bottom:8px">${take}</div>`
       ).join("") || "<span style='color:#ccc'>No takes yet.</span>";
-      document.getElementById("modalTeams").innerHTML = user.teams.map(
+      document.getElementById("modalTeams").innerHTML = (user.teams || []).map(
         team => `<div style="margin-bottom:8px">${team.name} <span style="color:#444">(${team.role})</span></div>`
       ).join("") || "<span style='color:#ccc'>No teams yet.</span>";
       document.getElementById("profileModalBg").style.display = "flex";
@@ -575,7 +659,6 @@
     document.getElementById("closeProfileBtn").onclick = function() {
       document.getElementById("profileModalBg").style.display = "none";
     };
-    // Dismiss modal on bg click
     document.getElementById("profileModalBg").onclick = function(e) {
       if (e.target === this) this.style.display = "none";
     };
