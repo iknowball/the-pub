@@ -36,16 +36,24 @@
       box-shadow: 0 4px 14px #3b230f55;
       text-align: center;
     }
+    .search-bar-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 24px auto 0 auto;
+      width: 100vw;
+    }
     .search-bar-container {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 10px;
       background: #ffe38aee;
-      border-radius: 0 0 20px 20px;
+      border-radius: 20px;
       border: 0px solid #d8b170;
       max-width: 580px;
-      margin: 0 auto 0 auto;
+      width: 100%;
+      margin: 0 auto;
       box-shadow: 0 2px 10px #3b230f22;
       padding: 10px 18px 12px 18px;
       position: relative;
@@ -292,6 +300,29 @@
     .post-form button:hover, .take-form button:hover, .team-form button:hover {
       background: #ffe38a;
     }
+    .nav-buttons {
+      max-width:580px;
+      margin: 0 auto 0 auto;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0 0 0;
+    }
+    .nav-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 8px;
+      font-weight: bold;
+      padding: 6px 18px;
+      border: none;
+      cursor: pointer;
+      font-size: 1.07rem;
+      transition: background 0.2s;
+    }
+    .nav-btn:hover {
+      background: #ffe38a;
+    }
     .profile-modal-bg {
       display: none;
       position: fixed;
@@ -357,35 +388,17 @@
 </head>
 <body>
   <div class="pub-sign" id="pubTitle">Your Pub</div>
-  <div id="loginArea" style="max-width:580px;margin:12px auto 0 auto;">
-    <div id="loginFormArea">
-      <div style="margin-bottom:8px;">
-        <input id="loginEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="loginPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <button id="loginBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Login</button>
-        <button id="registerBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Register</button>
-      </div>
-    </div>
-    <div id="userWelcome" style="display:none;">
-      <span id="welcomeText"></span>
-      <button id="logoutBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:4px 14px;font-weight:bold;float:right;">Logout</button>
-    </div>
-    <div id="registerArea" style="display:none;">
-      <div>
-        <input id="registerEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="registerPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <input id="registerUsername" type="text" placeholder="Username" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
-        <button id="registerConfirmBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Confirm Register</button>
-        <button id="registerCancelBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Cancel</button>
-      </div>
-      <div id="registerError" style="color:red;margin-top:7px;"></div>
-    </div>
-    <div id="loginError" style="color:red;margin-top:7px;"></div>
+  <div class="nav-buttons">
+    <button id="homeBtn" class="nav-btn">Home</button>
+    <button id="logoutBtn" class="nav-btn">Sign Out</button>
   </div>
-  <div class="search-bar-container" style="position:relative;">
-    <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
-    <button id="searchBtn">Search</button>
-    <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
+  <!-- Centered Search Bar -->
+  <div class="search-bar-area">
+    <div class="search-bar-container" style="position:relative;">
+      <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
+      <button id="searchBtn">Search</button>
+      <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
+    </div>
   </div>
   <div id="searchResults" class="search-results" style="display:none"></div>
   <div class="bar-front"></div>
@@ -421,9 +434,9 @@
   <script>
     // ---- FIREBASE SETUP ----
     const firebaseConfig = {
-      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-      authDomain: "thepub-sigma.firebaseapp.com",
-      projectId: "thepub-sigma",
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -434,17 +447,6 @@
 
     function setUsernameUI(username) {
       document.getElementById("pubTitle").textContent = `${username}'s Pub`;
-      document.getElementById("welcomeText").textContent = `Welcome, ${username}!`;
-    }
-
-    function showLoginArea(show) {
-      document.getElementById("loginFormArea").style.display = show ? "" : "none";
-      document.getElementById("userWelcome").style.display = show ? "none" : "";
-    }
-
-    function showRegisterArea(show) {
-      document.getElementById("registerArea").style.display = show ? "" : "none";
-      document.getElementById("loginFormArea").style.display = show ? "none" : "";
     }
 
     auth.onAuthStateChanged(async function(user) {
@@ -459,66 +461,21 @@
           username = user.email.split('@')[0];
         }
         setUsernameUI(username);
-        showLoginArea(false);
         renderWall();
       } else {
         username = "Unknown";
         setUsernameUI(username);
-        showLoginArea(true);
+        // You may want to redirect to a login page here
       }
     });
 
-    document.getElementById("loginBtn").onclick = async function() {
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
-      document.getElementById("loginError").textContent = "";
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (e) {
-        document.getElementById("loginError").textContent = e.message;
-      }
-    };
-
-    document.getElementById("registerBtn").onclick = function() {
-      showRegisterArea(true);
-      document.getElementById("registerError").textContent = "";
-    };
-
-    document.getElementById("registerConfirmBtn").onclick = async function() {
-      const email = document.getElementById("registerEmail").value.trim();
-      const password = document.getElementById("registerPassword").value;
-      const regUsername = document.getElementById("registerUsername").value.trim();
-      document.getElementById("registerError").textContent = "";
-      if (!email || !password || !regUsername) {
-        document.getElementById("registerError").textContent = "Please fill all fields.";
-        return;
-      }
-      const usernameQuery = await db.collection("users").where("username", "==", regUsername).get();
-      if (!usernameQuery.empty) {
-        document.getElementById("registerError").textContent = "Username already taken.";
-        return;
-      }
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const uid = userCredential.user.uid;
-        await db.collection("users").doc(uid).set({
-          username: regUsername,
-          wall: [],
-          takes: [],
-          teams: []
-        });
-        showRegisterArea(false);
-      } catch (e) {
-        document.getElementById("registerError").textContent = e.message;
-      }
-    };
-
-    document.getElementById("registerCancelBtn").onclick = function() {
-      showRegisterArea(false);
-    };
-
     document.getElementById("logoutBtn").onclick = async function() {
       await auth.signOut();
+      window.location.reload();
+    };
+
+    document.getElementById("homeBtn").onclick = function() {
+      window.location.href = "index.html";
     };
 
     let wallPosts = [];
