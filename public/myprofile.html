@@ -45,6 +45,673 @@
       margin: 0 auto 0 auto;
       box-shadow: 0 2px 10px #3b230f22;
       padding: 10px 18px 12px 18px;
+      position: relative;
+    }
+    .search-bar-container input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid #b57f4a;
+      padding: 8px 12px;
+      font-size: 1.11rem;
+      background: #fff;
+      color: #6e4426;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .search-bar-container button {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 8px;
+      font-weight: bold;
+      padding: 8px 18px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1.07rem;
+    }
+    .search-bar-container button:hover {
+      background: #ffe38a;
+    }
+    .search-dropdown {
+      position: absolute;
+      top: 48px;
+      left: 18px;
+      right: 18px;
+      background: #fff8e1ee;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 12px #3b230f33;
+      z-index: 10;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      border: 1px solid #e3b46c;
+      font-size: 1.07rem;
+      color: #3b230f;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .search-dropdown li {
+      padding: 9px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid #f4e3c1;
+      transition: background 0.12s;
+    }
+    .search-dropdown li:last-child {
+      border-bottom: none;
+    }
+    .search-dropdown li:hover,
+    .search-dropdown li.active {
+      background: #ffe38a;
+      color: #222a32;
+    }
+    .search-results {
+      max-width: 580px;
+      margin: 0 auto 18px auto;
+      background: #fff8e1cc;
+      border-radius: 0 0 18px 18px;
+      box-shadow: 0 2px 10px #3b230f33;
+      padding: 10px 20px;
+      font-size: 1.07rem;
+      color: #3b230f;
+    }
+    .search-results .user-result {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 0;
+      border-bottom: 1px solid #e3b46c;
+    }
+    .search-results .user-result:last-child {
+      border-bottom: none;
+    }
+    .search-results .view-profile-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 4px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+      border: none;
+      font-size: 0.98em;
+      transition: background 0.2s;
+    }
+    .search-results .view-profile-btn:hover {
+      background: #ffe38a;
+    }
+    .bar-front {
+      background: linear-gradient(90deg, #7a5537 70%, #cfa56a 100%);
+      height: 36px;
+      border-radius: 0 0 20px 20px;
+      border-top: 4px solid #d8b170;
+      max-width: 580px;
+      margin: 0 auto 24px auto;
+      box-shadow: 0 2px 10px #3b230f44;
+    }
+    .tv-frame {
+      background: #1b242b;
+      border-radius: 32px;
+      border: 7px solid #c5c8c9;
+      box-shadow: 0 8px 48px 0 #000a, 0 0 0 7px #111 inset;
+      max-width: 560px;
+      margin: 0 auto 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .tv-bezel {
+      background: linear-gradient(180deg, #42505e 0%, #1b242b 100%);
+      border-radius: 32px 32px 24px 24px;
+      min-height: 34px;
+      width: 100%;
+      box-shadow: 0 2px 8px #444 inset;
+      color: #ffe38a;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: center;
+      padding: 7px 0 0 0;
+      letter-spacing: 1px;
+    }
+    .tv-screen {
+      background: linear-gradient(180deg, #313e4e 0%, #212a36 100%);
+      min-height: 320px;
+      max-height: 420px;
+      overflow: hidden;
+      padding: 0;
+      position: relative;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 16px #0007 inset;
+      border-top: 4px solid #334155;
+    }
+    .tab-btn {
+      background: #222a32;
+      color: #ffd700;
+      border-bottom: 2px solid #444;
+      font-weight: bold;
+      transition: background 0.2s, color 0.2s;
+      padding: 12px 28px;
+      border-radius: 16px 16px 0 0;
+      cursor: pointer;
+      font-size: 1.12rem;
+      margin-right: 4px;
+    }
+    .tab-btn.active {
+      background: #ffd700;
+      color: #222a32;
+      border-bottom: 4px solid #ffd700;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #ffd70088;
+    }
+    .tab-btn:not(.active):hover {
+      background: #ffe38a;
+      color: #222a32;
+    }
+    .tv-content {
+      background: rgba(40,46,54,0.96);
+      padding: 18px 16px 10px 16px;
+      min-height: 210px;
+      max-height: 340px;
+      overflow-y: auto;
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 2px 8px #fff3;
+    }
+    .wall-post {
+      background: #fffdf3;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 4px #ccb;
+      color: #222a32;
+      border-left: 4px solid #ffd700;
+    }
+    .wall-post-author {
+      font-weight: bold;
+      color: #2b6cb0;
+      margin-bottom: 3px;
+      display: block;
+    }
+    .my-take {
+      background: #ffe58a;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      color: #222a32;
+      box-shadow: 0 2px 6px #ffd70055;
+      border-left: 4px solid #ffd700;
+    }
+    .team-card {
+      background: #ffd70022;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      color: #222a32;
+      box-shadow: 0 2px 6px #ffd70044;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #ffd700;
+    }
+    .edit-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 4px 10px;
+      margin-left: 10px;
+      cursor: pointer;
+      border: none;
+    }
+    .edit-btn:hover {
+      background: #ffe58a;
+    }
+    .post-form, .take-form, .team-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .post-form input, .take-form input, .team-form input {
+      flex: 1;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      font-size: 1rem;
+      background: #fff;
+      color: #222a32;
+    }
+    .post-form button, .take-form button, .team-form button {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 6px 16px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .post-form button:hover, .take-form button:hover, .team-form button:hover {
+      background: #ffe38a;
+    }
+    /* Profile preview modal */
+    .profile-modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #0008;
+      justify-content: center;
+      align-items: center;
+    }
+    .profile-modal {
+      background: #222a32;
+      color: #ffd700;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 95vw;
+      box-shadow: 0 8px 32px #000b;
+      padding: 36px 28px 24px 28px;
+      position: relative;
+      text-align: center;
+      font-size: 1.13rem;
+      border: 6px solid #ffd700;
+    }
+    .profile-modal .close-btn {
+      position: absolute;
+      right: 18px; top: 14px;
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      font-size: 1.12em;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+    .profile-modal .close-btn:hover {
+      background: #ffe38a;
+    }
+    .profile-modal .user-username {
+      font-size: 1.25em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #ffe38a;
+    }
+    .profile-modal .profile-section {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .profile-modal .profile-section-title {
+      font-weight: bold;
+      color: #ffd700;
+      margin-bottom: 5px;
+      font-size: 1.07em;
+    }
+    .profile-modal .profile-list {
+      background: #ffe38a22;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      color: #222a32;
+      font-size: 0.98em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Pub Bar Sign -->
+  <div class="pub-sign" id="pubTitle">Your Pub</div>
+  <!-- Search Friends Bar -->
+  <div class="search-bar-container" style="position:relative;">
+    <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
+    <button id="searchBtn">Search</button>
+    <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
+  </div>
+  <!-- Search Results -->
+  <div id="searchResults" class="search-results" style="display:none"></div>
+  <!-- Bar Front -->
+  <div class="bar-front"></div>
+  <!-- TV Frame -->
+  <div class="tv-frame">
+    <!-- TV Bezel -->
+    <div class="tv-bezel">Facing the Big Screen</div>
+    <!-- Tabs -->
+    <div class="flex flex-row justify-center gap-2 mb-0 pt-2 pb-1" id="tabBar">
+      <button class="tab-btn active" data-tab="wall">Wall</button>
+      <button class="tab-btn" data-tab="takes">My Takes</button>
+      <button class="tab-btn" data-tab="teams">My Teams</button>
+    </div>
+    <!-- Content Screen -->
+    <div class="tv-screen">
+      <div class="tv-content" id="tabContent">
+        <!-- Wall content (default) -->
+      </div>
+    </div>
+  </div>
+  <!-- Profile Preview Modal -->
+  <div id="profileModalBg" class="profile-modal-bg">
+    <div class="profile-modal" id="profileModal">
+      <button class="close-btn" id="closeProfileBtn">Close</button>
+      <div class="user-username" id="modalUsername"></div>
+      <div class="profile-section">
+        <div class="profile-section-title">Wall</div>
+        <div id="modalWall" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Takes</div>
+        <div id="modalTakes" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Teams</div>
+        <div id="modalTeams" class="profile-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simulated username (replace with actual username from backend/auth)
+    const username = "iknowball"; // For demo, update dynamically in actual app
+    document.getElementById("pubTitle").textContent = `${username}'s Pub`;
+
+    // Simulated user database (for demo only)
+    const userDB = [
+      {
+        username: "iknowball",
+        wall: [
+          {author: "sportsguru", text: "Welcome to the pub!"},
+          {author: "iknowball", text: "Leave your takes!"},
+        ],
+        takes: ["CMC for OPOY!", "Never bet against Mahomes."],
+        teams: [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}],
+      },
+      {
+        username: "ballerfan42",
+        wall: [
+          {author:"iknowball", text:"Love your takes!"},
+          {author:"sportsguru", text:"Let's go Knicks!"},
+        ],
+        takes: ["Knicks are winning it all.", "Jalen Brunson is HIM."],
+        teams: [{name:"Knicks", role:"Fan"},{name:"Yankees",role:"Fan"}],
+      },
+      {
+        username: "sportsguru",
+        wall: [
+          {author:"iknowball", text:"Bills for the AFC East!"},
+          {author:"ballerfan42", text:"You know ball!"},
+        ],
+        takes: ["Bills are going deep!", "Cowboys fans will be disappointed."],
+        teams: [{name:"Bills",role:"Fan"},{name:"Cowboys",role:"Hater"}],
+      },
+      {
+        username: "johnnyfootball",
+        wall: [
+          {author:"iknowball", text:"Johnny's comeback season is here!"},
+        ],
+        takes: ["Browns will surprise everyone.", "Defense wins championships."],
+        teams: [{name:"Browns",role:"Fan"},{name:"Ohio State",role:"Alumni"}],
+      },
+      {
+        username: "sportsqueen",
+        wall: [
+          {author:"iknowball", text:"WNBA finals prediction?"},
+        ],
+        takes: ["Aces are unstoppable!", "Don't sleep on Caitlin Clark."],
+        teams: [{name:"Aces",role:"Fan"},{name:"Iowa",role:"Alumni"}],
+      },
+    ];
+
+    // Use your own wall/takes/teams data for logged-in user
+    let wallPosts = userDB[0].wall.slice(); // This user's wall
+    let takes = userDB[0].takes.slice();
+    let teams = userDB[0].teams.slice();
+
+    const tabContent = document.getElementById("tabContent");
+    const tabBar = document.getElementById("tabBar");
+    let currentTab = "wall";
+
+    // Renderers
+    function renderWall() {
+      let html = `
+        <form class="post-form" id="wallForm">
+          <input type="text" id="wallInput" placeholder="Post something on ${username}'s wall..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      wallPosts.slice().reverse().forEach(post => {
+        html += `
+          <div class="wall-post">
+            <span class="wall-post-author">${post.author}</span>
+            ${post.text}
+          </div>
+        `;
+      });
+      tabContent.innerHTML = html;
+      document.getElementById("wallForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("wallInput");
+        if (input.value.trim()) {
+          wallPosts.push({author: username, text: input.value.trim()});
+          input.value = "";
+          renderWall();
+        }
+      };
+    }
+
+    function renderTakes() {
+      let html = `
+        <form class="take-form" id="takeForm">
+          <input type="text" id="takeInput" placeholder="Share your latest sports take..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      takes.slice().reverse().forEach(take => {
+        html += `<div class="my-take">${take}</div>`;
+      });
+      tabContent.innerHTML = html;
+      document.getElementById("takeForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("takeInput");
+        if (input.value.trim()) {
+          takes.push(input.value.trim());
+          input.value = "";
+          renderTakes();
+        }
+      };
+    }
+
+    function renderTeams() {
+      let html = `
+        <form class="team-form" id="teamForm">
+          <input type="text" id="teamInput" placeholder="Add team name...">
+          <input type="text" id="roleInput" placeholder="Role (Fan, Alumni, etc)">
+          <button type="submit">Add</button>
+        </form>
+      `;
+      teams.forEach((team, idx) => {
+        html += `
+          <div class="team-card">
+            <span>${team.name} <span style="font-size:0.95em;color:#444;">(${team.role})</span></span>
+            <button class="edit-btn" data-idx="${idx}">Remove</button>
+          </div>
+        `;
+      });
+      tabContent.innerHTML = html;
+
+      document.getElementById("teamForm").onsubmit = function(e) {
+        e.preventDefault();
+        const teamName = document.getElementById("teamInput").value.trim();
+        const role = document.getElementById("roleInput").value.trim() || "Fan";
+        if (teamName) {
+          teams.push({name: teamName, role});
+          renderTeams();
+        }
+      };
+      document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = function() {
+          const idx = parseInt(btn.getAttribute("data-idx"));
+          teams.splice(idx, 1);
+          renderTeams();
+        }
+      });
+    }
+
+    // Tab switching
+    tabBar.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.onclick = function() {
+        tabBar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentTab = btn.getAttribute("data-tab");
+        if (currentTab === "wall") renderWall();
+        if (currentTab === "takes") renderTakes();
+        if (currentTab === "teams") renderTeams();
+      };
+    });
+
+    // Initial render
+    renderWall();
+
+    // --- Search friends with dropdown ---
+    const searchInput = document.getElementById("searchInput");
+    const searchDropdown = document.getElementById("searchDropdown");
+    const searchBtn = document.getElementById("searchBtn");
+    const searchResults = document.getElementById("searchResults");
+
+    // Helper: get all usernames
+    const usernames = userDB.map(u => u.username);
+
+    // Show dropdown filtered by input value
+    searchInput.addEventListener("input", function() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      // Filter and sort
+      const filtered = usernames.filter(u => u.toLowerCase().includes(query));
+      if (filtered.length === 0) {
+        searchDropdown.style.display = "none";
+        return;
+      }
+      searchDropdown.innerHTML = filtered.map(u =>
+        `<li tabindex="0" data-username="${u}">${u}</li>`
+      ).join("");
+      searchDropdown.style.display = "";
+    });
+
+    // Dropdown click: select username
+    searchDropdown.addEventListener("mousedown", function(e) {
+      if (e.target.tagName === "LI") {
+        searchInput.value = e.target.dataset.username;
+        searchDropdown.style.display = "none";
+        searchBtn.click();
+      }
+    });
+
+    // Keyboard navigation in dropdown
+    searchInput.addEventListener("keydown", function(e) {
+      if (searchDropdown.style.display !== "none") {
+        const items = searchDropdown.querySelectorAll("li");
+        let activeIdx = Array.from(items).findIndex(li => li.classList.contains("active"));
+        if (e.key === "ArrowDown") {
+          activeIdx = (activeIdx + 1) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "ArrowUp") {
+          activeIdx = (activeIdx - 1 + items.length) % items.length;
+          items.forEach(li => li.classList.remove("active"));
+          items[activeIdx].classList.add("active");
+          items[activeIdx].focus();
+          e.preventDefault();
+        }
+        if (e.key === "Enter" && activeIdx >= 0) {
+          searchInput.value = items[activeIdx].dataset.username;
+          searchDropdown.style.display = "none";
+          searchBtn.click();
+        }
+      }
+    });
+
+    // Hide dropdown if clicking elsewhere
+    document.addEventListener("click", function(e) {
+      if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+        searchDropdown.style.display = "none";
+      }
+    });
+
+    // --- Search results ---
+    searchBtn.onclick = function() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResults.style.display = "none";
+        return;
+      }
+      // Simulate search in userDB (exact match first, then partial)
+      let found = userDB.filter(u => u.username.toLowerCase() === query);
+      if (found.length === 0) {
+        found = userDB.filter(u => u.username.toLowerCase().includes(query));
+      }
+      if (found.length) {
+        let html = "";
+        found.forEach(user => {
+          html += `
+            <div class="user-result">
+              <span>@${user.username}</span>
+              <button class="view-profile-btn" data-username="${user.username}">View Profile</button>
+            </div>
+          `;
+        });
+        searchResults.innerHTML = html;
+        searchResults.style.display = "";
+        // Attach handlers
+        searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.onclick = function() {
+            showProfileModal(btn.getAttribute("data-username"));
+          }
+        });
+      } else {
+        searchResults.innerHTML = "<div>No users found.</div>";
+        searchResults.style.display = "";
+      }
+    };
+
+    searchInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") searchBtn.click();
+    });
+
+    // --- Profile modal rendering ---
+    function showProfileModal(username) {
+      const user = userDB.find(u => u.username === username);
+      if (!user) return;
+      document.getElementById("modalUsername").textContent = `@${user.username}`;
+      document.getElementById("modalWall").innerHTML = user.wall.map(
+        post => `<div style="margin-bottom:8px"><span style="font-weight:bold;color:#2b6cb0">${post.author}</span>: ${post.text}</div>`
+      ).join("") || "<span style='color:#ccc'>No posts yet.</span>";
+      document.getElementById("modalTakes").innerHTML = user.takes.map(
+        take => `<div style="margin-bottom:8px">${take}</div>`
+      ).join("") || "<span style='color:#ccc'>No takes yet.</span>";
+      document.getElementById("modalTeams").innerHTML = user.teams.map(
+        team => `<div style="margin-bottom:8px">${team.name} <span style="color:#444">(${team.role})</span></div>`
+      ).join("") || "<span style='color:#ccc'>No teams yet.</span>";
+      document.getElementById("profileModalBg").style.display = "flex";
+    }
+    document.getElementById("closeProfileBtn").onclick = function() {
+      document.getElementById("profileModalBg").style.display = "none";
+    };
+    // Dismiss modal on bg click
+    document.getElementById("profileModalBg").onclick = function(e) {
+      if (e.target === this) this.style.display = "none";
+    };
+  </script>
+</body>
+</html>      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      background: #ffe38aee;
+      border-radius: 0 0 20px 20px;
+      border: 0px solid #d8b170;
+      max-width: 580px;
+      margin: 0 auto 0 auto;
+      box-shadow: 0 2px 10px #3b230f22;
+      padding: 10px 18px 12px 18px;
     }
     .search-bar-container input {
       flex: 1;
