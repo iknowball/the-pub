@@ -6,9 +6,12 @@
   <title>Your Pub Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     body {
-      /* Woodgrain bar background */
       background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), linear-gradient(135deg, #a87744 0%, #6e4426 100%);
       background-size: 400px, cover;
       background-repeat: repeat, no-repeat;
@@ -289,7 +292,6 @@
     .post-form button:hover, .take-form button:hover, .team-form button:hover {
       background: #ffe38a;
     }
-    /* Profile preview modal */
     .profile-modal-bg {
       display: none;
       position: fixed;
@@ -354,36 +356,50 @@
   </style>
 </head>
 <body>
-  <!-- Top Pub Bar Sign -->
   <div class="pub-sign" id="pubTitle">Your Pub</div>
-  <!-- Search Friends Bar -->
+  <div id="loginArea" style="max-width:580px;margin:12px auto 0 auto;">
+    <div id="loginFormArea">
+      <div style="margin-bottom:8px;">
+        <input id="loginEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
+        <input id="loginPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
+        <button id="loginBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Login</button>
+        <button id="registerBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Register</button>
+      </div>
+    </div>
+    <div id="userWelcome" style="display:none;">
+      <span id="welcomeText"></span>
+      <button id="logoutBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:4px 14px;font-weight:bold;float:right;">Logout</button>
+    </div>
+    <div id="registerArea" style="display:none;">
+      <div>
+        <input id="registerEmail" type="email" placeholder="Email" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
+        <input id="registerPassword" type="password" placeholder="Password" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
+        <input id="registerUsername" type="text" placeholder="Username" style="padding:8px 12px;border-radius:8px;border:1px solid #bbb;width:140px;">
+        <button id="registerConfirmBtn" style="background:#ffd700;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Confirm Register</button>
+        <button id="registerCancelBtn" style="background:#ffe38a;color:#222a32;border-radius:8px;padding:8px 18px;font-weight:bold;">Cancel</button>
+      </div>
+      <div id="registerError" style="color:red;margin-top:7px;"></div>
+    </div>
+    <div id="loginError" style="color:red;margin-top:7px;"></div>
+  </div>
   <div class="search-bar-container" style="position:relative;">
     <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
     <button id="searchBtn">Search</button>
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
-  <!-- Search Results -->
   <div id="searchResults" class="search-results" style="display:none"></div>
-  <!-- Bar Front -->
   <div class="bar-front"></div>
-  <!-- TV Frame -->
   <div class="tv-frame">
-    <!-- TV Bezel -->
     <div class="tv-bezel">Facing the Big Screen</div>
-    <!-- Tabs -->
     <div class="flex flex-row justify-center gap-2 mb-0 pt-2 pb-1" id="tabBar">
       <button class="tab-btn active" data-tab="wall">Wall</button>
       <button class="tab-btn" data-tab="takes">My Takes</button>
       <button class="tab-btn" data-tab="teams">My Teams</button>
     </div>
-    <!-- Content Screen -->
     <div class="tv-screen">
-      <div class="tv-content" id="tabContent">
-        <!-- Wall content (default) -->
-      </div>
+      <div class="tv-content" id="tabContent"></div>
     </div>
   </div>
-  <!-- Profile Preview Modal -->
   <div id="profileModalBg" class="profile-modal-bg">
     <div class="profile-modal" id="profileModal">
       <button class="close-btn" id="closeProfileBtn">Close</button>
@@ -402,25 +418,133 @@
       </div>
     </div>
   </div>
-
   <script>
-    // Your own profile data logic remains the same...
-    const username = "iknowball"; // Set this dynamically from your auth/session
-    document.getElementById("pubTitle").textContent = `${username}'s Pub`;
+    // ---- FIREBASE SETUP ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
+      authDomain: "thepub-sigma.firebaseapp.com",
+      projectId: "thepub-sigma",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    // Simulated personal wall/takes/teams for logged-in user:
-    let wallPosts = [
-      {author: "sportsguru", text: "Welcome to the pub!"},
-      {author: "iknowball", text: "Leave your takes!"},
-    ];
-    let takes = ["CMC for OPOY!", "Never bet against Mahomes."];
-    let teams = [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}];
+    let username = "Unknown";
+    let userUid = null;
 
+    function setUsernameUI(username) {
+      document.getElementById("pubTitle").textContent = `${username}'s Pub`;
+      document.getElementById("welcomeText").textContent = `Welcome, ${username}!`;
+    }
+
+    function showLoginArea(show) {
+      document.getElementById("loginFormArea").style.display = show ? "" : "none";
+      document.getElementById("userWelcome").style.display = show ? "none" : "";
+    }
+
+    function showRegisterArea(show) {
+      document.getElementById("registerArea").style.display = show ? "" : "none";
+      document.getElementById("loginFormArea").style.display = show ? "none" : "";
+    }
+
+    auth.onAuthStateChanged(async function(user) {
+      if (user) {
+        userUid = user.uid;
+        const userDoc = await db.collection("users").doc(userUid).get();
+        if (userDoc.exists && userDoc.data().username) {
+          username = userDoc.data().username;
+        } else if (user.displayName) {
+          username = user.displayName;
+        } else if (user.email) {
+          username = user.email.split('@')[0];
+        }
+        setUsernameUI(username);
+        showLoginArea(false);
+        renderWall();
+      } else {
+        username = "Unknown";
+        setUsernameUI(username);
+        showLoginArea(true);
+      }
+    });
+
+    document.getElementById("loginBtn").onclick = async function() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      document.getElementById("loginError").textContent = "";
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (e) {
+        document.getElementById("loginError").textContent = e.message;
+      }
+    };
+
+    document.getElementById("registerBtn").onclick = function() {
+      showRegisterArea(true);
+      document.getElementById("registerError").textContent = "";
+    };
+
+    document.getElementById("registerConfirmBtn").onclick = async function() {
+      const email = document.getElementById("registerEmail").value.trim();
+      const password = document.getElementById("registerPassword").value;
+      const regUsername = document.getElementById("registerUsername").value.trim();
+      document.getElementById("registerError").textContent = "";
+      if (!email || !password || !regUsername) {
+        document.getElementById("registerError").textContent = "Please fill all fields.";
+        return;
+      }
+      const usernameQuery = await db.collection("users").where("username", "==", regUsername).get();
+      if (!usernameQuery.empty) {
+        document.getElementById("registerError").textContent = "Username already taken.";
+        return;
+      }
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        await db.collection("users").doc(uid).set({
+          username: regUsername,
+          wall: [],
+          takes: [],
+          teams: []
+        });
+        showRegisterArea(false);
+      } catch (e) {
+        document.getElementById("registerError").textContent = e.message;
+      }
+    };
+
+    document.getElementById("registerCancelBtn").onclick = function() {
+      showRegisterArea(false);
+    };
+
+    document.getElementById("logoutBtn").onclick = async function() {
+      await auth.signOut();
+    };
+
+    let wallPosts = [];
+    let takes = [];
+    let teams = [];
     const tabContent = document.getElementById("tabContent");
     const tabBar = document.getElementById("tabBar");
     let currentTab = "wall";
 
-    function renderWall() {
+    async function fetchCurrentUserData() {
+      if (!userUid) return;
+      const userDoc = await db.collection("users").doc(userUid).get();
+      if (userDoc.exists) {
+        wallPosts = userDoc.data().wall || [];
+        takes = userDoc.data().takes || [];
+        teams = userDoc.data().teams || [];
+      }
+    }
+
+    async function updateUserField(field, value) {
+      if (!userUid) return;
+      await db.collection("users").doc(userUid).update({ [field]: value });
+    }
+
+    async function renderWall() {
+      await fetchCurrentUserData();
       let html = `
         <form class="post-form" id="wallForm">
           <input type="text" id="wallInput" placeholder="Post something on ${username}'s wall..." maxlength="120">
@@ -436,18 +560,20 @@
         `;
       });
       tabContent.innerHTML = html;
-      document.getElementById("wallForm").onsubmit = function(e) {
+      document.getElementById("wallForm").onsubmit = async function(e) {
         e.preventDefault();
         const input = document.getElementById("wallInput");
         if (input.value.trim()) {
           wallPosts.push({author: username, text: input.value.trim()});
+          await updateUserField("wall", wallPosts);
           input.value = "";
           renderWall();
         }
       };
     }
 
-    function renderTakes() {
+    async function renderTakes() {
+      await fetchCurrentUserData();
       let html = `
         <form class="take-form" id="takeForm">
           <input type="text" id="takeInput" placeholder="Share your latest sports take..." maxlength="120">
@@ -458,18 +584,20 @@
         html += `<div class="my-take">${take}</div>`;
       });
       tabContent.innerHTML = html;
-      document.getElementById("takeForm").onsubmit = function(e) {
+      document.getElementById("takeForm").onsubmit = async function(e) {
         e.preventDefault();
         const input = document.getElementById("takeInput");
         if (input.value.trim()) {
           takes.push(input.value.trim());
+          await updateUserField("takes", takes);
           input.value = "";
           renderTakes();
         }
       };
     }
 
-    function renderTeams() {
+    async function renderTeams() {
+      await fetchCurrentUserData();
       let html = `
         <form class="team-form" id="teamForm">
           <input type="text" id="teamInput" placeholder="Add team name...">
@@ -486,20 +614,21 @@
         `;
       });
       tabContent.innerHTML = html;
-
-      document.getElementById("teamForm").onsubmit = function(e) {
+      document.getElementById("teamForm").onsubmit = async function(e) {
         e.preventDefault();
         const teamName = document.getElementById("teamInput").value.trim();
         const role = document.getElementById("roleInput").value.trim() || "Fan";
         if (teamName) {
           teams.push({name: teamName, role});
+          await updateUserField("teams", teams);
           renderTeams();
         }
       };
       document.querySelectorAll(".edit-btn").forEach(btn => {
-        btn.onclick = function() {
+        btn.onclick = async function() {
           const idx = parseInt(btn.getAttribute("data-idx"));
           teams.splice(idx, 1);
+          await updateUserField("teams", teams);
           renderTeams();
         }
       });
@@ -516,35 +645,26 @@
       };
     });
 
-    renderWall();
-
-    // --- Backend integration for username dropdown and profiles ---
     const searchInput = document.getElementById("searchInput");
     const searchDropdown = document.getElementById("searchDropdown");
     const searchBtn = document.getElementById("searchBtn");
     const searchResults = document.getElementById("searchResults");
 
-    async function fetchUsernames(query) {
-      if (!query) return [];
-      try {
-        const resp = await fetch(`/api/search-users?query=${encodeURIComponent(query)}`);
-        if (!resp.ok) return [];
-        const data = await resp.json(); // array of usernames
-        return data;
-      } catch (e) {
-        return [];
-      }
+    async function fetchAllUsernames() {
+      const snapshot = await db.collection("users").get();
+      return snapshot.docs.map(doc => doc.data().username);
     }
 
-    async function fetchProfile(username) {
-      try {
-        const resp = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
-        if (!resp.ok) return null;
-        const data = await resp.json(); // {username, wall, takes, teams}
-        return data;
-      } catch (e) {
-        return null;
-      }
+    async function fetchUsernames(query) {
+      if (!query) return [];
+      const allUsernames = await fetchAllUsernames();
+      return allUsernames.filter(u => u.toLowerCase().includes(query.toLowerCase()));
+    }
+
+    async function fetchProfileByUsername(username) {
+      const snapshot = await db.collection("users").where("username", "==", username).get();
+      if (snapshot.empty) return null;
+      return snapshot.docs[0].data();
     }
 
     let lastDropdownQuery = "";
@@ -642,9 +762,9 @@
     });
 
     async function showProfileModal(username) {
-      const user = await fetchProfile(username);
+      const user = await fetchProfileByUsername(username);
       if (!user) return;
-      document.getElementById("modalUsername").textContent = `@${user.username}`;
+      document.getElementById("modalUsername").textContent = `@${username}`;
       document.getElementById("modalWall").innerHTML = (user.wall || []).map(
         post => `<div style="margin-bottom:8px"><span style="font-weight:bold;color:#2b6cb0">${post.author}</span>: ${post.text}</div>`
       ).join("") || "<span style='color:#ccc'>No posts yet.</span>";
