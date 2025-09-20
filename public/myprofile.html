@@ -2,625 +2,582 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Custom Pub Profile</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <title>Your Pub Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: radial-gradient(ellipse at 50% 0%, #3c2913 60%, #1a1107 100%);
+      /* Woodgrain bar background */
+      background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'), linear-gradient(135deg, #a87744 0%, #6e4426 100%);
+      background-size: 400px, cover;
+      background-repeat: repeat, no-repeat;
+      background-attachment: fixed;
       min-height: 100vh;
-      overflow-x: hidden;
-    }
-    .bar-top {
-      background: transparent;
-      position: relative;
+      font-family: 'Montserrat', sans-serif;
     }
     .pub-sign {
-      font-family: 'Permanent Marker', cursive;
-      font-size: 2.6rem;
-      color: #f9e38f;
-      letter-spacing: 4px;
-      background: #342007;
-      border-radius: 18px 18px 28px 28px;
-      border: 3px solid #cfb467;
-      padding: 10px 38px 8px 38px;
-      margin: 0 auto;
-      box-shadow: 0 7px 26px 1px #cfb46788, 0 4px 0 #bb9846;
-      display: inline-block;
-      margin-top: 20px;
-      margin-bottom: 20px;
-      text-shadow: 0 2px 8px #000a, 0 0px 2px #f8e183;
-      transition: background 0.2s;
+      background: linear-gradient(90deg, #6e4426 60%, #b57f4a 100%);
+      color: #ffe38a;
+      font-size: 2rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #3b230f99;
+      border-radius: 20px 20px 0 0;
+      border: 4px solid #d8b170;
+      border-bottom: none;
+      max-width: 580px;
+      margin: 44px auto 0 auto;
+      padding: 18px 0 9px 0;
+      letter-spacing: 2px;
+      box-shadow: 0 4px 14px #3b230f55;
+      text-align: center;
+    }
+    .search-bar-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      background: #ffe38aee;
+      border-radius: 0 0 20px 20px;
+      border: 0px solid #d8b170;
+      max-width: 580px;
+      margin: 0 auto 0 auto;
+      box-shadow: 0 2px 10px #3b230f22;
+      padding: 10px 18px 12px 18px;
+    }
+    .search-bar-container input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid #b57f4a;
+      padding: 8px 12px;
+      font-size: 1.11rem;
+      background: #fff;
+      color: #6e4426;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .search-bar-container button {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 8px;
+      font-weight: bold;
+      padding: 8px 18px;
+      border: none;
       cursor: pointer;
-      position: relative;
+      transition: background 0.2s;
+      font-size: 1.07rem;
+    }
+    .search-bar-container button:hover {
+      background: #ffe38a;
+    }
+    .search-results {
+      max-width: 580px;
+      margin: 0 auto 18px auto;
+      background: #fff8e1cc;
+      border-radius: 0 0 18px 18px;
+      box-shadow: 0 2px 10px #3b230f33;
+      padding: 10px 20px;
+      font-size: 1.07rem;
+      color: #3b230f;
+    }
+    .search-results .user-result {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 0;
+      border-bottom: 1px solid #e3b46c;
+    }
+    .search-results .user-result:last-child {
+      border-bottom: none;
+    }
+    .search-results .view-profile-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 4px 12px;
+      margin-left: 8px;
+      cursor: pointer;
+      border: none;
+      font-size: 0.98em;
+      transition: background 0.2s;
+    }
+    .search-results .view-profile-btn:hover {
+      background: #ffe38a;
+    }
+    .bar-front {
+      background: linear-gradient(90deg, #7a5537 70%, #cfa56a 100%);
+      height: 36px;
+      border-radius: 0 0 20px 20px;
+      border-top: 4px solid #d8b170;
+      max-width: 580px;
+      margin: 0 auto 24px auto;
+      box-shadow: 0 2px 10px #3b230f44;
     }
     .tv-frame {
-      background: #161616;
-      border: 12px solid #2a2a2a;
-      border-radius: 22px;
-      box-shadow: 0 14px 50px 8px #000a, 0 3px 0 0 #6a6131 inset;
+      background: #1b242b;
+      border-radius: 32px;
+      border: 7px solid #c5c8c9;
+      box-shadow: 0 8px 48px 0 #000a, 0 0 0 7px #111 inset;
+      max-width: 560px;
+      margin: 0 auto 0 auto;
       position: relative;
-      max-width: 600px;
-      width: 97vw;
-      margin: 0 auto;
-      aspect-ratio: 16/9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      overflow: hidden;
+    }
+    .tv-bezel {
+      background: linear-gradient(180deg, #42505e 0%, #1b242b 100%);
+      border-radius: 32px 32px 24px 24px;
+      min-height: 34px;
+      width: 100%;
+      box-shadow: 0 2px 8px #444 inset;
+      color: #ffe38a;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: center;
+      padding: 7px 0 0 0;
+      letter-spacing: 1px;
     }
     .tv-screen {
-      background: linear-gradient(135deg, #22262b 92%, #171717 100%);
-      border-radius: 8px;
-      box-shadow: 0 0 36px #000e, 0 0 0 6px #0008 inset;
+      background: linear-gradient(180deg, #313e4e 0%, #212a36 100%);
+      min-height: 320px;
+      max-height: 420px;
       overflow: hidden;
-      width: 97%;
-      height: 89%;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: stretch;
-      position: relative;
-      z-index: 2;
-    }
-    .tv-glare {
-      position: absolute;
-      left: 7%;
-      top: 3%;
-      width: 86%;
-      height: 18%;
-      background: linear-gradient(180deg, #fff9 12%, transparent 80%);
-      border-radius: 0 0 30% 30%/0 0 58% 58%;
-      pointer-events: none;
-      z-index: 3;
-      filter: blur(1px) opacity(0.7);
-    }
-    .tv-feed::-webkit-scrollbar { width: 8px; background: #21262a; }
-    .tv-feed::-webkit-scrollbar-thumb { background: #393b40; border-radius: 6px; }
-    .tv-feed {
-      scrollbar-width: thin;
-      scrollbar-color: #393b40 #21262a;
-    }
-    .bar-surface {
-      background: linear-gradient(180deg, #b49155 70%, #a47d3b 100%);
-      border-top: 8px solid #7c6130;
-      min-height: 95px;
-      box-shadow: 0 0 70px 8px #2c200b inset;
-      position: relative;
-      z-index: 20;
-      width: 100vw;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-    }
-    .can {
-      width: 70px;
-      height: 110px;
-      border-radius: 20px 20px 18px 18px/24px 24px 28px 28px;
-      background: #eee;
-      box-shadow: 0 10px 24px 0 #2d210cb0, 0 2px 8px #fff8 inset;
-      margin: 0 26px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      position: relative;
-      border: 1.5px solid #a0a0a0;
-      overflow: hidden;
-      transition: transform 0.12s;
-      cursor: pointer;
-    }
-    .can:hover {
-      transform: translateY(-8px) scale(1.04);
-      box-shadow: 0 18px 28px 0 #2d210c, 0 2px 8px #fff8 inset;
-    }
-    .can .can-top {
-      width: 90%;
-      height: 18px;
-      border-radius: 50% 50% 38% 38%/50% 60% 30% 30%;
-      background: linear-gradient(180deg, #dadada 70%, #bcbcbc 100%);
-      position: absolute;
-      top: 0;
-      left: 5%;
-      box-shadow: 0 3px 8px #c0b06070 inset;
-      z-index: 2;
-    }
-    .can .can-body {
-      width: 100%;
-      height: 78%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: stretch;
-      position: relative;
-      z-index: 1;
-    }
-    .can .can-label {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 2px 7px #000c;
-      font-size: 1.17rem;
-      letter-spacing: 1.5px;
-      padding: 7px 0 4px 0;
-      width: 100%;
-      text-align: center;
-      border-radius: 0 0 16px 16px/0 0 18px 18px;
-      background: rgba(0,0,0,0.10);
-      margin-bottom: 7px;
-      cursor: pointer;
-      user-select: none;
-    }
-    @media (max-width: 600px) {
-      .tv-frame { max-width: 98vw; }
-      .tv-screen { height: 62vw; min-height: 270px; }
-      .bar-surface { min-height: 66px; }
-      .can { width: 53px; height: 78px; }
-      .can .can-label { font-size: 0.95rem; }
-      .can .can-top { height: 13px;}
-    }
-    .inline-edit-input {
-      font-family: inherit;
-      font-size: inherit;
-      font-weight: bold;
-      text-align: center;
-      padding: 2px 6px;
-      border: 2px solid #cfb467;
-      border-radius: 8px;
-      background: #fffbe6;
-      color: #65481c;
-      outline: none;
-      width: 95%;
-      margin: 0 auto 8px auto;
-      display: block;
-      box-sizing: border-box;
-      transition: border .2s;
-    }
-    .inline-edit-input:focus {
-      border-color: #f6b509;
-      background: #fffad1;
-    }
-    .home-btn-profile {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: bold;
-      font-size: 1.25rem;
-      background: #f9e38f;
-      color: #2b2007;
-      border: 3px solid #cfb467;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px #cfb46777, 0 2px 0 #bb9846;
-      padding: 7px 26px 7px 26px;
-      margin: 0 18px;
-      text-shadow: 0 1px 5px #fffbe7a3;
-      display: inline-block;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .home-btn-profile:hover {
-      background: #fffbe7;
-      color: #b88340;
-    }
-    .profile-pic {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid #cfb467;
-      margin-bottom: 10px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      background: #fff;
-    }
-    .profile-btns {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      margin-bottom: 8px;
-    }
-    .profile-btns button {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: bold;
-      font-size: 1rem;
-      padding: 6px 16px;
-      border-radius: 8px;
-      border: 2px solid #cfb467;
-      background: #f9e38f;
-      color: #533e1f;
-      transition: background 0.2s, color 0.2s;
-      cursor: pointer;
-    }
-    .profile-btns button:hover {
-      background: #fffbe7;
-      color: #b88340;
-    }
-    /* Stats Modal styles */
-    .modal-bg {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-box {
-      background: #342007;
-      border-radius: 18px;
-      border: 3px solid #cfb467;
-      color: #f9e38f;
-      padding: 28px 32px 22px 32px;
-      max-width: 98vw;
-      width: 370px;
-      box-shadow: 0 8px 44px #000a;
-    }
-    .modal-title {
-      font-size: 1.45rem;
-      font-family: 'Montserrat';
-      font-weight: bold;
-      margin-bottom: 17px;
-      text-align: center;
-      letter-spacing: 2px;
-    }
-    .modal-close {
-      margin-top: 22px;
-      background: #f9e38f;
-      color: #533e1f;
-      border: 2px solid #cfb467;
-      border-radius: 7px;
-      font-family: inherit;
-      font-size: 1.08rem;
-      font-weight: bold;
-      padding: 7px 22px;
-      cursor: pointer;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      transition: background 0.2s,color 0.2s;
-    }
-    .modal-close:hover {
-      background: #fffbe7;
-      color: #b88340;
-    }
-    .modal-list {
-      list-style: none;
-      margin-top: 9px;
-      margin-bottom: 8px;
       padding: 0;
-      font-size: 1.09rem;
+      position: relative;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 16px #0007 inset;
+      border-top: 4px solid #334155;
     }
-    .modal-list li {
-      margin-bottom: 11px;
+    .tab-btn {
+      background: #222a32;
+      color: #ffd700;
+      border-bottom: 2px solid #444;
+      font-weight: bold;
+      transition: background 0.2s, color 0.2s;
+      padding: 12px 28px;
+      border-radius: 16px 16px 0 0;
+      cursor: pointer;
+      font-size: 1.12rem;
+      margin-right: 4px;
+    }
+    .tab-btn.active {
+      background: #ffd700;
+      color: #222a32;
+      border-bottom: 4px solid #ffd700;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #ffd70088;
+    }
+    .tab-btn:not(.active):hover {
+      background: #ffe38a;
+      color: #222a32;
+    }
+    .tv-content {
+      background: rgba(40,46,54,0.96);
+      padding: 18px 16px 10px 16px;
+      min-height: 210px;
+      max-height: 340px;
+      overflow-y: auto;
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 2px 8px #fff3;
+    }
+    .wall-post {
+      background: #fffdf3;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 4px #ccb;
+      color: #222a32;
+      border-left: 4px solid #ffd700;
+    }
+    .wall-post-author {
+      font-weight: bold;
+      color: #2b6cb0;
+      margin-bottom: 3px;
+      display: block;
+    }
+    .my-take {
+      background: #ffe58a;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      color: #222a32;
+      box-shadow: 0 2px 6px #ffd70055;
+      border-left: 4px solid #ffd700;
+    }
+    .team-card {
+      background: #ffd70022;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      color: #222a32;
+      box-shadow: 0 2px 6px #ffd70044;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid #ffd700;
+    }
+    .edit-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 4px 10px;
+      margin-left: 10px;
+      cursor: pointer;
+      border: none;
+    }
+    .edit-btn:hover {
+      background: #ffe58a;
+    }
+    .post-form, .take-form, .team-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .post-form input, .take-form input, .team-form input {
+      flex: 1;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      font-size: 1rem;
+      background: #fff;
+      color: #222a32;
+    }
+    .post-form button, .take-form button, .team-form button {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 6px 16px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .post-form button:hover, .take-form button:hover, .team-form button:hover {
+      background: #ffe58a;
+    }
+    /* Profile preview modal */
+    .profile-modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #0008;
+      justify-content: center;
+      align-items: center;
+    }
+    .profile-modal {
+      background: #222a32;
+      color: #ffd700;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 95vw;
+      box-shadow: 0 8px 32px #000b;
+      padding: 36px 28px 24px 28px;
+      position: relative;
+      text-align: center;
+      font-size: 1.13rem;
+      border: 6px solid #ffd700;
+    }
+    .profile-modal .close-btn {
+      position: absolute;
+      right: 18px; top: 14px;
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      font-size: 1.12em;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+    .profile-modal .close-btn:hover {
+      background: #ffe38a;
+    }
+    .profile-modal .user-username {
+      font-size: 1.25em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #ffe38a;
+    }
+    .profile-modal .profile-section {
+      margin-bottom: 18px;
       text-align: left;
-      font-weight: 600;
+    }
+    .profile-modal .profile-section-title {
+      font-weight: bold;
+      color: #ffd700;
+      margin-bottom: 5px;
+      font-size: 1.07em;
+    }
+    .profile-modal .profile-list {
+      background: #ffe38a22;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      color: #222a32;
+      font-size: 0.98em;
     }
   </style>
 </head>
-<body class="flex flex-col items-center">
-
-  <!-- Bar Top with Editable Sign and Home Button -->
-  <div class="bar-top w-full flex flex-col items-center py-2 relative z-10">
-    <div class="flex flex-row justify-center items-center gap-4">
-      <span id="pubSign" class="pub-sign" title="Click to edit pub name">My Pub</span>
-      <a href="index.html" class="home-btn-profile">Home</a>
-    </div>
-    <img id="profilePic" class="profile-pic" src="" alt="Profile Picture" />
-    <div class="profile-btns">
-      <button id="changeNameBtn">Change Name</button>
-      <button id="changePicBtn">Change Picture</button>
-      <button id="myStatsBtn">My Stats</button>
-    </div>
-    <button id="signInBtn" style="display:none" class="bg-amber-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign in with Google</button>
-    <button id="signOutBtn" style="display:none" class="bg-red-700 mt-2 text-white font-bold px-4 py-2 rounded">Sign Out</button>
+<body>
+  <!-- Top Pub Bar Sign -->
+  <div class="pub-sign" id="pubTitle">Your Pub</div>
+  <!-- Search Friends Bar -->
+  <div class="search-bar-container">
+    <input type="text" id="searchInput" placeholder="Search friends by username...">
+    <button id="searchBtn">Search</button>
   </div>
-
-  <div class="flex justify-center w-full mt-6 md:mt-12 z-20" style="min-height:400px;">
-    <div class="tv-frame">
-      <div class="tv-glare"></div>
-      <div class="tv-screen">
-        <form id="postForm" class="flex items-center gap-2 px-3 pt-3 pb-1 sticky top-0 bg-opacity-80 bg-gray-900 z-10 rounded-t">
-          <input type="text" id="postInput" maxlength="140" placeholder="Post to the bar feed..." class="w-full rounded px-3 py-2 border border-gray-400 focus:outline-none focus:border-yellow-400 bg-gray-100 text-gray-900" />
-          <button type="submit" class="bg-amber-600 text-white font-bold px-4 py-2 rounded hover:bg-amber-700 transition">Post</button>
-        </form>
-        <div id="tvFeed" class="tv-feed h-full overflow-y-auto flex flex-col gap-3 p-3 pb-5 pt-2" style="max-height:calc(100% - 55px);"></div>
+  <!-- Search Results -->
+  <div id="searchResults" class="search-results" style="display:none"></div>
+  <!-- Bar Front -->
+  <div class="bar-front"></div>
+  <!-- TV Frame -->
+  <div class="tv-frame">
+    <!-- TV Bezel -->
+    <div class="tv-bezel">Facing the Big Screen</div>
+    <!-- Tabs -->
+    <div class="flex flex-row justify-center gap-2 mb-0 pt-2 pb-1" id="tabBar">
+      <button class="tab-btn active" data-tab="wall">Wall</button>
+      <button class="tab-btn" data-tab="takes">My Takes</button>
+      <button class="tab-btn" data-tab="teams">My Teams</button>
+    </div>
+    <!-- Content Screen -->
+    <div class="tv-screen">
+      <div class="tv-content" id="tabContent">
+        <!-- Wall content (default) -->
+      </div>
+    </div>
+  </div>
+  <!-- Profile Preview Modal -->
+  <div id="profileModalBg" class="profile-modal-bg">
+    <div class="profile-modal" id="profileModal">
+      <button class="close-btn" id="closeProfileBtn">Close</button>
+      <div class="user-username" id="modalUsername"></div>
+      <div class="profile-section">
+        <div class="profile-section-title">Wall</div>
+        <div id="modalWall" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Takes</div>
+        <div id="modalTakes" class="profile-list"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">Teams</div>
+        <div id="modalTeams" class="profile-list"></div>
       </div>
     </div>
   </div>
 
-  <div class="bar-surface pb-7 pt-5 z-30 gap-12" id="cansBar"></div>
-
-  <!-- Stats Modal -->
-  <div id="statsModal" class="modal-bg" style="display:none;">
-    <div class="modal-box">
-      <div class="modal-title">Your Average Scores</div>
-      <ul class="modal-list" id="statsList">
-        <li>Players Game: <span id="playersAvg">...</span></li>
-        <li>College Game: <span id="collegeAvg">...</span></li>
-        <li>Trivia Game: <span id="triviaAvg">...</span></li>
-      </ul>
-      <button class="modal-close" id="closeStatsModal">Close</button>
-    </div>
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-      authDomain: "thepub-sigma.firebaseapp.com",
-      projectId: "thepub-sigma",
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    // Simulated username (replace with actual username from backend/auth)
+    const username = "iknowball"; // For demo, update dynamically in actual app
+    document.getElementById("pubTitle").textContent = `${username}'s Pub`;
 
-    // DOM
-    const pubSign = document.getElementById("pubSign");
-    const changeNameBtn = document.getElementById("changeNameBtn");
-    const profilePic = document.getElementById("profilePic");
-    const changePicBtn = document.getElementById("changePicBtn");
-    const signInBtn = document.getElementById("signInBtn");
-    const signOutBtn = document.getElementById("signOutBtn");
-    const myStatsBtn = document.getElementById("myStatsBtn");
-    const statsModal = document.getElementById("statsModal");
-    const closeStatsModal = document.getElementById("closeStatsModal");
-    const playersAvgSpan = document.getElementById("playersAvg");
-    const collegeAvgSpan = document.getElementById("collegeAvg");
-    const triviaAvgSpan = document.getElementById("triviaAvg");
+    // Simulated user database (for demo only)
+    const userDB = [
+      {
+        username: "iknowball",
+        wall: [
+          {author: "sportsguru", text: "Welcome to the pub!"},
+          {author: "iknowball", text: "Leave your takes!"},
+        ],
+        takes: ["CMC for OPOY!", "Never bet against Mahomes."],
+        teams: [{name:"Bills", role:"Fan"},{name:"Warriors",role:"Fan"}],
+      },
+      {
+        username: "ballerfan42",
+        wall: [
+          {author:"iknowball", text:"Love your takes!"},
+          {author:"sportsguru", text:"Let's go Knicks!"},
+        ],
+        takes: ["Knicks are winning it all.", "Jalen Brunson is HIM."],
+        teams: [{name:"Knicks", role:"Fan"},{name:"Yankees",role:"Fan"}],
+      },
+      {
+        username: "sportsguru",
+        wall: [
+          {author:"iknowball", text:"Bills for the AFC East!"},
+          {author:"ballerfan42", text:"You know ball!"},
+        ],
+        takes: ["Bills are going deep!", "Cowboys fans will be disappointed."],
+        teams: [{name:"Bills",role:"Fan"},{name:"Cowboys",role:"Hater"}],
+      },
+    ];
 
-    // Default avatar
-    const defaultAvatar = "https://randomuser.me/api/portraits/men/44.jpg";
-    let userProfile = { username: "User", pubname: "My Pub", avatar: defaultAvatar };
-    let userUid = null;
+    // Use your own wall/takes/teams data for logged-in user
+    let wallPosts = userDB[0].wall.slice(); // This user's wall
+    let takes = userDB[0].takes.slice();
+    let teams = userDB[0].teams.slice();
 
-    // Posts logic
-    const tvFeed = document.getElementById("tvFeed");
-    const postForm = document.getElementById("postForm");
-    const postInput = document.getElementById("postInput");
-    let myPosts = [];
+    const tabContent = document.getElementById("tabContent");
+    const tabBar = document.getElementById("tabBar");
+    let currentTab = "wall";
 
-    // PROFILE LOAD/SAVE
-    async function loadUserProfile(uid) {
-      const doc = await db.collection('users').doc(uid).get();
-      if (doc.exists) {
-        userProfile = doc.data();
-        pubSign.textContent = userProfile.pubname || "My Pub";
-        profilePic.src = userProfile.avatar || defaultAvatar;
-      } else {
-        userProfile = { username: "User", pubname: "My Pub", avatar: defaultAvatar };
-        pubSign.textContent = userProfile.pubname;
-        profilePic.src = userProfile.avatar;
-        await db.collection('users').doc(uid).set(userProfile);
-      }
-    }
-    function saveUserProfile(uid) {
-      return db.collection('users').doc(uid).set(userProfile, { merge: true });
-    }
-
-    // POSTS LOAD/SAVE
-    async function loadMyPosts(uid) {
-      const snapshot = await db.collection("users").doc(uid).collection("posts").orderBy("timestamp", "desc").get();
-      myPosts = [];
-      snapshot.forEach(doc => {
-        myPosts.push(doc.data());
-      });
-      renderPosts();
-    }
-    function saveMyPost(uid, text) {
-      const post = {
-        text,
-        time: "just now",
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        avatar: userProfile.avatar,
-        username: userProfile.username
-      };
-      return db.collection("users").doc(uid).collection("posts").add(post);
-    }
-
-    // POST RENDER
-    function renderPosts() {
-      tvFeed.innerHTML = "";
-      myPosts.forEach(post => {
-        let postDiv = document.createElement("div");
-        postDiv.className = "bg-white/95 rounded-lg px-4 py-3 shadow flex gap-3 items-start";
-        postDiv.innerHTML = `
-          <img src="${post.avatar || defaultAvatar}" class="rounded-full w-10 h-10 border-2 border-gray-300" alt="avatar" />
-          <div>
-            <span class="font-semibold text-gray-900">${post.username || userProfile.username}</span>
-            <p class="text-gray-700 mt-1">${post.text}</p>
-            <span class="text-xs text-gray-400">${post.time || ''}</span>
+    // Renderers
+    function renderWall() {
+      let html = `
+        <form class="post-form" id="wallForm">
+          <input type="text" id="wallInput" placeholder="Post something on ${username}'s wall..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      wallPosts.slice().reverse().forEach(post => {
+        html += `
+          <div class="wall-post">
+            <span class="wall-post-author">${post.author}</span>
+            ${post.text}
           </div>
         `;
-        tvFeed.appendChild(postDiv);
       });
-    }
-
-    // PUB NAME (bar) CHANGE
-    function enablePubSignEdit() {
-      if (!userUid) return;
-      const currentPub = pubSign.textContent;
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = currentPub;
-      input.maxLength = 36;
-      input.className = "inline-edit-input";
-      input.onblur = async () => {
-        let value = input.value.trim() || "My Pub";
-        pubSign.textContent = value;
-        userProfile.pubname = value;
-        await saveUserProfile(userUid);
-        pubSign.replaceWith(pubSign);
+      tabContent.innerHTML = html;
+      document.getElementById("wallForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("wallInput");
+        if (input.value.trim()) {
+          wallPosts.push({author: username, text: input.value.trim()});
+          input.value = "";
+          renderWall();
+        }
       };
-      input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
-      pubSign.replaceWith(input);
-      input.focus();
-      input.select();
     }
-    pubSign.onclick = enablePubSignEdit;
 
-    // USERNAME CHANGE
-    changeNameBtn.onclick = async () => {
-      if (!userUid) return;
-      const name = prompt("Enter your username:", userProfile.username || "");
-      if (name && name.trim().length > 1) {
-        userProfile.username = name.trim();
-        await saveUserProfile(userUid);
-        loadMyPosts(userUid); // update posts to show new username
-      }
-    };
+    function renderTakes() {
+      let html = `
+        <form class="take-form" id="takeForm">
+          <input type="text" id="takeInput" placeholder="Share your latest sports take..." maxlength="120">
+          <button type="submit">Post</button>
+        </form>
+      `;
+      takes.slice().reverse().forEach(take => {
+        html += `<div class="my-take">${take}</div>`;
+      });
+      tabContent.innerHTML = html;
+      document.getElementById("takeForm").onsubmit = function(e) {
+        e.preventDefault();
+        const input = document.getElementById("takeInput");
+        if (input.value.trim()) {
+          takes.push(input.value.trim());
+          input.value = "";
+          renderTakes();
+        }
+      };
+    }
 
-    // PROFILE PIC
-    changePicBtn.onclick = async () => {
-      if (!userUid) return;
-      const url = prompt("Enter the URL of your new profile picture:", userProfile.avatar);
-      if (url && url.trim().length > 5) {
-        userProfile.avatar = url.trim();
-        profilePic.src = userProfile.avatar;
-        await saveUserProfile(userUid);
-        loadMyPosts(userUid); // update posts with new avatar
-      }
-    };
+    function renderTeams() {
+      let html = `
+        <form class="team-form" id="teamForm">
+          <input type="text" id="teamInput" placeholder="Add team name...">
+          <input type="text" id="roleInput" placeholder="Role (Fan, Alumni, etc)">
+          <button type="submit">Add</button>
+        </form>
+      `;
+      teams.forEach((team, idx) => {
+        html += `
+          <div class="team-card">
+            <span>${team.name} <span style="font-size:0.95em;color:#444;">(${team.role})</span></span>
+            <button class="edit-btn" data-idx="${idx}">Remove</button>
+          </div>
+        `;
+      });
+      tabContent.innerHTML = html;
 
-    // FORM POST
-    postForm.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!userUid) return;
-      const text = postInput.value.trim();
-      if (!text) return;
-      await saveMyPost(userUid, text);
-      postInput.value = "";
-      await loadMyPosts(userUid);
-      tvFeed.scrollTop = 0;
-    };
-
-    // CANS LOGIC (local)
-    const cansBar = document.getElementById("cansBar");
-    const defaultCans = ["Red", "White", "Blue"];
-    let cans = JSON.parse(localStorage.getItem("barCans")) || defaultCans;
-    const CAN_COLORS = [
-      {body: 'linear-gradient(180deg, #ea2222 80%, #b51212 100%)', label: '#ea2222', labelText: '#fff', border: '#b51212'},
-      {body: 'linear-gradient(180deg, #fff 90%, #e6e6e6 100%)', label: '#fff', labelText: '#000', border: '#ccc'},
-      {body: 'linear-gradient(180deg, #2a44a4 80%, #112366 100%)', label: '#2a44a4', labelText: '#fff', border: '#112366'},
-    ];
-    function getCanStyle(idx, name) { return CAN_COLORS[idx % CAN_COLORS.length]; }
-    function renderCans() {
-      cansBar.innerHTML = "";
-      cans.forEach((team, i) => {
-        const style = getCanStyle(i, team);
-        const can = document.createElement("div");
-        can.className = "can";
-        can.style.background = "#eee";
-        can.innerHTML = `<div class="can-top"></div><div class="can-body"></div>`;
-        setTimeout(() => {
-          const body = can.querySelector('.can-body');
-          if (body) body.style.background = style.body;
-        }, 0);
-        const canLabel = document.createElement("div");
-        canLabel.className = "can-label";
-        canLabel.textContent = team.toUpperCase();
-        canLabel.title = "Click to edit beer name";
-        canLabel.style.background = style.label;
-        canLabel.style.color = style.labelText;
-        canLabel.style.borderBottom = `4px solid ${style.border}`;
-        canLabel.onclick = (e) => {
-          e.stopPropagation();
-          enableCanEdit(i, canLabel, team);
-        };
-        can.appendChild(canLabel);
-        cansBar.appendChild(can);
+      document.getElementById("teamForm").onsubmit = function(e) {
+        e.preventDefault();
+        const teamName = document.getElementById("teamInput").value.trim();
+        const role = document.getElementById("roleInput").value.trim() || "Fan";
+        if (teamName) {
+          teams.push({name: teamName, role});
+          renderTeams();
+        }
+      };
+      document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = function() {
+          const idx = parseInt(btn.getAttribute("data-idx"));
+          teams.splice(idx, 1);
+          renderTeams();
+        }
       });
     }
-    function enableCanEdit(idx, labelDiv, oldValue) {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = oldValue;
-      input.maxLength = 14;
-      input.className = "inline-edit-input";
-      input.onblur = () => finishCanEdit(idx, input);
-      input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
-      labelDiv.replaceWith(input);
-      input.focus();
-      input.select();
-    }
-    function finishCanEdit(idx, input) {
-      let v = input.value.trim() || defaultCans[idx];
-      cans[idx] = v;
-      localStorage.setItem("barCans", JSON.stringify(cans));
-      renderCans();
-    }
-    renderCans();
 
-    // AUTH LOGIC
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        userUid = user.uid;
-        signInBtn.style.display = "none";
-        signOutBtn.style.display = "";
-        pubSign.style.pointerEvents = "";
-        changeNameBtn.disabled = false;
-        changePicBtn.disabled = false;
-        myStatsBtn.disabled = false;
-        await loadUserProfile(userUid);
-        await loadMyPosts(userUid);
-      } else {
-        userUid = null;
-        signInBtn.style.display = "";
-        signOutBtn.style.display = "none";
-        pubSign.textContent = "Sign in to edit profile";
-        profilePic.src = defaultAvatar;
-        pubSign.style.pointerEvents = "none";
-        changeNameBtn.disabled = true;
-        changePicBtn.disabled = true;
-        myStatsBtn.disabled = true;
-        tvFeed.innerHTML = "";
-      }
+    // Tab switching
+    tabBar.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.onclick = function() {
+        tabBar.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentTab = btn.getAttribute("data-tab");
+        if (currentTab === "wall") renderWall();
+        if (currentTab === "takes") renderTakes();
+        if (currentTab === "teams") renderTeams();
+      };
     });
-    signInBtn.onclick = () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider);
-    };
-    signOutBtn.onclick = () => auth.signOut();
 
-    // --- STATS BUTTON & MODAL LOGIC ---
-    myStatsBtn.onclick = async () => {
-      if (!userUid) return;
-      playersAvgSpan.textContent = '...';
-      collegeAvgSpan.textContent = '...';
-      triviaAvgSpan.textContent = '...';
+    // Initial render
+    renderWall();
 
-      // Fetch averages from each game
-      try {
-        // Players Game: userAverages
-        const playersDoc = await db.collection('userAverages').doc(userUid).get();
-        playersAvgSpan.textContent = (playersDoc.exists && typeof playersDoc.data().averageScore === 'number')
-          ? playersDoc.data().averageScore.toFixed(1)
-          : 'N/A';
+    // --- Search friends functionality ---
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const searchResults = document.getElementById("searchResults");
 
-        // College Game: collegeAverages
-        const collegeDoc = await db.collection('collegeAverages').doc(userUid).get();
-        collegeAvgSpan.textContent = (collegeDoc.exists && typeof collegeDoc.data().averageScore === 'number')
-          ? collegeDoc.data().averageScore.toFixed(1)
-          : 'N/A';
-
-        // Trivia Game: triviaAverages
-        const triviaDoc = await db.collection('triviaAverages').doc(userUid).get();
-        triviaAvgSpan.textContent = (triviaDoc.exists && typeof triviaDoc.data().averageScore === 'number')
-          ? triviaDoc.data().averageScore.toFixed(1)
-          : 'N/A';
-      } catch (err) {
-        playersAvgSpan.textContent = 'Error';
-        collegeAvgSpan.textContent = 'Error';
-        triviaAvgSpan.textContent = 'Error';
+    searchBtn.onclick = function() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResults.style.display = "none";
+        return;
       }
-
-      statsModal.style.display = "";
+      // Simulate search in userDB
+      const found = userDB.filter(u => u.username.toLowerCase().includes(query));
+      if (found.length) {
+        let html = "";
+        found.forEach(user => {
+          html += `
+            <div class="user-result">
+              <span>@${user.username}</span>
+              <button class="view-profile-btn" data-username="${user.username}">View Profile</button>
+            </div>
+          `;
+        });
+        searchResults.innerHTML = html;
+        searchResults.style.display = "";
+        // Attach handlers
+        searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.onclick = function() {
+            showProfileModal(btn.getAttribute("data-username"));
+          }
+        });
+      } else {
+        searchResults.innerHTML = "<div>No users found.</div>";
+        searchResults.style.display = "";
+      }
     };
 
-    closeStatsModal.onclick = () => {
-      statsModal.style.display = "none";
+    searchInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") searchBtn.click();
+    });
+
+    // --- Profile modal rendering ---
+    function showProfileModal(username) {
+      const user = userDB.find(u => u.username === username);
+      if (!user) return;
+      document.getElementById("modalUsername").textContent = `@${user.username}`;
+      document.getElementById("modalWall").innerHTML = user.wall.map(
+        post => `<div style="margin-bottom:8px"><span style="font-weight:bold;color:#2b6cb0">${post.author}</span>: ${post.text}</div>`
+      ).join("") || "<span style='color:#ccc'>No posts yet.</span>";
+      document.getElementById("modalTakes").innerHTML = user.takes.map(
+        take => `<div style="margin-bottom:8px">${take}</div>`
+      ).join("") || "<span style='color:#ccc'>No takes yet.</span>";
+      document.getElementById("modalTeams").innerHTML = user.teams.map(
+        team => `<div style="margin-bottom:8px">${team.name} <span style="color:#444">(${team.role})</span></div>`
+      ).join("") || "<span style='color:#ccc'>No teams yet.</span>";
+      document.getElementById("profileModalBg").style.display = "flex";
+    }
+    document.getElementById("closeProfileBtn").onclick = function() {
+      document.getElementById("profileModalBg").style.display = "none";
+    };
+    // Dismiss modal on bg click
+    document.getElementById("profileModalBg").onclick = function(e) {
+      if (e.target === this) this.style.display = "none";
     };
   </script>
 </body>
