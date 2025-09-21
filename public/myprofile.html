@@ -132,6 +132,31 @@
       font-size: 1.07rem;
       color: #3b230f;
     }
+    .selected-profile-container {
+      max-width: 580px;
+      margin: 18px auto 0 auto;
+      text-align: center;
+      color: #222a32;
+      font-size: 1.15rem;
+      font-weight: bold;
+      background: #fff8e1;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px #3b230f22;
+      padding: 10px 0;
+      display: none;
+    }
+    .selected-profile-label {
+      color: #7a5537;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    .selected-profile-name {
+      font-size: 1.24rem;
+      font-weight: bold;
+      color: #2b6cb0;
+      margin-bottom: 0;
+    }
     .error-message {
       color: #b91c1c;
       background: #ffe5e5;
@@ -395,6 +420,7 @@
     <button class="home-btn" id="homeBtn">Home</button>
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
+  <div id="selectedProfileContainer" class="selected-profile-container"></div>
   <div class="actions-bar">
     <button class="action-btn" id="statsBtn">My Stats</button>
     <button class="action-btn" id="settingsBtn">Settings</button>
@@ -463,8 +489,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
-    const viewedUsername = getQueryParam('user');
-
+    let viewedUsername = getQueryParam('user');
     let loggedInUsername = null;
     let loggedInUid = null;
     let viewedUid = null;
@@ -498,12 +523,13 @@
         let triviaAvg = "N/A";
         let playerAvg = "N/A";
         let collegeAvg = "N/A";
-        if (loggedInUid) {
-          const triviaDoc = await db.collection('triviaAverages').doc(loggedInUid).get();
+        // Use viewedUid for stats (show selected user's stats)
+        if (viewedUid) {
+          const triviaDoc = await db.collection('triviaAverages').doc(viewedUid).get();
           if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
-          const playerDoc = await db.collection('playerAverages').doc(loggedInUid).get();
+          const playerDoc = await db.collection('playerAverages').doc(viewedUid).get();
           if (playerDoc.exists) playerAvg = playerDoc.data().averageScore?.toFixed(2) || "N/A";
-          const collegeDoc = await db.collection('collegeAverages').doc(loggedInUid).get();
+          const collegeDoc = await db.collection('collegeAverages').doc(viewedUid).get();
           if (collegeDoc.exists) collegeAvg = collegeDoc.data().averageScore?.toFixed(2) || "N/A";
         }
         statsContent.innerHTML = `
@@ -638,6 +664,7 @@
     const searchDropdown = document.getElementById("searchDropdown");
     const searchBtn = document.getElementById("searchBtn");
     const searchResults = document.getElementById("searchResults");
+    const selectedProfileContainer = document.getElementById("selectedProfileContainer");
 
     function setSearchPlaceholder() {
       if (!searchInput.value.trim()) {
@@ -673,7 +700,7 @@
     });
 
     searchDropdown.addEventListener("mousedown", function(e) {
-      if (e.target.tagName === "LI") {
+      if (e.target.tagName === "LI" && e.target.dataset.username) {
         searchInput.value = e.target.dataset.username;
         searchDropdown.style.display = "none";
         searchBtn.click();
@@ -698,7 +725,7 @@
           items[activeIdx].focus();
           e.preventDefault();
         }
-        if (e.key === "Enter" && activeIdx >= 0) {
+        if (e.key === "Enter" && activeIdx >= 0 && items[activeIdx].dataset.username) {
           searchInput.value = items[activeIdx].dataset.username;
           searchDropdown.style.display = "none";
           searchBtn.click();
@@ -732,9 +759,25 @@
         searchResults.innerHTML = html;
         searchResults.style.display = "";
         searchResults.querySelectorAll(".view-profile-btn").forEach(btn => {
-          btn.onclick = function() {
-            window.location.href = `myprofile.html?user=${encodeURIComponent(btn.getAttribute("data-username"))}`;
-          }
+          btn.onclick = async function() {
+            // Show selected profile above stats/settings
+            selectedProfileContainer.innerHTML = `<span class="selected-profile-label">Current Profile:</span><span class="selected-profile-name">${btn.getAttribute("data-username")}</span>`;
+            selectedProfileContainer.style.display = "";
+            // Change URL/profile context to selected user
+            // Do NOT reload page, just update viewedUsername and reload profile context
+            viewedUsername = btn.getAttribute("data-username");
+            const profileDoc = await fetchProfileDocByUsername(viewedUsername);
+            if (profileDoc) {
+              viewedUid = profileDoc.id;
+              viewedUser = profileDoc.data();
+              ownProfile = (loggedInUsername === viewedUser.username);
+              document.getElementById("pubTitle").textContent = `${viewedUser.username}'s Pub`;
+              wallPosts = viewedUser.wall || [];
+              takes = viewedUser.takes || [];
+              teams = viewedUser.teams || [];
+              renderWall();
+            }
+          };
         });
       } else {
         searchResults.innerHTML = "<div>No users found.</div>";
@@ -746,7 +789,7 @@
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // --- PROFILE PAGE LOGIC (unchanged from previous version) ---
+    // --- PROFILE PAGE LOGIC ---
     const tabContent = document.getElementById("tabContent");
     const tabBar = document.getElementById("tabBar");
     let currentTab = "wall";
@@ -787,6 +830,13 @@
         wallPosts = viewedUser.wall || [];
         takes = viewedUser.takes || [];
         teams = viewedUser.teams || [];
+        // Show selected profile above stats/settings if not own profile
+        if (!ownProfile) {
+          selectedProfileContainer.innerHTML = `<span class="selected-profile-label">Current Profile:</span><span class="selected-profile-name">${viewedUser.username}</span>`;
+          selectedProfileContainer.style.display = "";
+        } else {
+          selectedProfileContainer.style.display = "none";
+        }
         renderWall();
       } else {
         showProfileError("Please log in to view profiles.");
