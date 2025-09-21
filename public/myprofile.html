@@ -244,7 +244,6 @@
       box-shadow: 0 2px 6px #ffd70055;
       border-left: 4px solid #ffd700;
     }
-    /* New style for yellow filled teams */
     .team-card {
       background: #ffe38a;
       border-radius: 8px;
@@ -689,12 +688,11 @@
         return;
       }
       let html = "";
-      // Own profile: team form
+      // Own profile: team form (no role input)
       if (ownProfile) {
         html += `
           <form class="team-form" id="teamForm">
             <input type="text" id="teamNameInput" placeholder="Team name..." maxlength="60">
-            <input type="text" id="teamRoleInput" placeholder="Role..." maxlength="60">
             <button type="submit">Add Team</button>
           </form>
         `;
@@ -705,24 +703,21 @@
       teams.forEach((team, idx) => {
         html += `
           <div class="team-card">
-            <span>${team.name} <span style="font-size:0.95em;color:#444;">(${team.role})</span></span>
+            <span>${team.name}</span>
             ${ownProfile ? `<button class="remove-btn" data-idx="${idx}">Remove</button>` : ""}
           </div>
         `;
       });
       tabContent.innerHTML = html;
 
-      // Add team logic
       if (ownProfile) {
         document.getElementById("teamForm").onsubmit = async function(e) {
           e.preventDefault();
           const nameInput = document.getElementById("teamNameInput");
-          const roleInput = document.getElementById("teamRoleInput");
-          if (nameInput.value.trim() && roleInput.value.trim()) {
-            teams.push({ name: nameInput.value.trim(), role: roleInput.value.trim() });
+          if (nameInput.value.trim()) {
+            teams.push({ name: nameInput.value.trim() });
             await updateViewedUserField("teams", teams);
             nameInput.value = "";
-            roleInput.value = "";
             try {
               const userDoc = await db.collection("users").doc(viewedUid).get();
               teams = userDoc.data().teams || [];
@@ -732,8 +727,6 @@
             }
           }
         };
-
-        // Remove team logic
         tabContent.querySelectorAll(".remove-btn").forEach(btn => {
           btn.onclick = async function() {
             const idx = parseInt(btn.getAttribute("data-idx"));
