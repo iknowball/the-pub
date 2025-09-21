@@ -244,8 +244,9 @@
       box-shadow: 0 2px 6px #ffd70055;
       border-left: 4px solid #ffd700;
     }
+    /* New style for yellow filled teams */
     .team-card {
-      background: #ffd70022;
+      background: #ffe38a;
       border-radius: 8px;
       margin-bottom: 14px;
       padding: 12px 14px;
@@ -255,6 +256,7 @@
       justify-content: space-between;
       align-items: center;
       border-left: 4px solid #ffd700;
+      font-weight: bold;
     }
     .edit-btn {
       background: #ffd700;
@@ -307,6 +309,20 @@
       max-width: 580px;
       text-align: center;
     }
+    .remove-btn {
+      background: #ff4d4d;
+      color: #fff;
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 3px 12px;
+      margin-left: 10px;
+      cursor: pointer;
+      border: none;
+    }
+    .remove-btn:hover {
+      background: #ff8888;
+      color: #222a32;
+    }
   </style>
 </head>
 <body>
@@ -353,10 +369,9 @@
     let loggedInUid = null;
     let viewedUid = null;
     let viewedUser = null;
-    let ownProfile = true; // If viewing own profile
+    let ownProfile = true;
     let userNotFound = false;
 
-    // HOME BUTTON
     document.getElementById("homeBtn").onclick = function() {
       window.location.href = "index.html";
     };
@@ -371,7 +386,6 @@
       document.getElementById("profileError").style.display = "none";
     }
 
-    // --- SEARCH FUNCTIONALITY ---
     async function fetchAllUsernames() {
       const snapshot = await db.collection("users").get();
       return snapshot.docs.map(doc => doc.data().username);
@@ -555,7 +569,16 @@
         return;
       }
       let html = "";
-      // Show post form only when viewing someone else's profile
+      // Own profile: show post form
+      if (ownProfile) {
+        html += `
+          <form class="post-form" id="wallForm">
+            <input type="text" id="wallInput" placeholder="Post something on your wall..." maxlength="120">
+            <button type="submit">Post</button>
+          </form>
+        `;
+      }
+      // Other profile: post form to their wall
       if (!ownProfile) {
         html += `
           <form class="post-form" id="wallForm">
@@ -567,7 +590,7 @@
       if (!wallPosts.length) {
         html += `<div style="color:#aaa;text-align:center;">No posts yet.</div>`;
       }
-      wallPosts.slice().reverse().forEach(post => {
+      wallPosts.slice().reverse().forEach((post, idx) => {
         html += `
           <div class="wall-post">
             <span class="wall-post-author">${post.author}</span>
@@ -576,7 +599,8 @@
         `;
       });
       tabContent.innerHTML = html;
-      if (!ownProfile) {
+      // Always allow posting on your own wall
+      if (ownProfile || !ownProfile) {
         document.getElementById("wallForm").onsubmit = async function(e) {
           e.preventDefault();
           const input = document.getElementById("wallInput");
@@ -602,13 +626,61 @@
         return;
       }
       let html = "";
+      // Own profile: take form
+      if (ownProfile) {
+        html += `
+          <form class="take-form" id="takeForm">
+            <input type="text" id="takeInput" placeholder="Share your take..." maxlength="120">
+            <button type="submit">Add Take</button>
+          </form>
+        `;
+      }
       if (!takes.length) {
         html += `<div style="color:#aaa;text-align:center;">No takes yet.</div>`;
       }
-      takes.slice().reverse().forEach(take => {
-        html += `<div class="my-take">${take}</div>`;
+      takes.slice().reverse().forEach((take, idx) => {
+        html += `<div class="my-take">
+          ${take}
+          ${ownProfile ? `<button class="remove-btn" data-idx="${takes.length-1-idx}">Remove</button>` : ""}
+        </div>`;
       });
       tabContent.innerHTML = html;
+
+      // Add take logic
+      if (ownProfile) {
+        document.getElementById("takeForm").onsubmit = async function(e) {
+          e.preventDefault();
+          const input = document.getElementById("takeInput");
+          if (input.value.trim()) {
+            takes.push(input.value.trim());
+            await updateViewedUserField("takes", takes);
+            input.value = "";
+            try {
+              const userDoc = await db.collection("users").doc(viewedUid).get();
+              takes = userDoc.data().takes || [];
+              renderTakes();
+            } catch (err) {
+              showProfileError("Could not refresh takes after posting.");
+            }
+          }
+        };
+
+        // Remove take logic
+        tabContent.querySelectorAll(".remove-btn").forEach(btn => {
+          btn.onclick = async function() {
+            const idx = parseInt(btn.getAttribute("data-idx"));
+            takes.splice(idx, 1);
+            await updateViewedUserField("takes", takes);
+            try {
+              const userDoc = await db.collection("users").doc(viewedUid).get();
+              takes = userDoc.data().takes || [];
+              renderTakes();
+            } catch (err) {
+              showProfileError("Could not refresh takes after removing.");
+            }
+          };
+        });
+      }
     }
 
     function renderTeams() {
@@ -617,17 +689,66 @@
         return;
       }
       let html = "";
+      // Own profile: team form
+      if (ownProfile) {
+        html += `
+          <form class="team-form" id="teamForm">
+            <input type="text" id="teamNameInput" placeholder="Team name..." maxlength="60">
+            <input type="text" id="teamRoleInput" placeholder="Role..." maxlength="60">
+            <button type="submit">Add Team</button>
+          </form>
+        `;
+      }
       if (!teams.length) {
         html += `<div style="color:#aaa;text-align:center;">No teams yet.</div>`;
       }
-      teams.forEach(team => {
+      teams.forEach((team, idx) => {
         html += `
           <div class="team-card">
             <span>${team.name} <span style="font-size:0.95em;color:#444;">(${team.role})</span></span>
+            ${ownProfile ? `<button class="remove-btn" data-idx="${idx}">Remove</button>` : ""}
           </div>
         `;
       });
       tabContent.innerHTML = html;
+
+      // Add team logic
+      if (ownProfile) {
+        document.getElementById("teamForm").onsubmit = async function(e) {
+          e.preventDefault();
+          const nameInput = document.getElementById("teamNameInput");
+          const roleInput = document.getElementById("teamRoleInput");
+          if (nameInput.value.trim() && roleInput.value.trim()) {
+            teams.push({ name: nameInput.value.trim(), role: roleInput.value.trim() });
+            await updateViewedUserField("teams", teams);
+            nameInput.value = "";
+            roleInput.value = "";
+            try {
+              const userDoc = await db.collection("users").doc(viewedUid).get();
+              teams = userDoc.data().teams || [];
+              renderTeams();
+            } catch (err) {
+              showProfileError("Could not refresh teams after posting.");
+            }
+          }
+        };
+
+        // Remove team logic
+        tabContent.querySelectorAll(".remove-btn").forEach(btn => {
+          btn.onclick = async function() {
+            const idx = parseInt(btn.getAttribute("data-idx"));
+            teams.splice(idx, 1);
+            await updateViewedUserField("teams", teams);
+            try {
+              const userDoc = await db.collection("users").doc(viewedUid).get();
+              teams = userDoc.data().teams || [];
+              renderTeams();
+            } catch (err) {
+              showProfileError("Could not refresh teams after removing.");
+            }
+          };
+        });
+      }
     }
 
     tabBar.querySelectorAll(".tab-btn").forEach(btn => {
@@ -640,14 +761,6 @@
         if (currentTab === "teams") renderTeams();
       };
     });
-
-    // Modal logic unchanged
-    document.getElementById("closeProfileBtn").onclick = function() {
-      document.getElementById("profileModalBg").style.display = "none";
-    };
-    document.getElementById("profileModalBg").onclick = function(e) {
-      if (e.target === this) this.style.display = "none";
-    };
   </script>
 </body>
 </html>
