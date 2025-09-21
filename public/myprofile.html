@@ -60,7 +60,8 @@
       color: #6e4426;
       font-family: 'Montserrat', sans-serif;
     }
-    .search-bar-container button {
+    .search-bar-container button,
+    .action-btn {
       background: #ffd700;
       color: #222a32;
       border-radius: 8px;
@@ -70,8 +71,11 @@
       cursor: pointer;
       transition: background 0.2s;
       font-size: 1.07rem;
+      margin: 0;
+      box-shadow: 0 2px 6px #ffd70044;
     }
-    .search-bar-container button:hover {
+    .search-bar-container button:hover,
+    .action-btn:hover {
       background: #ffe38a;
     }
     .home-btn {
@@ -82,24 +86,41 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 32px;
+      gap: 10px;
       margin: 16px auto 0 auto;
       max-width: 580px;
     }
-    .action-btn {
-      background: #ffd700;
-      color: #222a32;
-      border-radius: 12px;
-      font-weight: bold;
-      padding: 13px 32px;
-      border: none;
-      cursor: pointer;
-      font-size: 1.20rem;
-      box-shadow: 0 2px 6px #ffd70044;
-      transition: background 0.2s;
+    .search-dropdown {
+      position: absolute;
+      top: 48px;
+      left: 18px;
+      right: 18px;
+      background: #fff8e1ee;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 2px 12px #3b230f33;
+      z-index: 10;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      border: 1px solid #e3b46c;
+      font-size: 1.07rem;
+      color: #3b230f;
+      max-height: 180px;
+      overflow-y: auto;
     }
-    .action-btn:hover {
+    .search-dropdown li {
+      padding: 9px 18px;
+      cursor: pointer;
+      border-bottom: 1px solid #f4e3c1;
+      transition: background 0.12s;
+    }
+    .search-dropdown li:last-child {
+      border-bottom: none;
+    }
+    .search-dropdown li:hover,
+    .search-dropdown li.active {
       background: #ffe38a;
+      color: #222a32;
     }
     .search-results {
       max-width: 580px;
@@ -369,7 +390,7 @@
 <body>
   <div class="pub-sign" id="pubTitle">Your Pub</div>
   <div class="search-bar-container">
-    <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
+    <input type="text" id="searchInput" autocomplete="off" placeholder="Search...">
     <button id="searchBtn">Search</button>
     <button class="home-btn" id="homeBtn">Home</button>
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
@@ -477,7 +498,6 @@
         let triviaAvg = "N/A";
         let playerAvg = "N/A";
         let collegeAvg = "N/A";
-        // If loggedInUid is available, fetch stats
         if (loggedInUid) {
           const triviaDoc = await db.collection('triviaAverages').doc(loggedInUid).get();
           if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
@@ -591,7 +611,7 @@
       }
     };
 
-    // --- SEARCH FUNCTIONALITY ---(unchanged from previous version)
+    // --- SEARCH FUNCTIONALITY ---
     async function fetchAllUsernames() {
       const snapshot = await db.collection("users").get();
       return snapshot.docs.map(doc => doc.data().username);
@@ -613,23 +633,37 @@
       }
     }
 
+    // ---- Search Bar Dropdown & Placeholder Logic ----
     const searchInput = document.getElementById("searchInput");
     const searchDropdown = document.getElementById("searchDropdown");
     const searchBtn = document.getElementById("searchBtn");
     const searchResults = document.getElementById("searchResults");
 
+    function setSearchPlaceholder() {
+      if (!searchInput.value.trim()) {
+        searchInput.placeholder = "Search...";
+      }
+    }
+    setSearchPlaceholder();
+
+    searchInput.addEventListener("focus", setSearchPlaceholder);
+    searchInput.addEventListener("blur", setSearchPlaceholder);
+
     let lastDropdownQuery = "";
     searchInput.addEventListener("input", async function() {
       const query = searchInput.value.trim();
+      setSearchPlaceholder();
       if (!query) {
-        searchDropdown.style.display = "none";
+        searchDropdown.innerHTML = `<li style="color:#bbb;text-align:center;">Search...</li>`;
+        searchDropdown.style.display = "";
         return;
       }
       lastDropdownQuery = query;
       const usernames = await fetchUsernames(query);
       if (searchInput.value.trim() !== lastDropdownQuery) return;
       if (usernames.length === 0) {
-        searchDropdown.style.display = "none";
+        searchDropdown.innerHTML = `<li style="color:#bbb;text-align:center;">No users found</li>`;
+        searchDropdown.style.display = "";
         return;
       }
       searchDropdown.innerHTML = usernames.map(u =>
