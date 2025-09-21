@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Pub Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
   <!-- Firebase SDKs -->
@@ -78,37 +78,28 @@
       padding: 8px 16px;
       margin-left: 0;
     }
-    .search-dropdown {
-      position: absolute;
-      top: 48px;
-      left: 18px;
-      right: 18px;
-      background: #fff8e1ee;
-      border-radius: 0 0 12px 12px;
-      box-shadow: 0 2px 12px #3b230f33;
-      z-index: 10;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-      border: 1px solid #e3b46c;
-      font-size: 1.07rem;
-      color: #3b230f;
-      max-height: 180px;
-      overflow-y: auto;
+    .actions-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      margin: 16px auto 0 auto;
+      max-width: 580px;
     }
-    .search-dropdown li {
-      padding: 9px 18px;
-      cursor: pointer;
-      border-bottom: 1px solid #f4e3c1;
-      transition: background 0.12s;
-    }
-    .search-dropdown li:last-child {
-      border-bottom: none;
-    }
-    .search-dropdown li:hover,
-    .search-dropdown li.active {
-      background: #ffe38a;
+    .action-btn {
+      background: #ffd700;
       color: #222a32;
+      border-radius: 12px;
+      font-weight: bold;
+      padding: 13px 32px;
+      border: none;
+      cursor: pointer;
+      font-size: 1.20rem;
+      box-shadow: 0 2px 6px #ffd70044;
+      transition: background 0.2s;
+    }
+    .action-btn:hover {
+      background: #ffe38a;
     }
     .search-results {
       max-width: 580px;
@@ -120,39 +111,16 @@
       font-size: 1.07rem;
       color: #3b230f;
     }
-    .search-results .user-result {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 7px 0;
-      border-bottom: 1px solid #e3b46c;
-    }
-    .search-results .user-result:last-child {
-      border-bottom: none;
-    }
-    .search-results .view-profile-btn {
-      background: #ffd700;
-      color: #222a32;
-      border-radius: 6px;
-      font-weight: bold;
-      padding: 4px 12px;
-      margin-left: 8px;
-      cursor: pointer;
-      border: none;
-      font-size: 0.98em;
-      transition: background 0.2s;
-    }
-    .search-results .view-profile-btn:hover {
-      background: #ffe38a;
-    }
-    .bar-front {
-      background: linear-gradient(90deg, #7a5537 70%, #cfa56a 100%);
-      height: 36px;
-      border-radius: 0 0 20px 20px;
-      border-top: 4px solid #d8b170;
+    .error-message {
+      color: #b91c1c;
+      background: #ffe5e5;
+      border-left: 4px solid #b91c1c;
+      padding: 11px 18px;
+      font-size: 1.1em;
+      border-radius: 8px;
+      margin: 18px auto;
       max-width: 580px;
-      margin: 0 auto 24px auto;
-      box-shadow: 0 2px 10px #3b230f44;
+      text-align: center;
     }
     .tv-frame {
       background: #1b242b;
@@ -297,17 +265,6 @@
     .post-form button:hover, .take-form button:hover, .team-form button:hover {
       background: #ffe38a;
     }
-    .error-message {
-      color: #b91c1c;
-      background: #ffe5e5;
-      border-left: 4px solid #b91c1c;
-      padding: 11px 18px;
-      font-size: 1.1em;
-      border-radius: 8px;
-      margin: 18px auto;
-      max-width: 580px;
-      text-align: center;
-    }
     .remove-btn {
       background: #ff4d4d;
       color: #fff;
@@ -322,19 +279,107 @@
       background: #ff8888;
       color: #222a32;
     }
+    /* Modal styles */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      z-index: 200;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #0008;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal {
+      background: #222a32;
+      color: #ffd700;
+      border-radius: 24px;
+      max-width: 400px;
+      width: 96vw;
+      padding: 32px 24px 24px 24px;
+      position: relative;
+      text-align: center;
+      font-size: 1.13rem;
+      border: 6px solid #ffd700;
+      margin: 0 auto;
+      box-shadow: 0 8px 32px #000b;
+    }
+    .modal .close-btn {
+      position: absolute;
+      right: 18px; top: 14px;
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      font-size: 1.12em;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+    .modal .close-btn:hover {
+      background: #ffe38a;
+    }
+    .modal input, .modal button {
+      margin: 7px 0;
+    }
+    .modal label {
+      display: block;
+      margin-bottom: 3px;
+      font-weight: bold;
+    }
+    .modal .modal-list {
+      background: #ffe38a22;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      color: #222a32;
+      font-size: 1.08em;
+      text-align: left;
+    }
+    .modal .modal-error {
+      color: #ff4d4d;
+      margin: 7px 0 0 0;
+      font-size: 1em;
+      font-weight: bold;
+      text-align: center;
+    }
+    .modal .settings-options {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+    .modal .settings-btn {
+      background: #ffd700;
+      color: #222a32;
+      border-radius: 8px;
+      font-weight: bold;
+      padding: 10px 0;
+      border: none;
+      font-size: 1.07em;
+      margin: 0 0 4px 0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .modal .settings-btn:hover {
+      background: #ffe38a;
+    }
   </style>
 </head>
 <body>
   <div class="pub-sign" id="pubTitle">Your Pub</div>
-  <div class="search-bar-container" style="position:relative;">
+  <div class="search-bar-container">
     <input type="text" id="searchInput" autocomplete="off" placeholder="Search friends by username...">
     <button id="searchBtn">Search</button>
     <button class="home-btn" id="homeBtn">Home</button>
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
+  <div class="actions-bar">
+    <button class="action-btn" id="statsBtn">My Stats</button>
+    <button class="action-btn" id="settingsBtn">Settings</button>
+  </div>
   <div id="searchResults" class="search-results" style="display:none"></div>
   <div id="profileError" class="error-message" style="display:none;"></div>
-  <div class="bar-front"></div>
   <div class="tv-frame">
     <div class="tv-bezel">PubTV</div>
     <div class="flex flex-row justify-center gap-2 mb-0 pt-2 pb-1" id="tabBar">
@@ -346,6 +391,41 @@
       <div class="tv-content" id="tabContent"></div>
     </div>
   </div>
+
+  <!-- Stats Modal -->
+  <div class="modal-bg" id="statsModalBg">
+    <div class="modal" id="statsModal">
+      <button class="close-btn" id="closeStatsBtn">Close</button>
+      <h2 style="margin-bottom:16px;">My Stats</h2>
+      <div id="statsContent"></div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-bg" id="settingsModalBg">
+    <div class="modal" id="settingsModal">
+      <button class="close-btn" id="closeSettingsBtn">Close</button>
+      <h2 style="margin-bottom:16px;">Settings</h2>
+      <div class="settings-options" id="settingsOptions">
+        <button class="settings-btn" id="editUsernameBtn">Change Username</button>
+        <button class="settings-btn" id="editPasswordBtn">Change Password</button>
+        <button class="settings-btn" id="signOutBtn">Sign Out</button>
+      </div>
+      <form id="usernameForm" style="display:none;">
+        <label for="newUsername">New Username</label>
+        <input type="text" id="newUsername" autocomplete="off" style="width:90%;padding:7px;border-radius:6px;">
+        <button type="submit">Update Username</button>
+        <div class="modal-error" id="usernameError"></div>
+      </form>
+      <form id="passwordForm" style="display:none;">
+        <label for="newPassword">New Password</label>
+        <input type="password" id="newPassword" autocomplete="off" style="width:90%;padding:7px;border-radius:6px;">
+        <button type="submit">Update Password</button>
+        <div class="modal-error" id="passwordError"></div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // ---- FIREBASE SETUP ----
     const firebaseConfig = {
@@ -375,16 +455,143 @@
       window.location.href = "index.html";
     };
 
-    function showProfileError(msg) {
-      document.getElementById("profileError").textContent = msg;
-      document.getElementById("profileError").style.display = "";
-      document.getElementById("pubTitle").textContent = "Unknown's Pub";
-      document.getElementById("tabContent").innerHTML = "";
-    }
-    function hideProfileError() {
-      document.getElementById("profileError").style.display = "none";
+    // --- Stats Modal ---
+    const statsBtn = document.getElementById("statsBtn");
+    const statsModalBg = document.getElementById("statsModalBg");
+    const statsContent = document.getElementById("statsContent");
+    const closeStatsBtn = document.getElementById("closeStatsBtn");
+    statsBtn.onclick = function() {
+      statsModalBg.style.display = "flex";
+      loadStats();
+    };
+    closeStatsBtn.onclick = function() {
+      statsModalBg.style.display = "none";
+      statsContent.innerHTML = "";
+    };
+    statsModalBg.onclick = function(e) {
+      if (e.target === statsModalBg) statsModalBg.style.display = "none";
+    };
+    async function loadStats() {
+      statsContent.innerHTML = "<div style='color:#aaa;'>Loading...</div>";
+      try {
+        let triviaAvg = "N/A";
+        let playerAvg = "N/A";
+        let collegeAvg = "N/A";
+        // If loggedInUid is available, fetch stats
+        if (loggedInUid) {
+          const triviaDoc = await db.collection('triviaAverages').doc(loggedInUid).get();
+          if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
+          const playerDoc = await db.collection('playerAverages').doc(loggedInUid).get();
+          if (playerDoc.exists) playerAvg = playerDoc.data().averageScore?.toFixed(2) || "N/A";
+          const collegeDoc = await db.collection('collegeAverages').doc(loggedInUid).get();
+          if (collegeDoc.exists) collegeAvg = collegeDoc.data().averageScore?.toFixed(2) || "N/A";
+        }
+        statsContent.innerHTML = `
+          <div class="modal-list">
+            <div><strong>Trivia Average:</strong> ${triviaAvg}</div>
+            <div><strong>Name the Player Average:</strong> ${playerAvg}</div>
+            <div><strong>College Average:</strong> ${collegeAvg}</div>
+          </div>
+        `;
+      } catch (err) {
+        statsContent.innerHTML = "<div style='color:#ff4d4d;'>Error loading stats.</div>";
+      }
     }
 
+    // --- Settings Modal ---
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsModalBg = document.getElementById("settingsModalBg");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const settingsOptions = document.getElementById("settingsOptions");
+    const editUsernameBtn = document.getElementById("editUsernameBtn");
+    const editPasswordBtn = document.getElementById("editPasswordBtn");
+    const signOutBtn = document.getElementById("signOutBtn");
+    const usernameForm = document.getElementById("usernameForm");
+    const passwordForm = document.getElementById("passwordForm");
+    const usernameError = document.getElementById("usernameError");
+    const passwordError = document.getElementById("passwordError");
+
+    settingsBtn.onclick = function() {
+      settingsModalBg.style.display = "flex";
+      settingsOptions.style.display = "flex";
+      usernameForm.style.display = "none";
+      passwordForm.style.display = "none";
+      usernameError.textContent = "";
+      passwordError.textContent = "";
+    };
+    closeSettingsBtn.onclick = function() {
+      settingsModalBg.style.display = "none";
+      settingsOptions.style.display = "flex";
+      usernameForm.style.display = "none";
+      passwordForm.style.display = "none";
+      usernameError.textContent = "";
+      passwordError.textContent = "";
+    };
+    settingsModalBg.onclick = function(e) {
+      if (e.target === settingsModalBg) settingsModalBg.style.display = "none";
+    };
+    editUsernameBtn.onclick = function() {
+      settingsOptions.style.display = "none";
+      usernameForm.style.display = "";
+      passwordForm.style.display = "none";
+      usernameError.textContent = "";
+    };
+    editPasswordBtn.onclick = function() {
+      settingsOptions.style.display = "none";
+      passwordForm.style.display = "";
+      usernameForm.style.display = "none";
+      passwordError.textContent = "";
+    };
+    signOutBtn.onclick = function() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    };
+
+    usernameForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const newUsername = document.getElementById("newUsername").value.trim();
+      usernameError.textContent = "";
+      if (!newUsername) {
+        usernameError.textContent = "Enter a username.";
+        return;
+      }
+      try {
+        const taken = await db.collection("users").where("username", "==", newUsername).get();
+        if (!taken.empty) {
+          usernameError.textContent = "That username is taken.";
+          return;
+        }
+        await db.collection("users").doc(loggedInUid).update({ username: newUsername });
+        loggedInUsername = newUsername;
+        document.getElementById("pubTitle").textContent = `${loggedInUsername}'s Pub`;
+        usernameError.textContent = "Updated!";
+      } catch (err) {
+        usernameError.textContent = "Error updating username.";
+      }
+    };
+
+    passwordForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById("newPassword").value.trim();
+      passwordError.textContent = "";
+      if (!newPassword || newPassword.length < 6) {
+        passwordError.textContent = "Password must be at least 6 characters.";
+        return;
+      }
+      try {
+        if (auth.currentUser) {
+          await auth.currentUser.updatePassword(newPassword);
+          passwordError.textContent = "Password updated!";
+        } else {
+          passwordError.textContent = "Not signed in.";
+        }
+      } catch (err) {
+        passwordError.textContent = err.message || "Error updating password.";
+      }
+    };
+
+    // --- SEARCH FUNCTIONALITY ---(unchanged from previous version)
     async function fetchAllUsernames() {
       const snapshot = await db.collection("users").get();
       return snapshot.docs.map(doc => doc.data().username);
@@ -505,7 +712,7 @@
       if (e.key === "Enter") searchBtn.click();
     });
 
-    // --- PROFILE PAGE LOGIC ---
+    // --- PROFILE PAGE LOGIC (unchanged from previous version) ---
     const tabContent = document.getElementById("tabContent");
     const tabBar = document.getElementById("tabBar");
     let currentTab = "wall";
@@ -526,7 +733,6 @@
           return;
         }
         loggedInUsername = loggedInDoc.data().username;
-
         let loadedUserDoc;
         if (viewedUsername && viewedUsername !== loggedInUsername) {
           loadedUserDoc = await fetchProfileDocByUsername(viewedUsername);
@@ -553,6 +759,16 @@
       }
     });
 
+    function showProfileError(msg) {
+      document.getElementById("profileError").textContent = msg;
+      document.getElementById("profileError").style.display = "";
+      document.getElementById("pubTitle").textContent = "Unknown's Pub";
+      document.getElementById("tabContent").innerHTML = "";
+    }
+    function hideProfileError() {
+      document.getElementById("profileError").style.display = "none";
+    }
+
     async function updateViewedUserField(field, value) {
       if (!viewedUid) return;
       try {
@@ -568,7 +784,6 @@
         return;
       }
       let html = "";
-      // Own profile: show post form
       if (ownProfile) {
         html += `
           <form class="post-form" id="wallForm">
@@ -577,7 +792,6 @@
           </form>
         `;
       }
-      // Other profile: post form to their wall
       if (!ownProfile) {
         html += `
           <form class="post-form" id="wallForm">
@@ -598,7 +812,6 @@
         `;
       });
       tabContent.innerHTML = html;
-      // Always allow posting on your own wall
       if (ownProfile || !ownProfile) {
         document.getElementById("wallForm").onsubmit = async function(e) {
           e.preventDefault();
@@ -625,7 +838,6 @@
         return;
       }
       let html = "";
-      // Own profile: take form
       if (ownProfile) {
         html += `
           <form class="take-form" id="takeForm">
@@ -644,8 +856,6 @@
         </div>`;
       });
       tabContent.innerHTML = html;
-
-      // Add take logic
       if (ownProfile) {
         document.getElementById("takeForm").onsubmit = async function(e) {
           e.preventDefault();
@@ -663,8 +873,6 @@
             }
           }
         };
-
-        // Remove take logic
         tabContent.querySelectorAll(".remove-btn").forEach(btn => {
           btn.onclick = async function() {
             const idx = parseInt(btn.getAttribute("data-idx"));
@@ -688,7 +896,6 @@
         return;
       }
       let html = "";
-      // Own profile: team form (no role input)
       if (ownProfile) {
         html += `
           <form class="team-form" id="teamForm">
@@ -709,7 +916,6 @@
         `;
       });
       tabContent.innerHTML = html;
-
       if (ownProfile) {
         document.getElementById("teamForm").onsubmit = async function(e) {
           e.preventDefault();
