@@ -81,7 +81,6 @@
     .home-btn {
       padding: 8px 16px;
       margin-left: 0;
-      /* Remove previous position/top adjustments since it's in actions-bar now */
     }
     .actions-bar {
       display: flex;
@@ -440,7 +439,6 @@
   <div class="search-bar-container">
     <input type="text" id="searchInput" autocomplete="off" placeholder="Search...">
     <button id="searchBtn">Search</button>
-    <!-- Home button moved out of here -->
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
   <div id="selectedProfileContainer" class="selected-profile-container"></div>
@@ -551,8 +549,10 @@
         if (viewedUid) {
           const triviaDoc = await db.collection('triviaAverages').doc(viewedUid).get();
           if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
-          const playerDoc = await db.collection('playerAverages').doc(viewedUid).get();
-          if (playerDoc.exists) playerAvg = playerDoc.data().averageScore?.toFixed(2) || "N/A";
+          // --- CHANGED: get name the player avg from userAverage ---
+          const userAvgDoc = await db.collection('userAverage').doc(viewedUid).get();
+          if (userAvgDoc.exists) playerAvg = userAvgDoc.data().averageScore?.toFixed(2) || "N/A";
+          // --- END CHANGE ---
           const collegeDoc = await db.collection('collegeAverages').doc(viewedUid).get();
           if (collegeDoc.exists) collegeAvg = collegeDoc.data().averageScore?.toFixed(2) || "N/A";
         }
