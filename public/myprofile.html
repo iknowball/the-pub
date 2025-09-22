@@ -550,7 +550,7 @@
           const triviaDoc = await db.collection('triviaAverages').doc(viewedUid).get();
           if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
           // --- CHANGED: get name the player avg from userAverage ---
-          const userAvgDoc = await db.collection('userAverage').doc(viewedUid).get();
+          const userAvgDoc = await db.collection('userAverages').doc(viewedUid).get();
           if (userAvgDoc.exists) playerAvg = userAvgDoc.data().averageScore?.toFixed(2) || "N/A";
           // --- END CHANGE ---
           const collegeDoc = await db.collection('collegeAverages').doc(viewedUid).get();
