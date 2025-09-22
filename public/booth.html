@@ -71,21 +71,21 @@
         <div class="flex flex-col items-center mb-3">
           <label class="text-yellow-100 font-bold text-lg mb-2" for="boothSelect">Hop in a Group!</label>
           <select id="boothSelect" class="bg-yellow-100 border-2 border-yellow-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
-            <option value="falcons-panthers">Atlanta Falcons @ Carolina Panthers (1:00 PM EDT, FOX)</option>
-            <option value="packers-browns">Green Bay Packers @ Cleveland Browns (1:00 PM EDT, FOX)</option>
-            <option value="texans-jaguars">Houston Texans @ Jacksonville Jaguars (1:00 PM EDT, CBS)</option>
-            <option value="bengals-vikings">Cincinnati Bengals @ Minnesota Vikings (1:00 PM EDT, CBS)</option>
-            <option value="steelers-patriots">Pittsburgh Steelers @ New England Patriots (1:00 PM EDT, CBS)</option>
-            <option value="rams-eagles">Los Angeles Rams @ Philadelphia Eagles (1:00 PM EDT, FOX)</option>
-            <option value="jets-buccaneers">New York Jets @ Tampa Bay Buccaneers (1:00 PM EDT, FOX)</option>
-            <option value="colts-titans">Indianapolis Colts @ Tennessee Titans (1:00 PM EDT, CBS)</option>
-            <option value="raiders-commanders">Las Vegas Raiders @ Washington Commanders (1:00 PM EDT, FOX)</option>
-            <option value="broncos-chargers">Denver Broncos @ Los Angeles Chargers (4:05 PM EDT, CBS)</option>
-            <option value="saints-seahawks">New Orleans Saints @ Seattle Seahawks (4:05 PM EDT, CBS)</option>
-            <option value="cowboys-bears">Dallas Cowboys @ Chicago Bears (4:25 PM EDT, FOX)</option>
-            <option value="cardinals-49ers">Arizona Cardinals @ San Francisco 49ers (4:25 PM EDT, FOX)</option>
-            <option value="chiefs-giants">Kansas City Chiefs @ New York Giants (8:20 PM EDT, NBC/UNIVERSO)</option>
-            <option value="lions-ravens">Detroit Lions @ Baltimore Ravens (Monday, 8:15 PM EDT, ESPN/ABC/ESPN2/ESPN DEPORTES)</option>
+            <option value="vikings-steelers">Minnesota Vikings vs. Pittsburgh Steelers (9:30 AM EDT, NFL Network)</option>
+            <option value="commanders-falcons">Washington Commanders vs. Atlanta Falcons (1:00 PM EDT, CBS)</option>
+            <option value="saints-bills">New Orleans Saints vs. Buffalo Bills (1:00 PM EDT, CBS)</option>
+            <option value="browns-lions">Cleveland Browns vs. Detroit Lions (1:00 PM EDT, FOX)</option>
+            <option value="titans-texans">Tennessee Titans vs. Houston Texans (1:00 PM EDT, CBS)</option>
+            <option value="panthers-patriots">Carolina Panthers vs. New England Patriots (1:00 PM EDT, FOX)</option>
+            <option value="chargers-giants">Los Angeles Chargers vs. New York Giants (1:00 PM EDT, CBS)</option>
+            <option value="eagles-buccaneers">Philadelphia Eagles vs. Tampa Bay Buccaneers (1:00 PM EDT, FOX)</option>
+            <option value="colts-rams">Indianapolis Colts vs. Los Angeles Rams (4:05 PM EDT, FOX)</option>
+            <option value="jaguars-49ers">Jacksonville Jaguars vs. San Francisco 49ers (4:05 PM EDT, FOX)</option>
+            <option value="ravens-chiefs">Baltimore Ravens vs. Kansas City Chiefs (4:25 PM EDT, CBS)</option>
+            <option value="bears-raiders">Chicago Bears vs. Las Vegas Raiders (4:25 PM EDT, CBS)</option>
+            <option value="packers-cowboys">Green Bay Packers vs. Dallas Cowboys (8:20 PM EDT, NBC/UNIVERSO)</option>
+            <option value="jets-dolphins">New York Jets vs. Miami Dolphins (Monday, 7:15 PM EDT, ESPN/ESPN Deportes)</option>
+            <option value="bengals-broncos">Cincinnati Bengals vs. Denver Broncos (Monday, 8:15 PM EDT, ABC)</option>
           </select>
         </div>
         <div id="messages" class="flex-1 overflow-y-auto bg-amber-50/80 rounded-lg p-4 mb-2 border-2 border-yellow-600 shadow-inner"></div>
@@ -110,23 +110,23 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
-    // NFL games for Sunday, 9/21/2025
+    // NFL games for Week 4, 2025
     const nflGames = [
-      { id: "falcons-panthers", label: "Atlanta Falcons @ Carolina Panthers (1:00 PM EDT, FOX)" },
-      { id: "packers-browns", label: "Green Bay Packers @ Cleveland Browns (1:00 PM EDT, FOX)" },
-      { id: "texans-jaguars", label: "Houston Texans @ Jacksonville Jaguars (1:00 PM EDT, CBS)" },
-      { id: "bengals-vikings", label: "Cincinnati Bengals @ Minnesota Vikings (1:00 PM EDT, CBS)" },
-      { id: "steelers-patriots", label: "Pittsburgh Steelers @ New England Patriots (1:00 PM EDT, CBS)" },
-      { id: "rams-eagles", label: "Los Angeles Rams @ Philadelphia Eagles (1:00 PM EDT, FOX)" },
-      { id: "jets-buccaneers", label: "New York Jets @ Tampa Bay Buccaneers (1:00 PM EDT, FOX)" },
-      { id: "colts-titans", label: "Indianapolis Colts @ Tennessee Titans (1:00 PM EDT, CBS)" },
-      { id: "raiders-commanders", label: "Las Vegas Raiders @ Washington Commanders (1:00 PM EDT, FOX)" },
-      { id: "broncos-chargers", label: "Denver Broncos @ Los Angeles Chargers (4:05 PM EDT, CBS)" },
-      { id: "saints-seahawks", label: "New Orleans Saints @ Seattle Seahawks (4:05 PM EDT, CBS)" },
-      { id: "cowboys-bears", label: "Dallas Cowboys @ Chicago Bears (4:25 PM EDT, FOX)" },
-      { id: "cardinals-49ers", label: "Arizona Cardinals @ San Francisco 49ers (4:25 PM EDT, FOX)" },
-      { id: "chiefs-giants", label: "Kansas City Chiefs @ New York Giants (8:20 PM EDT, NBC/UNIVERSO)" },
-      { id: "lions-ravens", label: "Detroit Lions @ Baltimore Ravens (Monday, 8:15 PM EDT, ESPN/ABC/ESPN2/ESPN DEPORTES)" }
+      { id: "vikings-steelers", label: "Minnesota Vikings vs. Pittsburgh Steelers (9:30 AM EDT, NFL Network)" },
+      { id: "commanders-falcons", label: "Washington Commanders vs. Atlanta Falcons (1:00 PM EDT, CBS)" },
+      { id: "saints-bills", label: "New Orleans Saints vs. Buffalo Bills (1:00 PM EDT, CBS)" },
+      { id: "browns-lions", label: "Cleveland Browns vs. Detroit Lions (1:00 PM EDT, FOX)" },
+      { id: "titans-texans", label: "Tennessee Titans vs. Houston Texans (1:00 PM EDT, CBS)" },
+      { id: "panthers-patriots", label: "Carolina Panthers vs. New England Patriots (1:00 PM EDT, FOX)" },
+      { id: "chargers-giants", label: "Los Angeles Chargers vs. New York Giants (1:00 PM EDT, CBS)" },
+      { id: "eagles-buccaneers", label: "Philadelphia Eagles vs. Tampa Bay Buccaneers (1:00 PM EDT, FOX)" },
+      { id: "colts-rams", label: "Indianapolis Colts vs. Los Angeles Rams (4:05 PM EDT, FOX)" },
+      { id: "jaguars-49ers", label: "Jacksonville Jaguars vs. San Francisco 49ers (4:05 PM EDT, FOX)" },
+      { id: "ravens-chiefs", label: "Baltimore Ravens vs. Kansas City Chiefs (4:25 PM EDT, CBS)" },
+      { id: "bears-raiders", label: "Chicago Bears vs. Las Vegas Raiders (4:25 PM EDT, CBS)" },
+      { id: "packers-cowboys", label: "Green Bay Packers vs. Dallas Cowboys (8:20 PM EDT, NBC/UNIVERSO)" },
+      { id: "jets-dolphins", label: "New York Jets vs. Miami Dolphins (Monday, 7:15 PM EDT, ESPN/ESPN Deportes)" },
+      { id: "bengals-broncos", label: "Cincinnati Bengals vs. Denver Broncos (Monday, 8:15 PM EDT, ABC)" }
     ];
 
     // Firebase config (replace with your actual config if needed)
