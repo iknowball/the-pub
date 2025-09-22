@@ -81,6 +81,7 @@
     .home-btn {
       padding: 8px 16px;
       margin-left: 0;
+      /* Remove previous position/top adjustments since it's in actions-bar now */
     }
     .actions-bar {
       display: flex;
@@ -410,6 +411,28 @@
     .modal .settings-btn:hover {
       background: #ffe38a;
     }
+    /* --- Custom Modal Styles for Stats --- */
+    #statsModal {
+      background: #ffe38a !important;
+      color: #222a32 !important;
+      border: 6px solid #ffd700 !important;
+    }
+    #statsModal .close-btn {
+      background: #ffd700 !important;
+      color: #222a32 !important;
+    }
+    #statsModal .modal-list {
+      background: #fff8e1ee !important;
+      color: #222a32 !important;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 1.08em;
+      text-align: left;
+    }
+    #statsModal h2 {
+      color: #222a32 !important;
+    }
   </style>
 </head>
 <body>
@@ -417,13 +440,14 @@
   <div class="search-bar-container">
     <input type="text" id="searchInput" autocomplete="off" placeholder="Search...">
     <button id="searchBtn">Search</button>
-    <button class="home-btn" id="homeBtn">Home</button>
+    <!-- Home button moved out of here -->
     <ul id="searchDropdown" class="search-dropdown" style="display:none;"></ul>
   </div>
   <div id="selectedProfileContainer" class="selected-profile-container"></div>
   <div class="actions-bar">
     <button class="action-btn" id="statsBtn">My Stats</button>
     <button class="action-btn" id="settingsBtn">Settings</button>
+    <button class="action-btn home-btn" id="homeBtn">Home</button>
   </div>
   <div id="searchResults" class="search-results" style="display:none"></div>
   <div id="profileError" class="error-message" style="display:none;"></div>
