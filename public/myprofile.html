@@ -549,7 +549,7 @@
         if (viewedUid) {
           const triviaDoc = await db.collection('triviaAverages').doc(viewedUid).get();
           if (triviaDoc.exists) triviaAvg = triviaDoc.data().averageScore?.toFixed(2) || "N/A";
-          // --- CHANGED: get name the player avg from userAverage ---
+          // --- CHANGED: get  player avg from userAverage ---
           const userAvgDoc = await db.collection('userAverages').doc(viewedUid).get();
           if (userAvgDoc.exists) playerAvg = userAvgDoc.data().averageScore?.toFixed(2) || "N/A";
           // --- END CHANGE ---
@@ -558,9 +558,9 @@
         }
         statsContent.innerHTML = `
           <div class="modal-list">
-            <div><strong>Trivia Average:</strong> ${triviaAvg}</div>
-            <div><strong>Name the Player Average:</strong> ${playerAvg}</div>
-            <div><strong>College Average:</strong> ${collegeAvg}</div>
+            <div><strong>Trivia Avg:</strong> ${triviaAvg}</div>
+            <div><strong>Name the Player Avg:</strong> ${playerAvg}</div>
+            <div><strong>College Avg:</strong> ${collegeAvg}</div>
           </div>
         `;
       } catch (err) {
