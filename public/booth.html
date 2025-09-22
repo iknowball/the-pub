@@ -102,10 +102,11 @@
           <a href="index.html" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300">Home</a>
         </div>
       </div>
-      <div id="chatSection" class="flex flex-col h-[60vh] px-6 pb-6">
+      <div id="authSection" class="p-6 flex flex-col items-center space-y-3">
+        <button id="signInBtn" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">Sign in with Google</button>
+      </div>
+      <div id="chatSection" class="hidden flex flex-col h-[60vh] px-6 pb-6">
         <div class="flex flex-col items-center mb-3">
-          <label class="text-blue-100 font-bold text-lg mb-2" for="usernameInput">Your Username (optional):</label>
-          <input id="usernameInput" type="text" maxlength="20" class="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;" placeholder="Anonymous"/>
           <label class="text-blue-100 font-bold text-lg mb-2" for="boothSelect">Pick a Game Booth</label>
           <select id="boothSelect" class="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold" style="max-width: 400px;">
             <option value="vikings-steelers">Minnesota Vikings vs. Pittsburgh Steelers (9:30 AM EDT, NFL Network)</option>
@@ -145,6 +146,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script>
     // NFL games for Week 4, 2025
     const nflGames = [
@@ -175,12 +177,18 @@
     const db = firebase.firestore();
 
     // DOM elements
+    const authSection = document.getElementById('authSection');
+    const signInBtn = document.getElementById('signInBtn');
+    const chatSection = document.getElementById('chatSection');
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
     const messagesDiv = document.getElementById('messages');
     const boothSelect = document.getElementById('boothSelect');
     const barStools = document.getElementById('barStools');
-    const usernameInput = document.getElementById('usernameInput');
+
+    let user = null;
+    let unsubscribe = null;
+    let currentBooth = boothSelect.value;
 
     // Populate boothSelect with NFL games
     function populateBooths() {
@@ -190,8 +198,24 @@
     }
     populateBooths();
 
-    let unsubscribe = null;
-    let currentBooth = boothSelect.value;
+    // Auth
+    firebase.auth().onAuthStateChanged(u => {
+      user = u;
+      if (user) {
+        authSection.classList.add('hidden');
+        chatSection.classList.remove('hidden');
+        joinBooth(currentBooth);
+      } else {
+        chatSection.classList.remove('hidden');
+        authSection.classList.add('hidden');
+        joinBooth(currentBooth);
+      }
+    });
+
+    signInBtn.onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider);
+    };
 
     boothSelect.onchange = () => {
       currentBooth = boothSelect.value;
@@ -211,15 +235,20 @@
           let usersInBooth = {};
           snap.forEach(doc => {
             const msg = doc.data();
-            // Use displayName, default to Anonymous
-            const displayName = msg.displayName || "Anonymous";
-            usersInBooth[msg.displayName || msg.uid || "Anonymous"] = displayName;
-            // If mine, compare to session username
-            const sessionUsername = usernameInput.value.trim() || "Anonymous";
-            const isMine = displayName === sessionUsername;
+            // If signed in, match comment as mine if uid matches
+            let isMine = false;
+            let displayName = "Anonymous";
+            if (user) {
+              displayName = msg.displayName || user.displayName || "Anonymous";
+              isMine = msg.uid === user.uid;
+              usersInBooth[msg.uid || "Anonymous"] = displayName;
+            } else {
+              displayName = "Anonymous";
+              usersInBooth["Anonymous"] = displayName;
+            }
             messagesDiv.innerHTML += `
               <div class="twitter-chat-bubble${isMine ? " mine ml-auto" : ""}">
-                <span class="username">${displayName}</span>
+                <span class="username">${msg.displayName || "Anonymous"}</span>
                 <span class="timestamp">${msg.time || ""}</span>
                 <div>${msg.text}</div>
               </div>
@@ -231,24 +260,26 @@
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     }
-    // Initial booth join
-    joinBooth(currentBooth);
 
     messageForm.onsubmit = async (e) => {
       e.preventDefault();
       const text = messageInput.value.trim();
       if (!text) return;
-      // Use username if provided, else Anonymous
-      const displayName = usernameInput.value.trim() || "Anonymous";
+      let data = {
+        text: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      };
+      if (user) {
+        data.displayName = user.displayName || "Anonymous";
+        data.uid = user.uid;
+      } else {
+        data.displayName = "Anonymous";
+      }
       await db.collection('booths')
         .doc(currentBooth)
         .collection('messages')
-        .add({
-          text: text,
-          displayName: displayName,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        });
+        .add(data);
       messageInput.value = "";
     };
   </script>
