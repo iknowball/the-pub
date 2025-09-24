@@ -87,10 +87,10 @@
     <p class="text-center text-yellow-300 mb-2 text-lg">Question: <span id="currentLevel">1</span>/5</p>
     <p class="text-center text-yellow-300 mb-4 text-lg" id="questionText"></p>
     <input id="guessInput" type="text" placeholder="Enter your answer..." class="w-full p-3 bg-amber-800/90 text-white border-2 border-yellow-600 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-600" autocomplete="off">
-    <button id="submitAnswer" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md">Submit Answer</button>
-    <button id="nextLevel" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Next Question</button>
+    <button id="submitAnswer" type="button" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md">Submit Answer</button>
+    <button id="nextLevel" type="button" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md">Next Question</button>
     <a id="backToHome" href="index.html" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden border-2 border-yellow-600 shadow-md text-center">Back to Home</a>
-    <button id="viewStats" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
+    <button id="viewStats" type="button" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold hidden mt-2 border-2 border-yellow-600 shadow-md">View Stats</button>
     <p id="feedback" class="text-center mt-4 text-xl font-bold animate-fade-in"></p>
     <div class="flex flex-row items-center justify-center gap-4 mt-4">
       <div id="timer" class="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">00:00</div>
@@ -98,7 +98,7 @@
     </div>
     <div id="shareLink" class="text-center mt-4 hidden text-yellow-300">
       <div class="share-buttons-row">
-        <button id="clipboardBtn" class="clipboard-btn">Copy to Clipboard</button>
+        <button id="clipboardBtn" type="button" class="clipboard-btn">Copy to Clipboard</button>
         <a id="smsBtn" class="sms-btn" href="#" target="_blank">Send as SMS</a>
       </div>
       <div id="sharePreview" class="share-preview"></div>
@@ -123,7 +123,7 @@
           <tbody id="statsTableBody" class="text-center"></tbody>
         </table>
       </div>
-      <button id="closeStats" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
+      <button id="closeStats" type="button" class="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md">Close</button>
     </div>
   </div>
 
@@ -142,7 +142,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // --- NFL Trivia Questions Generator ---
+    // NFL Trivia Questions Pool
     const NFL_QUESTION_POOL = [
       { question: "Which team won the Super Bowl in 2010?", answer: "Saints" },
       { question: "Who was the NFL MVP in 2018?", answer: "Patrick Mahomes" },
@@ -253,8 +253,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       auth.onAuthStateChanged(user => {
         if (!user) {
-          auth.signInAnonymously()
-            .catch(() => {});
+          auth.signInAnonymously().catch(() => {});
         }
         startGame();
       });
@@ -309,16 +308,17 @@
         return `${minutes}:${secs}`;
       }
 
-      const gameContainer = document.getElementById('gameContainer');
+      // Get all DOM elements just once!
       const questionText = document.getElementById('questionText');
       const guessInput = document.getElementById('guessInput');
       const submitAnswer = document.getElementById('submitAnswer');
       const nextLevel = document.getElementById('nextLevel');
-      const backToHome = document.getElementById('backToHome');
-      const viewStats = document.getElementById('viewStats');
       const feedback = document.getElementById('feedback');
       const scoreDisplay = document.getElementById('scoreValue');
       const currentLevelDisplay = document.getElementById('currentLevel');
+      const timerDisplay = document.getElementById('timer');
+      const backToHome = document.getElementById('backToHome');
+      const viewStats = document.getElementById('viewStats');
       const shareLink = document.getElementById('shareLink');
       const sharePreview = document.getElementById('sharePreview');
       const clipboardBtn = document.getElementById('clipboardBtn');
@@ -327,7 +327,6 @@
       const avgScore = document.getElementById('avgScore');
       const statsTableBody = document.getElementById('statsTableBody');
       const closeStats = document.getElementById('closeStats');
-      const timerDisplay = document.getElementById('timer');
 
       function getScoreHistory() {
         return JSON.parse(localStorage.getItem('triviaGameHistory') || '[]');
@@ -412,59 +411,54 @@
         startTimer();
       }
 
-      async function moveToNextLevel() {
-        currentLevel++;
-        statsModal.querySelector('p.text-yellow-300.text-center.mb-4')?.remove();
-        if (currentLevel <= questions.length) {
-          loadLevel();
-        } else {
-          const finalTime = stopTimer();
-          saveScoreHistory(score, finalTime);
-          await recordTriviaGameScore(score, finalTime);
+      function endGame() {
+        const finalTime = stopTimer();
+        saveScoreHistory(score, finalTime);
+        recordTriviaGameScore(score, finalTime);
 
-          feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
-          feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
-          feedback.classList.add('text-yellow-300');
-          submitAnswer.classList.add('hidden');
-          guessInput.classList.add('hidden');
-          nextLevel.classList.add('hidden');
-          backToHome.classList.remove('hidden');
-          viewStats.classList.remove('hidden');
-          shareLink.classList.remove('hidden');
+        feedback.textContent = `Game Over! Your Score: ${score}/25 🏆`;
+        feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
+        feedback.classList.add('text-yellow-300');
+        submitAnswer.classList.add('hidden');
+        guessInput.classList.add('hidden');
+        nextLevel.classList.add('hidden');
+        backToHome.classList.remove('hidden');
+        viewStats.classList.remove('hidden');
+        shareLink.classList.remove('hidden');
 
-          while (answerResults.length < 5) answerResults.push(false);
+        while (answerResults.length < 5) answerResults.push(false);
 
-          shareLink.innerHTML = "";
-          const shareButtonsRow = document.createElement('div');
-          shareButtonsRow.className = "share-buttons-row";
-          shareButtonsRow.appendChild(clipboardBtn);
-          shareButtonsRow.appendChild(smsBtn);
-          shareLink.appendChild(shareButtonsRow);
+        shareLink.innerHTML = "";
+        const shareButtonsRow = document.createElement('div');
+        shareButtonsRow.className = "share-buttons-row";
+        shareButtonsRow.appendChild(clipboardBtn);
+        shareButtonsRow.appendChild(smsBtn);
+        shareLink.appendChild(shareButtonsRow);
 
-          sharePreview.innerHTML = generateShareText(answerResults);
-          shareLink.appendChild(sharePreview);
+        sharePreview.innerHTML = generateShareText(answerResults);
+        shareLink.appendChild(sharePreview);
 
-          clipboardBtn.onclick = function() {
-            const textToCopy = generateClipboardText(answerResults);
-            navigator.clipboard.writeText(textToCopy)
-              .then(() => {
-                clipboardBtn.textContent = "Copied!";
-                setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
-              })
-              .catch(() => {
-                clipboardBtn.textContent = "Copy Failed";
-                setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
-              });
-          };
+        clipboardBtn.onclick = function() {
+          const textToCopy = generateClipboardText(answerResults);
+          navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+              clipboardBtn.textContent = "Copied!";
+              setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
+            })
+            .catch(() => {
+              clipboardBtn.textContent = "Copy Failed";
+              setTimeout(() => { clipboardBtn.textContent = "Copy to Clipboard"; }, 1200);
+            });
+        };
 
-          smsBtn.href = generateSmsLink(answerResults);
-        }
+        smsBtn.href = generateSmsLink(answerResults);
       }
 
-      submitAnswer.addEventListener('click', () => {
+      submitAnswer.onclick = function() {
+        if (submitAnswer.classList.contains('hidden')) return;
+
         const guess = guessInput.value.trim().toLowerCase();
         const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
-
         feedback.classList.remove('text-red-500', 'text-green-500', 'text-yellow-400');
         let result = false;
         if (guess === correctAnswer) {
@@ -494,26 +488,28 @@
         }
         answerResults.push(result);
         scoreDisplay.textContent = score;
-      });
+      };
 
-      guessInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') submitAnswer.click();
-      });
+      guessInput.onkeypress = function(e) {
+        if (e.key === 'Enter') submitAnswer.onclick();
+      };
 
-      nextLevel.addEventListener('click', () => {
-        moveToNextLevel();
-      });
-
-      viewStats.addEventListener('click', () => {
-        displayStats();
-      });
-
-      closeStats.addEventListener('click', () => {
-        statsModal.classList.add('hidden');
+      nextLevel.onclick = function() {
+        currentLevel++;
         if (currentLevel <= questions.length) {
-          moveToNextLevel();
+          loadLevel();
+        } else {
+          endGame();
         }
-      });
+      };
+
+      viewStats.onclick = function() {
+        displayStats();
+      };
+
+      closeStats.onclick = function() {
+        statsModal.classList.add('hidden');
+      };
 
       loadLevel();
     }
