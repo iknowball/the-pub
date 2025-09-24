@@ -142,6 +142,52 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // --- NFL Trivia Questions Generator ---
+    const NFL_QUESTION_POOL = [
+      { question: "Which team won the Super Bowl in 2010?", answer: "Saints" },
+      { question: "Who was the NFL MVP in 2018?", answer: "Patrick Mahomes" },
+      { question: "Which QB threw a 99-yard touchdown pass in 2011?", answer: "Matt Stafford" },
+      { question: "Which player holds the record for most career sacks?", answer: "Bruce Smith" },
+      { question: "Who was the first overall pick in the 2020 NFL Draft?", answer: "Joe Burrow" },
+      { question: "Which stadium do the Seattle Seahawks play in?", answer: "Lumen Field" },
+      { question: "Who was the coach of the Patriots for their first Super Bowl win?", answer: "Bill Belichick" },
+      { question: "Which team has the most Super Bowl appearances?", answer: "Patriots" },
+      { question: "Which running back had a 2,000 yard season in 2009?", answer: "Chris Johnson" },
+      { question: "Which kicker hit the double-doink in the playoffs?", answer: "Cody Parkey" },
+      { question: "Who was the 'Steel Curtain' defense's leader in the 1970s?", answer: "Mean Joe Greene" },
+      { question: "Which NFL team was featured in 'Hard Knocks' in 2023?", answer: "Jets" },
+      { question: "Who caught the helmet catch in Super Bowl XLII?", answer: "David Tyree" },
+      { question: "Which QB started for the Eagles in the 2018 Super Bowl?", answer: "Nick Foles" },
+      { question: "Which wide receiver was known as 'Megatron'?", answer: "Calvin Johnson" },
+      { question: "Who led the NFL in rushing yards in 2016?", answer: "Ezekiel Elliott" },
+    ];
+
+    function getEasternMidnightDateKey() {
+      const now = new Date();
+      const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+      const nyDate = new Date(nyString);
+      nyDate.setHours(0,0,0,0);
+      return nyDate.toISOString().slice(0, 10);
+    }
+
+    async function getOrGenerateDailyQuestions() {
+      const dateKey = getEasternMidnightDateKey();
+      const docRef = db.collection('dailyTrivia').doc(dateKey);
+      const doc = await docRef.get();
+      if (doc.exists && Array.isArray(doc.data().questions)) {
+        return doc.data().questions;
+      } else {
+        const shuffled = NFL_QUESTION_POOL.sort(() => 0.5 - Math.random());
+        const questions = shuffled.slice(0, 5);
+        await docRef.set({ questions: questions });
+        return questions;
+      }
+    }
+
+    async function fetchDailyQuestions() {
+      return await getOrGenerateDailyQuestions();
+    }
+
     function getCurrentUserId() {
       const user = auth.currentUser;
       if (user) {
@@ -204,35 +250,18 @@
       }
     }
 
-    function getTodayEasternMidnight() {
-      const now = new Date();
-      const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-      const nyDate = new Date(nyString);
-      return nyDate.toISOString().slice(0, 10);
-    }
-
-    async function fetchDailyQuestions() {
-      const dateKey = getTodayEasternMidnight();
-      try {
-        const doc = await db.collection('dailyTrivia').doc(dateKey).get();
-        if (doc.exists && Array.isArray(doc.data().questions)) {
-          return doc.data().questions;
-        } else {
-          alert("No trivia questions found for today.");
-          return [];
+    document.addEventListener("DOMContentLoaded", () => {
+      auth.onAuthStateChanged(user => {
+        if (!user) {
+          auth.signInAnonymously()
+            .catch(() => {});
         }
-      } catch (err) {
-        alert("Error fetching today's trivia questions: " + err.message);
-        return [];
-      }
-    }
+        startGame();
+      });
+    });
 
     async function startGame() {
       const questions = await fetchDailyQuestions();
-      if (!questions.length) {
-        document.getElementById('gameContainer').innerHTML = "<p class='text-yellow-200'>No trivia available for today.</p>";
-        return;
-      }
 
       let currentLevel = 1;
       let score = 0;
@@ -368,25 +397,6 @@
         return "sms:?body=" + encodeURIComponent(msg);
       }
 
-      function displayResultsFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const score = urlParams.get('score');
-        const incorrect = urlParams.get('incorrect');
-        if (score !== null) {
-          let incorrectMessage = "I got all the answers right! 🏆";
-          if (incorrect) {
-            const incorrectList = incorrect.split(',').map(name => decodeURIComponent(name)).join(', ');
-            incorrectMessage = `I missed ${incorrectList}.`;
-          }
-          gameContainer.innerHTML = `
-            <h1 class="text-3xl font-bold text-center text-yellow-300 mb-4">NFL Trivia Results</h1>
-            <p class="text-center mb-4 text-yellow-300 text-xl">Score: ${score}/25 🏈</p>
-            <p class="text-center mb-4 text-yellow-300">${incorrectMessage}</p>
-            <p class="text-center"><a href="index.html" class="text-yellow-400 underline text-lg">Back to Home</a></p>
-          `;
-        }
-      }
-
       function loadLevel() {
         questionText.textContent = questions[currentLevel - 1].question;
         guessInput.value = '';
@@ -422,10 +432,8 @@
           viewStats.classList.remove('hidden');
           shareLink.classList.remove('hidden');
 
-          // Emoji result array for 5 answers (pad if needed)
           while (answerResults.length < 5) answerResults.push(false);
 
-          // Clear any previous share preview/buttons
           shareLink.innerHTML = "";
           const shareButtonsRow = document.createElement('div');
           shareButtonsRow.className = "share-buttons-row";
@@ -461,7 +469,6 @@
         let result = false;
         if (guess === correctAnswer) {
           score += 5;
-          correctAnswers += 1;
           feedback.textContent = `Nailed it! +5 points! 🏀`;
           feedback.classList.add('text-green-500');
           submitAnswer.classList.add('hidden');
@@ -509,18 +516,7 @@
       });
 
       loadLevel();
-      displayResultsFromUrl();
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      auth.onAuthStateChanged(user => {
-        if (!user) {
-          auth.signInAnonymously()
-            .catch(() => {}); // Ignore errors; fallback to localStorage id
-        }
-        startGame();
-      });
-    });
   </script>
 </body>
 </html>
