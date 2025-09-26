@@ -41,7 +41,7 @@
     }
     .chat-bubble .username {
       font-weight: 700;
-      color: #e6c86a;
+      color: #fff;
       font-family: 'Montserrat',sans-serif;
       margin-bottom: 2px;
       font-size: 1.02rem;
@@ -88,7 +88,7 @@
     }
     .user-display {
       font-family: 'Montserrat', sans-serif;
-      color: #fbbf24;
+      color: #fff;
       font-weight: 700;
       font-size: 1.12rem;
       letter-spacing: 0.02em;
@@ -111,9 +111,6 @@
   <div class="w-full max-w-md glass-panel p-6 shadow-xl">
     <h1 class="text-4xl font-bold sports-bar-header mb-7 text-center">Welcome to the Pub</h1>
     <h2 class="text-2xl font-bold text-white mb-1 text-center">Main Bar</h2>
-    <div class="user-bar mb-2" id="userBar">
-      <!-- Active user info inserted here -->
-    </div>
     <div class="mb-4">
       <input type="text" id="messageInput" class="w-full p-2 rounded-lg border-2 border-yellow-600 bg-amber-900/90 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-600" placeholder="Type your message...">
       <button id="postMessage" class="w-full mt-2 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md">Send</button>
@@ -139,30 +136,8 @@
     const messageInput = document.getElementById('messageInput');
     const postMessageBtn = document.getElementById('postMessage');
     const messageList = document.getElementById('messageList');
-    const userBar = document.getElementById('userBar');
 
     let currentUser = null;
-
-    // Render user bar details
-    function renderUserBar(user) {
-      userBar.innerHTML = '';
-      const avatar = document.createElement('img');
-      avatar.className = "user-avatar";
-      let displayName;
-      if (user) {
-        displayName = user.displayName || user.email || "Anonymous";
-        avatar.src = user.photoURL || `https://robohash.org/${user.uid}?set=set5&size=38x38`;
-      } else {
-        displayName = "Anonymous";
-        avatar.src = "https://robohash.org/anon?set=set5&size=38x38";
-      }
-      const userText = document.createElement('span');
-      userText.className = "user-display";
-      userText.textContent = displayName;
-      if (!user) userText.classList.add('anonymous');
-      userBar.appendChild(avatar);
-      userBar.appendChild(userText);
-    }
 
     // Render messages, newest first
     function renderMessages(docs) {
@@ -232,7 +207,6 @@
     // Auth state and user info
     auth.onAuthStateChanged(user => {
       currentUser = user;
-      renderUserBar(currentUser);
     });
 
     postMessageBtn.addEventListener('click', saveMessage);
