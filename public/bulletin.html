@@ -40,12 +40,17 @@
       border: 1.5px solid #d4a827;
     }
     .chat-bubble .username {
-      font-weight: 700;
-      color: #fff;
+      font-weight: normal; /* not bold */
+      color: #191919; /* black */
       font-family: 'Montserrat',sans-serif;
       margin-bottom: 2px;
       font-size: 1.02rem;
       letter-spacing: 0.01em;
+    }
+    .chat-bubble .message-content {
+      font-weight: 700; /* bold */
+      color: #e6c86a;   /* username color from before */
+      font-family: 'Montserrat',sans-serif;
     }
     .chat-bubble .timestamp {
       font-size: 0.78em;
@@ -88,7 +93,7 @@
     }
     .user-display {
       font-family: 'Montserrat', sans-serif;
-      color: #fff;
+      color: #e6c86a;
       font-weight: 700;
       font-size: 1.12rem;
       letter-spacing: 0.02em;
@@ -155,6 +160,7 @@
         bubble.appendChild(usernameSpan);
         // Message text
         const messageSpan = document.createElement('span');
+        messageSpan.className = "message-content";
         messageSpan.textContent = msgData.message;
         bubble.appendChild(messageSpan);
         // Timestamp (date + time)
