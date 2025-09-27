@@ -289,4 +289,4 @@ export const MainBar: React.FC = () => {
   );
 };
 
-export default MainBar;
+export default bulletin;
