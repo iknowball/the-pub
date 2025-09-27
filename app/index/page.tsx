@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -210,7 +211,7 @@ const WelcomePub: React.FC = () => {
 
   const handleUserBtnClick = () => {
     if (currentUser) {
-      window.location.href = "myprofile.html";
+      window.location.href = "/myprofile";
     } else {
       openModal();
     }
@@ -232,31 +233,31 @@ const WelcomePub: React.FC = () => {
         <p className="text-sm text-yellow-300 mb-8">
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
-        <a
-          href="index-nfl.html"
+        <Link
+          href="/games-room"
           className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
         >
           <span className="text-3xl">Games</span>
           <p className="text-sm text-white">Prove that you know ball.</p>
-        </a>
-        <a
-          href="news.html"
+        </Link>
+        <Link
+          href="/news"
           className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
         >
           <span className="text-3xl">News</span>
           <p className="text-sm text-white">
             Pick up The Pub Times for the most ridiculous takes in sports.
           </p>
-        </a>
-        <a
-          href="index-bar.html"
+        </Link>
+        <Link
+          href="/bar"
           className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
         >
           <span className="text-3xl">Take a Seat</span>
           <p className="text-sm text-white">
             Sit at the Pub Bar, or join a table or booth.
           </p>
-        </a>
+        </Link>
       </div>
 
       {/* Sign Up/Login Modal */}
