@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   initializeApp
 } from "firebase/app";
@@ -12,7 +13,8 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  getDoc
 } from "firebase/firestore";
 import {
   getAuth,
@@ -278,12 +280,12 @@ export const DebateTable: React.FC = () => {
             🗣️ 1-on-1 Debate Table
           </h1>
           <div>
-            <a
-              href="index.html"
+            <Link
+              href="/"
               className="bg-blue-700 hover:bg-blue-900 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300"
             >
               Home
-            </a>
+            </Link>
           </div>
         </div>
         {!user && (
