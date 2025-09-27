@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
@@ -107,24 +108,24 @@ const PubNewsstand: React.FC = () => {
       </header>
       <nav className="w-full max-w-4xl bg-gray-200 p-4 mb-4 border-t-2 border-b-2 border-gray-900">
         <div className="flex justify-between">
-          <a
-            href="index.html"
+          <Link
+            href="/"
             className="text-gray-900 hover:text-gray-700 font-bold"
           >
             Home
-          </a>
-          <a
-            href="index-bar.html"
+          </Link>
+          <Link
+            href="/bar"
             className="text-gray-900 hover:text-gray-700 font-bold"
           >
             Hit the Bar
-          </a>
-          <a
-            href="index-nfl.html"
+          </Link>
+          <Link
+            href="/games-room"
             className="text-gray-900 hover:text-gray-700 font-bold"
           >
             Games
-          </a>
+          </Link>
         </div>
       </nav>
       <main className="w-full max-w-2xl mx-auto p-2" id="news-list">
