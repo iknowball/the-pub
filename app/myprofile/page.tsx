@@ -132,19 +132,21 @@ const PubProfile: React.FC = () => {
           } else {
             setOwnProfile(false);
             const userDoc = snap.docs[0];
+            const data = userDoc.data();
             setViewedUid(userDoc.id);
-            setViewedUser(userDoc.data() as UserProfile);
-            setWallPosts(userDoc.data().wall || []);
-            setTakes(userDoc.data().takes || []);
-            setTeams(userDoc.data().teams || []);
+            setViewedUser(data as UserProfile);
+            setWallPosts(data?.wall ?? []);
+            setTakes(data?.takes ?? []);
+            setTeams(data?.teams ?? []);
           }
         } else {
           setOwnProfile(true);
           setViewedUid(user.uid);
-          setViewedUser(loggedInDoc.data() as UserProfile);
-          setWallPosts(loggedInDoc.data().wall || []);
-          setTakes(loggedInDoc.data().takes || []);
-          setTeams(loggedInDoc.data().teams || []);
+          const data = loggedInDoc.data();
+          setViewedUser(data as UserProfile);
+          setWallPosts(data?.wall ?? []);
+          setTakes(data?.takes ?? []);
+          setTeams(data?.teams ?? []);
         }
         setProfileError("");
         setUserNotFound(false);
