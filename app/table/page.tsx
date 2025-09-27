@@ -51,7 +51,7 @@ type Message = {
   time?: string;
 };
 
-export const DebateTable: React.FC = () => {
+function DebateTable() {
   const [user, setUser] = useState<User | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [customTopic, setCustomTopic] = useState("");
@@ -442,6 +442,6 @@ export const DebateTable: React.FC = () => {
       </p>
     </div>
   );
-};
+}
 
 export default DebateTable;
