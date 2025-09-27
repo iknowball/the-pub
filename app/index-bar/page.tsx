@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import Link from "next/link";
 
 const PubBar: React.FC = () => {
   // Set background styling on mount
@@ -26,12 +27,12 @@ const PubBar: React.FC = () => {
       <div className="w-full max-w-md bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative text-center">
         {/* Home button bar row above the welcome text, left-aligned */}
         <div className="flex items-center mb-2">
-          <a
-            href="index.html"
+          <Link
+            href="/"
             className="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center mr-auto"
           >
             Home
-          </a>
+          </Link>
         </div>
         <div>
           <h1 className="text-3xl font-bold text-yellow-300 mb-4">
@@ -43,24 +44,24 @@ const PubBar: React.FC = () => {
           <p className="text-base text-yellow-300 mb-4">Jump in!</p>
         </div>
         <div className="space-y-2">
-          <a
-            href="table.html"
+          <Link
+            href="/table"
             className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center mt-2"
           >
             Tables
-          </a>
-          <a
-            href="booth.html"
+          </Link>
+          <Link
+            href="/booth"
             className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center mt-2"
           >
             Booths
-          </a>
-          <a
-            href="bulletin.html"
+          </Link>
+          <Link
+            href="/bulletin"
             className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center mt-2"
           >
             Bar
-          </a>
+          </Link>
         </div>
       </div>
     </div>
