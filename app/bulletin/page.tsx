@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import Link from "next/link";
 import {
   initializeApp
 } from "firebase/app";
@@ -276,12 +277,12 @@ export const MainBar: React.FC = () => {
             );
           })}
         </div>
-        <a
-          href="index.html"
+        <Link
+          href="/"
           className="block w-full mt-4 bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center"
         >
           Back to Home
-        </a>
+        </Link>
       </div>
     </div>
   );
