@@ -1,9 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import {
-  initializeApp
-} from "firebase/app";
+import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   collection,
@@ -38,7 +36,7 @@ type Message = {
   timestamp?: any;
 };
 
-export const bulletin: React.FC = () => {
+function BulletinPage() {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -287,6 +285,6 @@ export const bulletin: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
-export default bulletin;
+export default BulletinPage;
