@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-
+import Link from "next/link";
 // Firebase Modular SDK Imports
 import { initializeApp } from "firebase/app";
 import {
@@ -21,7 +21,6 @@ import {
   User,
 } from "firebase/auth";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
   authDomain: "thepub-sigma.firebaseapp.com",
@@ -96,17 +95,17 @@ const emojiShareMessage = (results: boolean[]) => {
 };
 
 const generateShareText = (results: boolean[]) => {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/game.html" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
   return `${emojiShareMessage(results)} <a href="${homepage}" class="share-link-ball" target="_blank">Do you know ball?</a>`;
 };
 
 const generateClipboardText = (results: boolean[]) => {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/game.html" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
   return `${emojiShareMessage(results)} Do you know ball? ${homepage}`;
 };
 
 const generateSmsLink = (results: boolean[]) => {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/game.html" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
   const msg = `${emojiShareMessage(results)} Do you know ball? ${homepage}`;
   return "sms:?body=" + encodeURIComponent(msg);
 };
@@ -345,10 +344,10 @@ const GuessThePlayer: React.FC = () => {
       </header>
       <div className="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative" id="gameContainer">
         <div className="flex flex-wrap gap-2 justify-center mb-4">
-          <a href="index.html" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</a>
-          <a href="news.html" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</a>
-          <a href="trivia-game.html" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Trivia</a>
-          <a href="college-game.html" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">College</a>
+          <Link href="/" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</Link>
+          <Link href="/news" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</Link>
+          <Link href="/trivia-game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Trivia</Link>
+          <Link href="/college-game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">College</Link>
         </div>
         <h1 className="text-3xl font-bold text-center text-yellow-300 mb-4">Who is This?</h1>
         <p className="text-center text-yellow-300 mb-2 text-lg">
@@ -398,12 +397,12 @@ const GuessThePlayer: React.FC = () => {
             </button>
           </>
         )}
-        <a
-          href="index.html"
+        <Link
+          href="/"
           className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold ${gameOver ? "" : "hidden"} border-2 border-yellow-600 shadow-md text-center`}
         >
           Back to Home
-        </a>
+        </Link>
         <button
           className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold mt-2 border-2 border-yellow-600 shadow-md ${gameOver ? "" : "hidden"}`}
           onClick={() => setShowStats(true)}
