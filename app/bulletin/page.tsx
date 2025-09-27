@@ -38,7 +38,7 @@ type Message = {
   timestamp?: any;
 };
 
-export const MainBar: React.FC = () => {
+export const bulletin: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -289,4 +289,4 @@ export const MainBar: React.FC = () => {
   );
 };
 
-export default MainBar;
+export default bulletin;
