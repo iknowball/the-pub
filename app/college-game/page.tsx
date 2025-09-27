@@ -108,11 +108,13 @@ function getCurrentUserId(user: User | null) {
   return anonId;
 }
 
-const emojiShareMessage = (results: boolean[]) => {
-  const emojis = results.map((r) => (r ? "✅" : "❌"));
+// ---- FIXED FUNCTION ----
+const emojiShareMessage = (results: boolean[]): string => {
+  const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 };
+// ---- END FIXED FUNCTION ----
 
 const CollegeGuess: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
