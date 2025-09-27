@@ -160,11 +160,13 @@ function formatTime(seconds: number) {
   return `${minutes}:${secs}`;
 }
 
+// ---- FIXED FUNCTION ----
 function emojiShareMessage(results: boolean[]) {
-  const emojis = results.map(r => r ? "✅" : "❌");
+  const emojis: string[] = results.map(r => r ? "✅" : "❌");
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 }
+// ---- END FIXED FUNCTION ----
 
 function generateShareText(results: boolean[]) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/trivia-game" : "";
