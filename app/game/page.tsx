@@ -89,11 +89,13 @@ function formatTime(seconds: number) {
   return `${minutes}:${secs}`;
 }
 
-const emojiShareMessage = (results: boolean[]) => {
-  const emojis = results.map((r) => (r ? "✅" : "❌"));
+// ---- FIXED FUNCTION ----
+const emojiShareMessage = (results: boolean[]): string => {
+  const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 };
+// ---- END FIXED FUNCTION ----
 
 const generateShareText = (results: boolean[]) => {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
