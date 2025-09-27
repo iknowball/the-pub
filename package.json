@@ -16,5 +16,9 @@
   },
   "engines": {
     "node": "20.x"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.14",
+    "typescript": "^5.9.2"
   }
 }
