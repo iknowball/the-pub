@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -31,6 +32,7 @@ const auth = getAuth(app);
 
 // Helper: get ?user=username from URL
 function getQueryParam(name: string) {
+  if (typeof window === "undefined") return null;
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(name);
 }
@@ -177,7 +179,7 @@ const PubProfile: React.FC = () => {
   // Settings modal logic
   const handleSignOut = async () => {
     await signOut(auth);
-    window.location.href = "index.html";
+    window.location.href = "/";
   };
   const handleEditUsername = () => {
     setEditUsernameOpen(true);
@@ -434,10 +436,6 @@ const PubProfile: React.FC = () => {
 
   return (
     <div>
-      <style>{`
-        /* Copy all your CSS rules here from the <style> block in the HTML */
-        /* ... (omitted for brevity, but copy all your CSS rules above) ... */
-      `}</style>
       <div className="pub-sign" id="pubTitle">
         {viewedUser ? `${viewedUser.username}'s Pub` : "Your Pub"}
       </div>
@@ -484,9 +482,9 @@ const PubProfile: React.FC = () => {
         <button className="action-btn" id="settingsBtn" onClick={() => setSettingsModalOpen(true)}>
           Settings
         </button>
-        <button className="action-btn home-btn" id="homeBtn" onClick={() => (window.location.href = "index.html")}>
+        <Link className="action-btn home-btn" id="homeBtn" href="/">
           Home
-        </button>
+        </Link>
       </div>
       {searchResults.length > 0 && (
         <div id="searchResults" className="search-results" style={{ display: "" }}>
