@@ -1,9 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { initializeApp } from "firebase/app";
+import { auth, db } from "../firebase"; // <-- Use shared Firebase instance
 import {
-  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -12,20 +11,10 @@ import {
   User,
 } from "firebase/auth";
 import {
-  getFirestore,
   doc,
   setDoc,
   getDoc,
 } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-  authDomain: "thepub-sigma.firebaseapp.com",
-  projectId: "thepub-sigma",
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 const WelcomePub: React.FC = () => {
   // Modal state
