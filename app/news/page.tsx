@@ -1,27 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { initializeApp } from "firebase/app";
+import { db } from "../firebase"; // <-- Import db from shared module
 import {
-  getFirestore,
   collection,
   getDocs,
   query,
   orderBy,
   Timestamp,
 } from "firebase/firestore";
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-  authDomain: "thepub-sigma.firebaseapp.com",
-  projectId: "thepub-sigma",
-  storageBucket: "thepub-sigma.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef",
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 type NewsArticle = {
   id: string;
