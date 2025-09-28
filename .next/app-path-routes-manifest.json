@@ -1,9 +1,9 @@
 {
   "/_not-found/page": "/_not-found",
-  "/bulletin/page": "/bulletin",
   "/booth/page": "/booth",
-  "/college-game/page": "/college-game",
+  "/bulletin/page": "/bulletin",
   "/game/page": "/game",
+  "/college-game/page": "/college-game",
   "/index-bar/page": "/index-bar",
   "/index-nfl/page": "/index-nfl",
   "/myprofile/page": "/myprofile",

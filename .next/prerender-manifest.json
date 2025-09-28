@@ -50,6 +50,54 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/bulletin": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/bulletin",
+      "dataRoute": "/bulletin.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/college-game": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/college-game",
+      "dataRoute": "/college-game.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/game": {
       "experimentalBypassFor": [
         {
@@ -89,54 +137,6 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/index-bar",
       "dataRoute": "/index-bar.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/college-game": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/college-game",
-      "dataRoute": "/college-game.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
-    "/bulletin": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/bulletin",
-      "dataRoute": "/bulletin.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -218,7 +218,7 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/trivia-game": {
+    "/": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -231,8 +231,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/trivia-game",
-      "dataRoute": "/trivia-game.rsc",
+      "srcRoute": "/",
+      "dataRoute": "/index.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -266,7 +266,7 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/": {
+    "/trivia-game": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -279,8 +279,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/",
-      "dataRoute": "/index.rsc",
+      "srcRoute": "/trivia-game",
+      "dataRoute": "/trivia-game.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -294,8 +294,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "b5ee855e2e8ad44572c2e59716b2e29f",
-    "previewModeSigningKey": "1a15bfe05dff81cdb348360452274d5f6193b6f73e8d230b0852848a1d51c32a",
-    "previewModeEncryptionKey": "fd0b144a16ac285e855e4a2681c4d3a6671305151ed7e0cbfaf278c14f405789"
+    "previewModeId": "ff02e23ba786636a14279c874846afcd",
+    "previewModeSigningKey": "cfdc4eefff70d87a4b1c59cefba2e1f79551f7ce2423a714fb4e46276d094080",
+    "previewModeEncryptionKey": "4a15bee94308b386e4a66845620d46a4e952741ef5914d1064cd167f1c9d41fd"
   }
 }

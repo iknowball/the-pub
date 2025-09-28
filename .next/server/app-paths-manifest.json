@@ -1,9 +1,9 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/bulletin/page": "app/bulletin/page.js",
   "/booth/page": "app/booth/page.js",
-  "/college-game/page": "app/college-game/page.js",
+  "/bulletin/page": "app/bulletin/page.js",
   "/game/page": "app/game/page.js",
+  "/college-game/page": "app/college-game/page.js",
   "/index-bar/page": "app/index-bar/page.js",
   "/index-nfl/page": "app/index-nfl/page.js",
   "/myprofile/page": "app/myprofile/page.js",
