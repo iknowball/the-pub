@@ -224,7 +224,7 @@ const WelcomePub: React.FC = () => {
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
         <Link
-          href="/games-room"
+          href="/index-nfl"
           className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
         >
           <span className="text-3xl">Games</span>
@@ -240,7 +240,7 @@ const WelcomePub: React.FC = () => {
           </p>
         </Link>
         <Link
-          href="/bar"
+          href="/index-bar"
           className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
         >
           <span className="text-3xl">Take a Seat</span>
