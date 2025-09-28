@@ -193,13 +193,59 @@ function BulletinPage() {
           border-radius: 1rem;
           border: 1.5px solid #d4a827;
         }
+        .profile-btn-bar {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+        }
+        .profile-link-btn {
+          background: #fbbf24;
+          color: #3f3f2e;
+          font-weight: bold;
+          padding: 0.6rem 1.3rem;
+          border-radius: 1rem;
+          border: 2px solid #d4a827;
+          font-size: 1rem;
+          box-shadow: 0 2px 12px #1a1a1a22;
+          transition: background 0.15s, color 0.15s, transform 0.12s;
+          text-decoration: none;
+        }
+        .profile-link-btn:hover {
+          background: #fde68a;
+          color: #26221a;
+          transform: scale(1.04);
+        }
         @media (max-width: 500px) {
           .glass-panel { padding: 0.7rem; }
+          .profile-link-btn { padding: 0.5rem 0.7rem; font-size: 0.9rem; }
         }
       `}</style>
       <div className="w-full max-w-md glass-panel p-6 shadow-xl">
-        <h1 className="text-4xl font-bold sports-bar-header mb-7 text-center">Welcome to the Pub</h1>
-        <h2 className="text-2xl font-bold text-white mb-1 text-center">Main Bar</h2>
+        <div className="profile-btn-bar">
+          {user && (
+            <Link
+              href="/myprofile"
+              className="profile-link-btn"
+            >
+              My Profile
+            </Link>
+          )}
+          {!user && (
+            <button
+              onClick={handleSignIn}
+              className="profile-link-btn"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+        <h1 className="text-4xl font-bold sports-bar-header mb-7 text-center">
+          The Pub Social
+        </h1>
+        <h2 className="text-2xl font-bold text-white mb-1 text-center">
+          Main Bar
+        </h2>
         <div className="user-bar mb-2" id="userBar">
           <img
             className="user-avatar"
@@ -213,14 +259,6 @@ function BulletinPage() {
               ? user.displayName || user.email || "Anonymous"
               : "Anonymous"}
           </span>
-          {!user && (
-            <button
-              onClick={handleSignIn}
-              className="ml-2 bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-1 rounded-lg shadow text-sm border-2 border-yellow-600"
-            >
-              Sign in with Google
-            </button>
-          )}
         </div>
         <div className="mb-4">
           <form className="flex flex-col" onSubmit={handleSend}>
@@ -228,7 +266,7 @@ function BulletinPage() {
               type="text"
               id="messageInput"
               className="w-full p-2 rounded-lg border-2 border-yellow-600 bg-amber-900/90 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-600"
-              placeholder="Type your message..."
+              placeholder={user ? "Type your message..." : "Sign in to post..."}
               value={input}
               onChange={e => setInput(e.target.value)}
               disabled={!user}
