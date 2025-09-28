@@ -32,7 +32,7 @@ const WelcomePub: React.FC = () => {
 
   useEffect(() => {
     document.body.style.backgroundImage =
-      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
+      "linear-gradient(rgba(69,26,3,0.8), rgba(34,34,34,0.6)), url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
@@ -209,30 +209,30 @@ const WelcomePub: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-      <div className="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14">
+      <div className="w-full max-w-md text-center bg-gradient-to-br from-amber-900 via-amber-800 to-yellow-700 border-2 border-yellow-400 rounded-2xl p-8 shadow-2xl relative pt-16 ring-4 ring-yellow-400/30 backdrop-blur-md">
         {/* Sign Up/Login/Profile Button (top right corner) */}
         <button
           id="userBtn"
           ref={userBtnRef}
-          className="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition"
+          className="absolute top-5 right-5 bg-yellow-300 text-amber-900 font-bold px-5 py-2 rounded-full hover:bg-yellow-400 shadow-lg ring-2 ring-amber-900 transition-all duration-200"
           onClick={handleUserBtnClick}
         >
           Sign Up/Login
         </button>
-        <h1 className="text-4xl font-bold text-yellow-300 mb-2">Welcome to the Pub</h1>
-        <p className="text-sm text-yellow-300 mb-8">
+        <h1 className="text-5xl font-bold text-yellow-100 drop-shadow mb-3">Welcome to the Pub</h1>
+        <p className="text-base text-yellow-200 mb-10 font-medium">
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
         <Link
           href="/index-nfl"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="block w-full bg-gradient-to-r from-amber-700 to-yellow-400 text-white font-extrabold p-5 rounded-xl hover:from-yellow-600 hover:to-amber-700 transform hover:scale-105 transition duration-150 border-2 border-yellow-400 shadow-lg mt-3 flex flex-col space-y-1"
         >
           <span className="text-3xl">Games</span>
           <p className="text-sm text-white">Prove that you know ball.</p>
         </Link>
         <Link
           href="/news"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="block w-full bg-gradient-to-r from-amber-700 to-yellow-400 text-white font-extrabold p-5 rounded-xl hover:from-yellow-600 hover:to-amber-700 transform hover:scale-105 transition duration-150 border-2 border-yellow-400 shadow-lg mt-3 flex flex-col space-y-1"
         >
           <span className="text-3xl">News</span>
           <p className="text-sm text-white">
@@ -241,7 +241,7 @@ const WelcomePub: React.FC = () => {
         </Link>
         <Link
           href="/index-bar"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="block w-full bg-gradient-to-r from-amber-700 to-yellow-400 text-white font-extrabold p-5 rounded-xl hover:from-yellow-600 hover:to-amber-700 transform hover:scale-105 transition duration-150 border-2 border-yellow-400 shadow-lg mt-3 flex flex-col space-y-1"
         >
           <span className="text-3xl">Take a Seat</span>
           <p className="text-sm text-white">
@@ -254,83 +254,83 @@ const WelcomePub: React.FC = () => {
       {modalOpen && (
         <div
           id="signupModal"
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 transition-all duration-200"
         >
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
+          <div className="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-sm relative ring-2 ring-amber-700/50">
             <button
               id="closeSignUp"
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold"
+              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl font-extrabold transition"
               onClick={closeModal}
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-4 text-amber-900 text-center">
+            <h2 className="text-3xl font-extrabold mb-5 text-amber-900 text-center drop-shadow">
               Sign Up / Login
             </h2>
             <div className="flex flex-col gap-2 mb-2">
               <button
                 id="googleSignInBtn"
                 type="button"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow"
                 onClick={handleGoogleSignIn}
               >
                 <img
                   src="https://www.svgrepo.com/show/475656/google-color.svg"
                   className="w-5 h-5"
                   alt="Google logo"
-                />{" "}
+                />
                 Sign in with Google
               </button>
             </div>
-            <div className="text-center text-sm my-2 text-gray-500">or</div>
+            <div className="text-center text-sm my-2 text-gray-400">or</div>
             <form id="signupForm" className="space-y-4" onSubmit={handleSignup}>
               <input
                 type="email"
                 ref={signupEmailRef}
                 required
                 placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 bg-amber-50 focus:outline-none focus:border-yellow-500 transition"
               />
               <input
                 type="password"
                 ref={signupPasswordRef}
                 required
                 placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 bg-amber-50 focus:outline-none focus:border-yellow-500 transition"
               />
               <input
                 type="text"
                 ref={signupUsernameRef}
                 required
                 placeholder="Choose a username"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 bg-amber-50 focus:outline-none focus:border-yellow-500 transition"
               />
               <button
                 type="submit"
-                className="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700"
+                className="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700 shadow"
               >
                 Create Account
               </button>
             </form>
-            <div className="text-center text-sm my-2 text-gray-500">or</div>
+            <div className="text-center text-sm my-2 text-gray-400">or</div>
             <form id="loginForm" className="space-y-4" onSubmit={handleLogin}>
               <input
                 type="email"
                 ref={loginEmailRef}
                 required
                 placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 bg-amber-50 focus:outline-none focus:border-yellow-500 transition"
               />
               <input
                 type="password"
                 ref={loginPasswordRef}
                 required
                 placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 bg-amber-50 focus:outline-none focus:border-yellow-500 transition"
               />
               <button
                 type="submit"
-                className="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400"
+                className="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400 shadow"
               >
                 Log In
               </button>
