@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { auth, db } from "../firebase"; // <-- Use shared Firebase instance
+import { auth, db } from "./firebase"; // <-- Use shared Firebase instance
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
