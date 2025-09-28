@@ -1,21 +1,24 @@
 {
   "compilerOptions": {
-    "target": "es6",                        // Modern JS output
+    "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,                        // Allow JS files in project (optional)
-    "skipLibCheck": true,                   // Faster builds, skip type checking of all declaration files
-    "esModuleInterop": true,                // Allow default imports from modules with no default export
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,                         // Enable all strict type-checking options
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,                         // Do not generate output files
+    "noEmit": true,
     "isolatedModules": true,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "jsx": "react-jsx",                     // Use the new JSX transform (React 17+)
-    "types": ["react", "react-dom"]         // Explicitly include React types
+    "jsx": "preserve",                   // <--- FIXED for Next.js
+    "types": ["react", "react-dom"]      // <--- Make sure you installed these!
   },
-  "include": ["app"],                       // Include your source directory
-  "exclude": ["node_modules"]               // Exclude node_modules
+  "include": [
+    "app",
+    ".next/types/**/*.ts"                // <--- Include Next.js auto-generated types
+  ],
+  "exclude": ["node_modules"]
 }
