@@ -1,0 +1,113 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/booth",
+      "regex": "^/booth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/booth(?:/)?$"
+    },
+    {
+      "page": "/bulletin",
+      "regex": "^/bulletin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/bulletin(?:/)?$"
+    },
+    {
+      "page": "/college-game",
+      "regex": "^/college\\-game(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/college\\-game(?:/)?$"
+    },
+    {
+      "page": "/game",
+      "regex": "^/game(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/game(?:/)?$"
+    },
+    {
+      "page": "/index-bar",
+      "regex": "^/index\\-bar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/index\\-bar(?:/)?$"
+    },
+    {
+      "page": "/index-nfl",
+      "regex": "^/index\\-nfl(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/index\\-nfl(?:/)?$"
+    },
+    {
+      "page": "/myprofile",
+      "regex": "^/myprofile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/myprofile(?:/)?$"
+    },
+    {
+      "page": "/news",
+      "regex": "^/news(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/news(?:/)?$"
+    },
+    {
+      "page": "/table",
+      "regex": "^/table(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/table(?:/)?$"
+    },
+    {
+      "page": "/trivia-game",
+      "regex": "^/trivia\\-game(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/trivia\\-game(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

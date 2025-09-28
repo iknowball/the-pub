@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/bulletin/page": "/bulletin",
+  "/booth/page": "/booth",
+  "/college-game/page": "/college-game",
+  "/game/page": "/game",
+  "/index-bar/page": "/index-bar",
+  "/index-nfl/page": "/index-nfl",
+  "/myprofile/page": "/myprofile",
+  "/news/page": "/news",
+  "/page": "/",
+  "/table/page": "/table",
+  "/trivia-game/page": "/trivia-game"
+}

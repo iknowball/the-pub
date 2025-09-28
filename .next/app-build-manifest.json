@@ -1,0 +1,133 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/app/_not-found/page-77d59351c12f87de.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/app/layout-ae38c91979d7c8af.js"
+    ],
+    "/bulletin/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/bulletin/page-a0d7deb0c6f347ff.js"
+    ],
+    "/booth/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/booth/page-720a338046cfac08.js"
+    ],
+    "/college-game/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/college-game/page-abed2e1eeaead294.js"
+    ],
+    "/game/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/game/page-645717e52306992c.js"
+    ],
+    "/index-bar/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/app/index-bar/page-7b36f2d56cbec706.js"
+    ],
+    "/index-nfl/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/app/index-nfl/page-c533d42f2cb9de18.js"
+    ],
+    "/myprofile/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/myprofile/page-10b62d81a73a8ff1.js"
+    ],
+    "/news/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/news/page-8fa154304428a723.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/page-a49dd737b6648f5d.js"
+    ],
+    "/table/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/table/page-75afed54d5c19d37.js"
+    ],
+    "/trivia-game/page": [
+      "static/chunks/webpack-30b9dd9193356b11.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4efeec91c7871d79.js",
+      "static/chunks/main-app-6636ecf86502a3e1.js",
+      "static/chunks/7508b87c-77b7b15bfeb18012.js",
+      "static/chunks/261b60bd-1b00cfda03ee82d4.js",
+      "static/chunks/619-ba102abea3e3d0e4.js",
+      "static/chunks/353-9d7349253474ea1d.js",
+      "static/chunks/app/trivia-game/page-3b936d5410588ce3.js"
+    ]
+  }
+}
