@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "../firebase"; // <-- Import db from shared module
+import { db } from "../firebase"; // Import db from shared module
 import {
   collection,
   getDocs,
@@ -16,6 +16,9 @@ type NewsArticle = {
   content?: string;
   author?: string;
   createdAt?: Timestamp | { seconds: number } | number;
+  date?: string;
+  image?: string;
+  source?: string;
 };
 
 function formatDate(ts: NewsArticle["createdAt"]): string {
@@ -140,12 +143,24 @@ const PubNewsstand: React.FC = () => {
                 style={{ display: expanded[data.id] ? "block" : "none" }}
               >
                 <div className="mb-2">{data.content || ""}</div>
+                {data.image && (
+                  <img
+                    src={data.image}
+                    alt=""
+                    className="w-full h-48 object-cover mb-4 border border-gray-900"
+                  />
+                )}
                 {data.author && (
                   <div className="text-sm text-gray-500">By {data.author}</div>
                 )}
-                {data.createdAt && (
+                {(data.createdAt || data.date) && (
                   <div className="text-xs text-gray-400 mt-1">
-                    Posted: {formatDate(data.createdAt)}
+                    Posted: {data.date || formatDate(data.createdAt)}
+                  </div>
+                )}
+                {data.source && (
+                  <div className="text-xs text-gray-500 mt-2">
+                    Source: {data.source}
                   </div>
                 )}
               </div>
