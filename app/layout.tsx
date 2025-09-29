@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
+import '../styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'The Pub', // Adjust to your app’s title
