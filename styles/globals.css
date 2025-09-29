@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Optional: Custom font import for Montserrat */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+/* comment out test @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
 
 /* Optional: Apply Montserrat font globally */
 body {
