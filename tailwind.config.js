@@ -6,7 +6,15 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        montserrat: ['Montserrat', 'sans-serif'],
+      },
+      colors: {
+        pubgold: '#ec9c32',
+        pubpanel: '#b2762c',
+      },
+    },
   },
   plugins: [],
 }
