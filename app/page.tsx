@@ -25,42 +25,52 @@ export default function WelcomePub() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-      <div className="w-full max-w-md text-center bg-black/80 border-2 border-yellow-600 rounded-xl p-8 shadow-2xl relative pt-16">
+      <div className="w-full max-w-xl text-center bg-[#a96c1d]/90 border-2 border-yellow-200 rounded-xl p-8 shadow-2xl relative pt-16" style={{boxShadow:"0 8px 32px 0 rgba(31, 38, 135, 0.37)"}}>
+        {/* Sign Up/Login Button positioned to match the reference */}
         <button
-          className="absolute top-5 right-5 bg-yellow-300 text-amber-900 font-bold px-5 py-2 rounded-full hover:bg-yellow-400 shadow transition"
+          className="absolute top-5 right-5 bg-yellow-300 text-amber-900 font-bold px-6 py-2 rounded-lg shadow transition text-xl hover:bg-yellow-400"
           onClick={() => setModalOpen(true)}
         >
-          My Profile
+          Sign Up/Login
         </button>
-        <h1 className="text-5xl font-extrabold text-yellow-200 drop-shadow mb-4">Welcome to the Pub</h1>
-        <p className="text-lg text-yellow-100 mb-8 font-medium">
+        <h1 className="text-5xl font-extrabold text-yellow-100 drop-shadow mb-2">Welcome to the Pub</h1>
+        <p className="text-xl text-yellow-200 mb-8 font-medium drop-shadow">
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Link
             href="/index-nfl"
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
+            style={{letterSpacing: "0.5px"}}
           >
-            <span>Games</span>
-            <span className="text-sm font-normal text-amber-900 mt-2">Prove that you know ball.</span>
+            <div>
+              Games
+              <div className="text-lg font-normal text-white mt-2 leading-tight">
+                Pub Games test your trivia, player, and college knowledge.
+              </div>
+            </div>
           </Link>
           <Link
             href="/news"
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
           >
-            <span>News</span>
-            <span className="text-sm font-normal text-amber-900 mt-2">
-              Pick up The Pub Times for the most ridiculous takes in sports.
-            </span>
+            <div>
+              Newsstand
+              <div className="text-lg font-normal text-white mt-2 leading-tight">
+                Pick up The Pub Times for the most ridiculous takes in sports.
+              </div>
+            </div>
           </Link>
           <Link
             href="/index-bar"
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
           >
-            <span>Take a Seat</span>
-            <span className="text-sm font-normal text-amber-900 mt-2">
-              Sit at the Pub Bar, or join a table or booth.
-            </span>
+            <div>
+              Bulletin
+              <div className="text-lg font-normal text-white mt-2 leading-tight">
+                TALK YOUR SHIT!
+              </div>
+            </div>
           </Link>
         </div>
       </div>
@@ -71,6 +81,7 @@ export default function WelcomePub() {
             <button
               className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl font-extrabold transition"
               onClick={() => setModalOpen(false)}
+              aria-label="Close Modal"
             >
               &times;
             </button>
