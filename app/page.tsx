@@ -1,5 +1,5 @@
-"use client"
-  
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
@@ -18,7 +18,6 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 
-// Define TypeScript interfaces
 interface UserData {
   username?: string;
   email?: string;
@@ -36,7 +35,6 @@ const App: React.FC = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [signupMsg, setSignupMsg] = useState('');
 
-  // Handle auth state changes
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
       setCurrentUser(user);
@@ -66,7 +64,6 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Handle user button click
   const handleUserBtnClick = () => {
     if (currentUser) {
       window.location.href = 'myprofile.html';
@@ -81,19 +78,12 @@ const App: React.FC = () => {
     }
   };
 
-  // Close modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  const closeModal = () => setIsModalOpen(false);
 
-  // Handle modal background click
   const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      setIsModalOpen(false);
-    }
+    if (e.target === e.currentTarget) setIsModalOpen(false);
   };
 
-  // Handle signup
   const handleSignup = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSignupMsg('');
@@ -119,7 +109,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle login
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setSignupMsg('');
@@ -132,7 +121,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle Google sign-in
   const handleGoogleSignIn = async () => {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -168,8 +156,14 @@ const App: React.FC = () => {
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen font-[Montserrat] pb-16"
       style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Montserrat', Arial, sans-serif",
+        paddingBottom: "4rem",
         backgroundImage: "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -177,127 +171,306 @@ const App: React.FC = () => {
         backgroundColor: '#451a03',
       }}
     >
-      <div className="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14">
+      <style>
+        {`
+        .main-card {
+          width: 100%;
+          max-width: 430px;
+          text-align: center;
+          background: rgba(146, 64, 14, 0.93);
+          border: 2px solid #facc15;
+          border-radius: 16px;
+          padding: 1.5rem 1.3rem 1.5rem 1.3rem;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          position: relative;
+          padding-top: 3.2rem;
+        }
+        .main-card h1 {
+          color: #fde68a;
+          font-size: 2.2rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+        }
+        .main-card p {
+          color: #fde68a;
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+        .user-btn {
+          position: absolute;
+          top: 1.1rem;
+          right: 1.1rem;
+          background: #fde68a;
+          color: #92400e;
+          font-weight: bold;
+          padding: 0.7rem 1.1rem;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px #0001;
+          border: none;
+          transition: background 0.17s;
+          cursor: pointer;
+        }
+        .user-btn:hover {
+          background: #fef08a;
+        }
+        .main-link {
+          display: block;
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 1.05rem 0.2rem 0.8rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 0.7rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.5rem;
+          transition: background 0.16s, transform 0.12s;
+        }
+        .main-link:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        .main-link span {
+          font-size: 2rem;
+          font-weight: bold;
+          color: #fff;
+        }
+        .main-link p {
+          margin: 0.18rem 0 0 0;
+          font-size: 1.01rem;
+          color: #fff;
+          font-weight: normal;
+        }
+        /* Modal Styles */
+        .modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.48);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50;
+        }
+        .modal-content {
+          background: #fff;
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.6rem 2.2rem 1.6rem;
+          width: 100%;
+          max-width: 370px;
+          position: relative;
+        }
+        .modal-close {
+          position: absolute;
+          top: 0.6rem;
+          right: 1.1rem;
+          background: none;
+          border: none;
+          color: #aaa;
+          font-size: 2.3rem;
+          font-weight: bold;
+          cursor: pointer;
+          transition: color 0.17s;
+        }
+        .modal-close:hover {
+          color: #ef4444;
+        }
+        .modal-title {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #92400e;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .google-btn {
+          width: 100%;
+          background: #2563eb;
+          color: #fff;
+          padding: 0.7rem 0;
+          border-radius: 8px;
+          font-weight: bold;
+          border: none;
+          margin-bottom: 0.6rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          font-size: 1.08rem;
+          cursor: pointer;
+          transition: background 0.17s;
+        }
+        .google-btn:hover {
+          background: #1d4ed8;
+        }
+        .modal-divider {
+          color: #aaa;
+          text-align: center;
+          font-size: 1rem;
+          margin: 0.8rem 0;
+        }
+        .modal-input {
+          width: 100%;
+          border: 2px solid #b45309;
+          border-radius: 8px;
+          padding: 0.7rem 1rem;
+          font-size: 1rem;
+          margin-bottom: 0.7rem;
+        }
+        .modal-action-btn {
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          padding: 0.7rem 0;
+          border-radius: 8px;
+          font-weight: bold;
+          border: none;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: background 0.17s;
+        }
+        .modal-action-btn:hover {
+          background: #b45309;
+        }
+        .modal-login-btn {
+          background: #fde68a;
+          color: #92400e;
+        }
+        .modal-login-btn:hover {
+          background: #fef08a;
+        }
+        .modal-msg {
+          margin-top: 1.1rem;
+          text-align: center;
+          font-size: 1.02rem;
+        }
+        .modal-msg.success {
+          color: #16a34a;
+        }
+        .modal-msg.error {
+          color: #b91c1c;
+        }
+        @media (max-width: 600px) {
+          .main-card { padding: 1rem 0.3rem 1rem 0.3rem; }
+          .modal-content { padding: 1.2rem 0.5rem 1.2rem 0.5rem; }
+        }
+        `}
+      </style>
+      <div className="main-card">
         <button
           onClick={handleUserBtnClick}
-          className="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition"
+          className="user-btn"
         >
           {currentUser ? 'My Profile' : 'Sign Up/Login'}
         </button>
-        <h1 className="text-4xl font-bold text-yellow-300 mb-2">Welcome to the Pub</h1>
-        <p className="text-sm text-yellow-300 mb-8">Your ultimate sports bar and media experience. Grab a seat.</p>
+        <h1>Welcome to the Pub</h1>
+        <p>Your ultimate sports bar and media experience. Grab a seat.</p>
         <a
           href="index-nfl.html"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="main-link"
         >
-          <span className="text-3xl">Games</span>
-          <p className="text-sm text-white">Prove that you know ball.</p>
+          <span>Games</span>
+          <p>Prove that you know ball.</p>
         </a>
         <a
           href="news.html"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="main-link"
         >
-          <span className="text-3xl">News</span>
-          <p className="text-sm text-white">Pick up The Pub Times for the most ridiculous takes in sports.</p>
+          <span>News</span>
+          <p>Pick up The Pub Times for the most ridiculous takes in sports.</p>
         </a>
         <a
           href="index-bar.html"
-          className="block w-full bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md mt-2 flex flex-col space-y-1"
+          className="main-link"
         >
-          <span className="text-3xl">Take a Seat</span>
-          <p className="text-sm text-white">Sit at the Pub Bar, or join a table or booth.</p>
+          <span>Take a Seat</span>
+          <p>Sit at the Pub Bar, or join a table or booth.</p>
         </a>
       </div>
-
       {isModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="modal-bg"
           onClick={handleModalClick}
         >
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
+          <div className="modal-content">
             <button
               onClick={closeModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold"
+              className="modal-close"
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-4 text-amber-900 text-center">Sign Up / Login</h2>
-            <div className="flex flex-col gap-2 mb-2">
-              <button
-                onClick={handleGoogleSignIn}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 flex items-center justify-center gap-2"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/475656/google-color.svg"
-                  className="w-5 h-5"
-                  alt="Google logo"
-                />
-                Sign in with Google
-              </button>
-            </div>
-            <div className="text-center text-sm my-2 text-gray-500">or</div>
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
-                required
-                placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
+            <div className="modal-title">Sign Up / Login</div>
+            <button
+              onClick={handleGoogleSignIn}
+              className="google-btn"
+            >
+              <img
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                style={{ width: 20, height: 20 }}
+                alt="Google logo"
               />
-              <input
-                type="password"
-                value={signupPassword}
-                onChange={(e) => setSignupPassword(e.target.value)}
-                required
-                placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
-              />
-              <input
-                type="text"
-                value={signupUsername}
-                onChange={(e) => setSignupUsername(e.target.value)}
-                required
-                placeholder="Choose a username"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
-              />
-              <button
-                onClick={handleSignup}
-                className="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700"
-              >
-                Create Account
-              </button>
-            </div>
-            <div className="text-center text-sm my-2 text-gray-500">or</div>
-            <div className="space-y-4">
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                required
-                placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
-              />
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                required
-                placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
-              />
-              <button
-                onClick={handleLogin}
-                className="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400"
-              >
-                Log In
-              </button>
-            </div>
-            <p
-              className={`mt-4 text-center ${signupMsg.includes('successfully') ? 'text-green-600' : signupMsg ? 'text-red-600' : ''}`}
+              Sign in with Google
+            </button>
+            <div className="modal-divider">or</div>
+            <input
+              type="email"
+              value={signupEmail}
+              onChange={(e) => setSignupEmail(e.target.value)}
+              required
+              placeholder="Email"
+              className="modal-input"
+            />
+            <input
+              type="password"
+              value={signupPassword}
+              onChange={(e) => setSignupPassword(e.target.value)}
+              required
+              placeholder="Password"
+              className="modal-input"
+            />
+            <input
+              type="text"
+              value={signupUsername}
+              onChange={(e) => setSignupUsername(e.target.value)}
+              required
+              placeholder="Choose a username"
+              className="modal-input"
+            />
+            <button
+              onClick={handleSignup}
+              className="modal-action-btn"
+            >
+              Create Account
+            </button>
+            <div className="modal-divider">or</div>
+            <input
+              type="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              required
+              placeholder="Email"
+              className="modal-input"
+            />
+            <input
+              type="password"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              required
+              placeholder="Password"
+              className="modal-input"
+            />
+            <button
+              onClick={handleLogin}
+              className="modal-action-btn modal-login-btn"
+            >
+              Log In
+            </button>
+            <div
+              className={`modal-msg ${signupMsg.includes('successfully') ? 'success' : signupMsg ? 'error' : ''}`}
             >
               {signupMsg}
-            </p>
+            </div>
           </div>
         </div>
       )}
