@@ -25,51 +25,46 @@ export default function WelcomePub() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-      <div className="w-full max-w-xl text-center bg-[#a96c1d]/90 border-2 border-yellow-200 rounded-xl p-8 shadow-2xl relative pt-16" style={{boxShadow:"0 8px 32px 0 rgba(31, 38, 135, 0.37)"}}>
-        {/* Sign Up/Login Button positioned to match the reference */}
+      <div className="w-full max-w-xl text-center bg-[#b2762c]/95 border-2 border-yellow-300 rounded-xl p-10 shadow-2xl relative pt-16" style={{boxShadow:"0 8px 32px 0 rgba(31, 38, 135, 0.37)"}}>
+        {/* Sign Up/Login Button styled as floating tab */}
         <button
-          className="absolute top-5 right-5 bg-yellow-300 text-amber-900 font-bold px-6 py-2 rounded-lg shadow transition text-xl hover:bg-yellow-400"
+          className="absolute -top-6 right-0 bg-yellow-300 text-amber-900 font-bold px-6 py-2 rounded-lg shadow-lg transition text-lg hover:bg-yellow-400 border-2 border-yellow-600"
           onClick={() => setModalOpen(true)}
+          style={{transform: "translateY(-50%)"}}
         >
           Sign Up/Login
         </button>
-        <h1 className="text-5xl font-extrabold text-yellow-100 drop-shadow mb-2">Welcome to the Pub</h1>
+        <h1 className="text-5xl font-extrabold text-yellow-100 drop-shadow mb-2 mt-2">Welcome to the Pub</h1>
         <p className="text-xl text-yellow-200 mb-8 font-medium drop-shadow">
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
         <div className="space-y-6">
           <Link
             href="/index-nfl"
-            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
+            className="block w-full bg-[#ec9c32] hover:bg-yellow-400 text-white font-extrabold py-8 px-8 text-3xl rounded-lg shadow-lg transition duration-150 border border-yellow-200"
             style={{letterSpacing: "0.5px"}}
           >
-            <div>
-              Games
-              <div className="text-lg font-normal text-white mt-2 leading-tight">
-                Pub Games test your trivia, player, and college knowledge.
-              </div>
+            Games
+            <div className="text-lg font-normal text-white mt-2 leading-tight">
+              Pub Games test your trivia, player, and college knowledge.
             </div>
           </Link>
           <Link
             href="/news"
-            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
+            className="block w-full bg-[#ec9c32] hover:bg-yellow-400 text-white font-extrabold py-8 px-8 text-3xl rounded-lg shadow-lg transition duration-150 border border-yellow-200"
           >
-            <div>
-              Newsstand
-              <div className="text-lg font-normal text-white mt-2 leading-tight">
-                Pick up The Pub Times for the most ridiculous takes in sports.
-              </div>
+            Newsstand
+            <div className="text-lg font-normal text-white mt-2 leading-tight">
+              Pick up The Pub Times for the most ridiculous takes in sports.
             </div>
           </Link>
           <Link
             href="/index-bar"
-            className="block w-full bg-[#dc9832] hover:bg-yellow-400 text-white font-bold py-8 px-8 text-3xl rounded shadow-lg transition duration-150 border border-yellow-200"
+            className="block w-full bg-[#ec9c32] hover:bg-yellow-400 text-white font-extrabold py-8 px-8 text-3xl rounded-lg shadow-lg transition duration-150 border border-yellow-200"
           >
-            <div>
-              Bulletin
-              <div className="text-lg font-normal text-white mt-2 leading-tight">
-                TALK YOUR SHIT!
-              </div>
+            Bulletin
+            <div className="text-lg font-normal text-white mt-2 leading-tight">
+              TALK YOUR SHIT!
             </div>
           </Link>
         </div>
