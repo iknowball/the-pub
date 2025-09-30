@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { auth, db } from "./firebase";
+import { auth, db } from "../firebase"; // <-- Adjust path if needed
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -10,14 +10,20 @@ import {
   GoogleAuthProvider,
   User,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
 
-const WelcomePub: React.FC = () => {
+export default function WelcomePub() {
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [signupMsg, setSignupMsg] = useState("");
   const [signupMsgClass, setSignupMsgClass] = useState("mt-4 text-center");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  // Form refs
   const signupEmailRef = useRef<HTMLInputElement>(null);
   const signupPasswordRef = useRef<HTMLInputElement>(null);
   const signupUsernameRef = useRef<HTMLInputElement>(null);
@@ -25,6 +31,7 @@ const WelcomePub: React.FC = () => {
   const loginPasswordRef = useRef<HTMLInputElement>(null);
   const userBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Set sports bar background and font globally
   useEffect(() => {
     document.body.classList.add("font-montserrat");
     document.body.style.backgroundImage =
@@ -32,7 +39,7 @@ const WelcomePub: React.FC = () => {
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundColor = "#451a03";
+    document.body.style.backgroundColor = "#2f2e22";
     return () => {
       document.body.classList.remove("font-montserrat");
       document.body.style.backgroundImage = "";
@@ -43,11 +50,13 @@ const WelcomePub: React.FC = () => {
     };
   }, []);
 
+  // Auth state and user profile logic
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
         if (userBtnRef.current) userBtnRef.current.textContent = "My Profile";
+        // Check Firestore for username, if missing and Google user, prompt to set it
         const userRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(userRef);
         if (!docSnap.exists() || !docSnap.data()?.username) {
@@ -76,10 +85,12 @@ const WelcomePub: React.FC = () => {
     return unsub;
   }, []);
 
+  // Modal controls
   const openModal = () => {
     setModalOpen(true);
     setSignupMsg("");
     setSignupMsgClass("mt-4 text-center");
+    // Reset forms
     if (signupEmailRef.current) signupEmailRef.current.value = "";
     if (signupPasswordRef.current) signupPasswordRef.current.value = "";
     if (signupUsernameRef.current) signupUsernameRef.current.value = "";
@@ -88,6 +99,7 @@ const WelcomePub: React.FC = () => {
   };
   const closeModal = () => setModalOpen(false);
 
+  // Outside modal click closes
   useEffect(() => {
     const handler = (event: MouseEvent) => {
       const modalEl = document.getElementById("signupModal");
@@ -97,6 +109,7 @@ const WelcomePub: React.FC = () => {
     return () => window.removeEventListener("mousedown", handler);
   }, [modalOpen]);
 
+  // Sign up form
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupMsg("");
@@ -133,6 +146,7 @@ const WelcomePub: React.FC = () => {
     }
   };
 
+  // Login form
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupMsg("");
@@ -152,6 +166,7 @@ const WelcomePub: React.FC = () => {
     }
   };
 
+  // Google sign in
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -195,8 +210,8 @@ const WelcomePub: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
-      <div className="w-full max-w-md text-center bg-black/70 border-2 border-yellow-600 rounded-xl p-8 shadow-2xl relative pt-16">
-        {/* My Profile/Sign Up/Login Button */}
+      <div className="w-full max-w-md text-center bg-black/80 border-2 border-yellow-600 rounded-xl p-8 shadow-2xl relative pt-16">
+        {/* Profile/Login Button */}
         <button
           id="userBtn"
           ref={userBtnRef}
@@ -205,8 +220,8 @@ const WelcomePub: React.FC = () => {
         >
           Sign Up/Login
         </button>
-        <h1 className="text-5xl font-extrabold text-yellow-100 drop-shadow mb-4">Welcome to the Pub</h1>
-        <p className="text-base text-yellow-200 mb-8 font-medium">
+        <h1 className="text-5xl font-extrabold text-yellow-200 drop-shadow mb-4">Welcome to the Pub</h1>
+        <p className="text-lg text-yellow-100 mb-8 font-medium">
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
         <div className="space-y-6">
@@ -326,6 +341,4 @@ const WelcomePub: React.FC = () => {
       )}
     </div>
   );
-};
-
-export default WelcomePub;
+}
