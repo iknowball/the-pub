@@ -174,20 +174,20 @@ const Home: React.FC = () => {
   };
 
   if (error) {
-    return <div className="text-red-600 text-center p-4">Error: {error}</div>;
+    return <div className="text-red-600 text-center p-4 font-montserrat">Error: {error}</div>;
   }
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16 bg-[#451a03]"
+      className="min-h-screen bg-[#451a03] flex items-center justify-center"
       style={{
-        backgroundImage: "url('/images/sports_bar.jpg')", // Place image in public/images/
+        backgroundImage: "url('/images/sports_bar.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
       }}
     >
-      <div className="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14">
+      <div className="w-full max-w-md text-center bg-amber-800/90 border-2 border-yellow-600 rounded-lg p-6 shadow-lg relative pt-14 font-montserrat">
         <button
           onClick={handleUserBtnClick}
           className="absolute top-4 right-4 bg-yellow-300 text-amber-900 font-bold px-4 py-2 rounded hover:bg-yellow-400 shadow transition"
@@ -224,7 +224,7 @@ const Home: React.FC = () => {
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={handleModalClick}
         >
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative">
+          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm relative font-montserrat">
             <button
               onClick={closeModal}
               className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl font-bold"
@@ -253,7 +253,7 @@ const Home: React.FC = () => {
                 onChange={(e) => setSignupEmail(e.target.value)}
                 required
                 placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 font-montserrat"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
               />
               <input
                 type="password"
@@ -261,7 +261,7 @@ const Home: React.FC = () => {
                 onChange={(e) => setSignupPassword(e.target.value)}
                 required
                 placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 font-montserrat"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
               />
               <input
                 type="text"
@@ -269,11 +269,11 @@ const Home: React.FC = () => {
                 onChange={(e) => setSignupUsername(e.target.value)}
                 required
                 placeholder="Choose a username"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 font-montserrat"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
               />
               <button
                 onClick={handleSignup}
-                className="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700 font-montserrat"
+                className="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700"
               >
                 Create Account
               </button>
@@ -286,7 +286,7 @@ const Home: React.FC = () => {
                 onChange={(e) => setLoginEmail(e.target.value)}
                 required
                 placeholder="Email"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 font-montserrat"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
               />
               <input
                 type="password"
@@ -294,17 +294,17 @@ const Home: React.FC = () => {
                 onChange={(e) => setLoginPassword(e.target.value)}
                 required
                 placeholder="Password"
-                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2 font-montserrat"
+                className="w-full border-2 border-amber-700 rounded-lg px-3 py-2"
               />
               <button
                 onClick={handleLogin}
-                className="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400 font-montserrat"
+                className="w-full bg-yellow-300 text-amber-900 py-2 rounded-lg font-bold hover:bg-yellow-400"
               >
                 Log In
               </button>
             </div>
             <p
-              className={`mt-4 text-center font-montserrat ${signupMsg.includes('successfully') ? 'text-green-600' : signupMsg ? 'text-red-600' : ''}`}
+              className={`mt-4 text-center ${signupMsg.includes('successfully') ? 'text-green-600' : signupMsg ? 'text-red-600' : ''}`}
             >
               {signupMsg}
             </p>
@@ -318,7 +318,7 @@ const Home: React.FC = () => {
 export default Home;
 ```
 
-### Setup Instructions
+### Setup and Troubleshooting Instructions
 1. **Project Setup**:
    - Ensure you have a Next.js project with TypeScript:
      ```bash
@@ -363,20 +363,24 @@ export default Home;
 
      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
 
-     body {
+     * {
        margin: 0;
        padding: 0;
        box-sizing: border-box;
      }
+
+     body {
+       min-height: 100vh;
+     }
      ```
 
 3. **Background Image**:
-   - Download the background image from `https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500`.
-   - Place it in `public/images/sports_bar.jpg`.
-   - The TSX uses `url('/images/sports_bar.jpg')` to reference it locally, avoiding external URL issues.
+   - Download the image from `https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500`.
+   - Save it as `public/images/sports_bar.jpg`.
+   - The TSX uses `url('/images/sports_bar.jpg')` to reference it.
 
-4. **Firebase Scripts**:
-   - Update `app/layout.tsx` to include Firebase SDKs and metadata:
+4. **Layout Configuration**:
+   - Update `app/layout.tsx` to ensure proper HTML structure and Firebase scripts:
      ```tsx
      import './globals.css';
      import { Metadata } from 'next';
@@ -393,27 +397,19 @@ export default Home;
      }) {
        return (
          <html lang="en">
-           <head>
-             <link
-               href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap"
-               rel="stylesheet"
-             />
-             <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" async />
-             <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" async />
-             <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" async />
-           </head>
            <body>{children}</body>
          </html>
        );
      }
      ```
+   - Move Firebase scripts to a Client Component (e.g., `app/page.tsx`) to avoid server-side issues, as they’re already included there.
 
 5. **Create Route Pages**:
-   - Create placeholder pages to avoid navigation errors:
+   - Add placeholder pages:
      ```tsx
      // app/nfl/page.tsx
      export default function NFL() {
-       return <div>NFL Page</div>;
+       return <div className="text-center p-4 font-montserrat">NFL Page</div>;
      }
      ```
      - Repeat for `app/news/page.tsx`, `app/bar/page.tsx`, and `app/myprofile/page.tsx`.
@@ -423,46 +419,36 @@ export default Home;
      ```bash
      npm run dev
      ```
-   - Visit `http://localhost:3000` to verify.
+   - Visit `http://localhost:3000`.
 
-### Troubleshooting Checklist
-1. **Verify Styling**:
-   - **Background Image**: Open dev tools (F12) and check if `/images/sports_bar.jpg` loads (Network tab). If not, ensure the file is in `public/images/`.
-   - **Tailwind Classes**: Inspect the main container (`<div className="w-full max-w-md ...">`). Confirm it has `background-color: rgba(180, 83, 9, 0.9)` (for `bg-amber-800/90`) and `border: 2px solid #ca8a04` (for `border-yellow-600`).
-   - **Font**: Inspect text elements (e.g., `<h1>Welcome to the Pub</h1>`). Ensure `font-family: Montserrat, sans-serif` is applied.
-   - **Button Hover**: Hover over buttons (e.g., “Games”) and check for `transform: scale(1.05)` and color change (`bg-amber-700`).
+### Troubleshooting the Preview
+- **Layout Check**:
+  - The outer `div` uses `flex items-center justify-center` to center the content vertically and horizontally.
+  - The inner `div` has `max-w-md` (max-width: 28rem) and `w-full` to constrain the width, mimicking the original HTML’s centered box.
+  - Verify in dev tools (F12) that the container has a width of approximately 28rem and is centered.
 
-2. **Modal Behavior**:
-   - Click “Sign Up/Login” to open the modal. Verify it’s centered, has a dark overlay (`bg-black/50`), and closes when clicking outside or the `&times;` button.
-   - Test form inputs and buttons. Ensure `signupMsg` displays in green (`text-green-600`) for success or red (`text-red-600`) for errors.
+- **Styling Check**:
+  - **Background**: Inspect the `min-h-screen` `div`. Ensure `background-image` is set to `/images/sports_bar.jpg` and `background-attachment: fixed` is applied.
+  - **Amber Box**: Inspect the `max-w-md` `div`. Confirm `background-color: rgba(180, 83, 9, 0.9)` (for `bg-amber-800/90`) and `border: 2px solid #ca8a04` (for `border-yellow-600`).
+  - **Font**: Check that `font-family: Montserrat, sans-serif` is applied to all text elements (use the `font-montserrat` class).
 
-3. **Firebase Functionality**:
-   - Test Google sign-in and email/password login. Check the console for Firebase errors (e.g., auth issues, Firestore permissions).
-   - Verify the “Sign Up/Login” button changes to “My Profile” after login.
+- **Modal Check**:
+  - Click “Sign Up/Login” to open the modal. Verify it’s centered with a dark overlay (`bg-black/50`) and closes correctly.
 
-4. **Console Errors**:
-   - Open dev tools (F12) and check the Console and Network tabs for:
-     - CSS errors (e.g., missing Tailwind classes).
-     - Image loading failures (404 for `/images/sports_bar.jpg` or Google logo).
-     - Firebase errors (e.g., “Invalid API key” or “CORS issues”).
-     - Hydration errors (Next.js mismatch between server and client).
+- **Console Errors**:
+  - Open dev tools (F12) and check for:
+    - CSS errors (e.g., Tailwind classes not recognized).
+    - Image loading failures (404 for `/images/sports_bar.jpg`).
+    - Firebase errors (e.g., auth initialization).
 
-5. **Compare with Original HTML**:
-   - Open the original HTML in a browser and compare:
-     - Main container: Amber semi-transparent background, yellow border, centered on page.
-     - Buttons: Amber with yellow border, white text, scale on hover.
-     - Modal: White background, centered, with amber and yellow buttons.
-     - Font: Montserrat bold for all text.
+- **Comparison with Original HTML**:
+  - The original HTML has a fixed background image with a centered amber box (semi-transparent, yellow border) containing the text and buttons. The updated TSX should replicate this exactly.
 
 ### If It Still Looks Wrong
-Please provide:
-- **Specific Visual Issues**: E.g., “The background is black instead of the bar image,” “Buttons are square instead of rounded,” or “The modal doesn’t appear.”
-- **Environment Details**: Are you using Vercel, CodeSandbox, or a local Next.js setup? Did you run `npm run build` or `npm run dev`?
-- **Console Errors**: Copy any errors from the browser console or build process.
-- **Screenshots (if possible)**: Describe how the preview differs from the original HTML.
-
-### Additional Fixes to Try
-- **Local Image**: If the background image still fails, verify `public/images/sports_bar.jpg` exists. Alternatively, revert to the external URL:
+- **Specific Issues**: Please describe what’s off (e.g., “The amber box is missing,” “The background scrolls,” “Buttons are misaligned”).
+- **Environment**: Confirm if you’re testing locally or on Vercel. Did you run `npm run build` or `npm run dev`?
+- **Console Output**: Share any errors from the browser console or build process.
+- **Image Verification**: Ensure `public/images/sports_bar.jpg` exists. If not, revert to the external URL:
   ```tsx
   style={{
     backgroundImage: "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')",
@@ -471,25 +457,16 @@ Please provide:
     backgroundAttachment: 'fixed',
   }}
   ```
-- **Tailwind CDN Fallback**: If Tailwind classes don’t work, add the CDN to `app/layout.tsx`:
+
+### Additional Notes
+- The `font-montserrat` class is used directly on the container to ensure the Montserrat font applies to all children, as per the original HTML’s `<body class="... font-montserrat">`.
+- The `min-h-screen` and `flex items-center justify-center` ensure the content is vertically centered, matching the original layout.
+- If Tailwind still fails, add the CDN as a fallback in `app/layout.tsx`:
   ```tsx
   <head>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet" />
   </head>
   ```
-- **Reset CSS**: Add a CSS reset in `app/globals.css` to avoid Next.js defaults:
-  ```css
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  ```
-- **Disable SSR for Testing**: Add `dynamic: 'force-dynamic'` to `app/page.tsx` to ensure client-side rendering:
-  ```tsx
-  export const dynamic = 'force-dynamic';
-  ```
 
-### Next Steps
-The updated TSX should resolve styling issues by using local assets and a proper Tailwind setup. If the preview still looks worse, please share specific details about the visual discrepancies or errors. I can refine the code further or provide a custom CSS fallback if Tailwind continues to cause issues. Let me know how it looks now or what specific problems persist!
+This updated TSX should align the preview with the original HTML’s design. Please test it and let me know what specific issues remain, and I’ll adjust accordingly!
