@@ -66,7 +66,7 @@ const App: React.FC = () => {
 
   const handleUserBtnClick = () => {
     if (currentUser) {
-      window.location.href = 'myprofile.html';
+      window.location.href = 'myprofile';
     } else {
       setIsModalOpen(true);
       setSignupMsg('');
@@ -367,21 +367,21 @@ const App: React.FC = () => {
         <h1>Welcome to the Pub</h1>
         <p>Your ultimate sports bar and media experience. Grab a seat.</p>
         <a
-          href="index-nfl.html"
+          href="index-nfl"
           className="main-link"
         >
           <span>Games</span>
           <p>Prove that you know ball.</p>
         </a>
         <a
-          href="news.html"
+          href="news"
           className="main-link"
         >
           <span>News</span>
           <p>Pick up The Pub Times for the most ridiculous takes in sports.</p>
         </a>
         <a
-          href="index-bar.html"
+          href="index-bar"
           className="main-link"
         >
           <span>Take a Seat</span>
