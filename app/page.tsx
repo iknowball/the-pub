@@ -37,32 +37,34 @@ export default function WelcomePub() {
           Your ultimate sports bar and media experience. Grab a seat.
         </p>
         <div className="space-y-4">
-          <Link href="/index-nfl" passHref legacyBehavior>
-            <a className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center">
-              <span>Games</span>
-              <span className="text-sm font-normal text-amber-900 mt-2">Prove that you know ball.</span>
-            </a>
+          <Link
+            href="/index-nfl"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+          >
+            <span>Games</span>
+            <span className="text-sm font-normal text-amber-900 mt-2">Prove that you know ball.</span>
           </Link>
-          <Link href="/news" passHref legacyBehavior>
-            <a className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center">
-              <span>News</span>
-              <span className="text-sm font-normal text-amber-900 mt-2">
-                Pick up The Pub Times for the most ridiculous takes in sports.
-              </span>
-            </a>
+          <Link
+            href="/news"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+          >
+            <span>News</span>
+            <span className="text-sm font-normal text-amber-900 mt-2">
+              Pick up The Pub Times for the most ridiculous takes in sports.
+            </span>
           </Link>
-          <Link href="/index-bar" passHref legacyBehavior>
-            <a className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center">
-              <span>Take a Seat</span>
-              <span className="text-sm font-normal text-amber-900 mt-2">
-                Sit at the Pub Bar, or join a table or booth.
-              </span>
-            </a>
+          <Link
+            href="/index-bar"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-amber-900 font-bold py-6 px-8 text-2xl rounded-full shadow-lg transition flex flex-col items-center"
+          >
+            <span>Take a Seat</span>
+            <span className="text-sm font-normal text-amber-900 mt-2">
+              Sit at the Pub Bar, or join a table or booth.
+            </span>
           </Link>
         </div>
       </div>
 
-      {/* Modal (optional) */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-sm relative ring-2 ring-amber-700/50">
