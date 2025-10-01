@@ -83,6 +83,9 @@ const GamesRoom: React.FC = () => {
         .gamesroom-link {
           display: block;
           width: 100%;
+          max-width: 340px;
+          margin-left: auto;
+          margin-right: auto;
           background: #d97706;
           color: #fff;
           font-weight: bold;
@@ -102,6 +105,11 @@ const GamesRoom: React.FC = () => {
         }
         @media (max-width: 600px) {
           .gamesroom-panel { padding: 1rem 0.3rem 2rem 0.3rem; }
+          .gamesroom-link {
+            max-width: 100%;
+            padding: 0.8rem 0.2rem;
+            font-size: 1rem;
+          }
         }
         `}
       </style>
