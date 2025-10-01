@@ -149,6 +149,7 @@ const PubNewsstand: React.FC = () => {
                   }))
                 }
                 aria-expanded={!!expanded[data.id]}
+                type="button"
               >
                 {data.title || "Untitled Story"}
               </button>
@@ -157,6 +158,7 @@ const PubNewsstand: React.FC = () => {
                 style={{ display: expanded[data.id] ? "block" : "none" }}
               >
                 {data.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={data.image}
                     alt=""
