@@ -357,7 +357,7 @@ function BulletinPage() {
             )}
           </div>
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            <Link href="/game" className="topnav-btn">Games</Link>
+            <Link href="/index-nfl" className="topnav-btn">Games</Link>
             <Link href="/news" className="topnav-btn">News</Link>
           </div>
         </div>
