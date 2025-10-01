@@ -1,18 +1,15 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 
-export default function WelcomePub() {
-  const [modalOpen, setModalOpen] = useState(false);
-
+const GamesRoom: React.FC = () => {
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundColor = "#2f2e22";
+    document.body.style.backgroundColor = "#451a03";
     document.body.style.fontFamily = "'Montserrat', Arial, sans-serif";
     return () => {
       document.body.style.backgroundImage = "";
@@ -25,10 +22,10 @@ export default function WelcomePub() {
   }, []);
 
   return (
-    <div className="welcome-container">
+    <div className="gamesroom-container">
       <style>
         {`
-        .welcome-container {
+        .gamesroom-container {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -36,157 +33,117 @@ export default function WelcomePub() {
           justify-content: center;
           padding-bottom: 4rem;
         }
-        .welcome-panel {
+        .gamesroom-panel {
           width: 100%;
-          max-width: 460px;
-          background: rgba(178, 118, 44, 0.95);
-          border: 2px solid #FFD700;
-          border-radius: 20px;
-          padding: 2.5rem 2rem 2rem 2rem;
-          box-shadow: 0 10px 40px rgba(31, 38, 135, 0.28);
-          position: relative;
+          max-width: 430px;
           text-align: center;
-          margin-top: 1rem;
+          background: rgba(146, 64, 14, 0.93); /* amber-800/90 */
+          border: 2px solid #facc15; /* yellow-600 */
+          border-radius: 16px;
+          padding: 1.5rem 1.2rem 2rem 1.2rem;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          position: relative;
         }
-        .welcome-panel h1 {
-          color: #ffe599;
-          font-size: 2.8rem;
-          font-weight: 900;
-          margin-bottom: 0.5rem;
-          text-shadow: 1px 2px 4px #0005;
-        }
-        .welcome-panel p {
-          color: #fff8dc;
-          font-size: 1.2rem;
+        .gamesroom-home-btn {
           margin-bottom: 2rem;
-          font-weight: 500;
-          text-shadow: 1px 2px 4px #0003;
+          display: flex;
+          justify-content: flex-start;
         }
-        .welcome-action-btn {
-          position: absolute;
-          top: -1.7rem;
-          right: 0;
-          background: #ffecb3;
-          color: #6b3d1b;
-          font-weight: bold;
-          font-size: 1.1rem;
-          padding: 0.7rem 1.4rem;
-          border-radius: 12px;
-          border: 2px solid #f7d774;
-          box-shadow: 0 2px 12px #0002;
-          cursor: pointer;
-          transition: background 0.18s, color 0.18s, transform 0.13s;
-        }
-        .welcome-action-btn:hover {
-          background: #ffe066;
-          color: #b2762c;
-          transform: scale(1.04);
-        }
-        .welcome-link {
-          display: block;
-          width: 100%;
-          background: #ec9c32;
+        .gamesroom-home-btn a {
+          background: #d97706;
           color: #fff;
           font-weight: bold;
-          padding: 2rem 0.7rem 1.2rem 0.7rem;
-          border-radius: 15px;
-          margin-top: 1.3rem;
-          font-size: 2rem;
+          padding: 0.7rem 1.2rem;
+          border-radius: 10px;
+          border: 2px solid #facc15;
           text-decoration: none;
-          border: 2px solid #f7d774;
-          box-shadow: 0 2px 12px #0002;
-          transition: background 0.18s, color 0.18s, transform 0.12s;
+          box-shadow: 0 2px 10px #0002;
+          transition: background 0.17s, transform 0.12s;
+          text-align: center;
+          display: inline-block;
+        }
+        .gamesroom-home-btn a:hover {
+          background: #b45309;
+          transform: scale(1.05);
+        }
+        .gamesroom-panel h1 {
+          color: #fde68a;
+          font-size: 2rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+        }
+        .gamesroom-panel p {
+          color: #fde68a;
+          font-size: 1.08rem;
+          margin-bottom: 1rem;
+        }
+        .gamesroom-links {
+          margin-top: 1.2rem;
+        }
+        .gamesroom-link {
+          display: block;
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 1.05rem 0.2rem 0.8rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 0.7rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.2rem;
+          transition: background 0.16s, transform 0.12s;
           text-align: center;
         }
-        .welcome-link:hover {
-          background: #fbbf24;
-          color: #272403;
+        .gamesroom-link:hover {
+          background: #b45309;
           transform: scale(1.03);
         }
-        .welcome-link .desc {
-          display: block;
-          margin-top: 0.8rem;
-          font-size: 1.1rem;
-          color: #fff;
-          font-weight: 400;
-        }
-        /* Modal Styles */
-        .modal-bg {
-          position: fixed;
-          inset: 0;
-          background: rgba(10, 10, 15, 0.63);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 100;
-        }
-        .modal-content {
-          background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 6px 32px rgba(76,52,23,0.22);
-          padding: 2.2rem 1.7rem 2.2rem 1.7rem;
-          width: 100%;
-          max-width: 340px;
-          position: relative;
-          text-align: center;
-        }
-        .modal-close {
-          position: absolute;
-          top: 0.9rem;
-          right: 1.2rem;
-          background: none;
-          border: none;
-          color: #b2762c;
-          font-size: 2.1rem;
-          font-weight: bold;
-          cursor: pointer;
-          transition: color 0.15s;
-        }
-        .modal-close:hover {
-          color: #b91c1c;
-        }
-        .modal-title {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #b2762c;
-          margin-bottom: 1.2rem;
-        }
         @media (max-width: 600px) {
-          .welcome-panel { padding: 1.2rem 0.5rem 1.2rem 0.5rem; }
-          .modal-content { padding: 1rem 0.3rem 1rem 0.3rem; }
+          .gamesroom-panel { padding: 1rem 0.3rem 2rem 0.3rem; }
         }
-      `}
+        `}
       </style>
-      <div className="welcome-panel">
-        <button className="welcome-action-btn" onClick={() => setModalOpen(true)}>
-          Sign Up/Login
-        </button>
-        <h1>Welcome to the Pub</h1>
-        <p>Your ultimate sports bar and media experience. Grab a seat.</p>
-        <Link href="/index-nfl" className="welcome-link">
-          Games
-          <span className="desc">Pub Games test your trivia, player, and college knowledge.</span>
-        </Link>
-        <Link href="/news" className="welcome-link">
-          Newsstand
-          <span className="desc">Pick up The Pub Times for the most ridiculous takes in sports.</span>
-        </Link>
-        <Link href="/index-bar" className="welcome-link">
-          Bulletin
-          <span className="desc">TALK YOUR SHIT!</span>
-        </Link>
-      </div>
-
-      {modalOpen && (
-        <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setModalOpen(false); }}>
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setModalOpen(false)}>&times;</button>
-            <div className="modal-title">Sign Up / Login</div>
-            {/* Add your login/signup forms here if needed */}
-            <p>Login and registration coming soon.</p>
-          </div>
+      <div className="gamesroom-panel">
+        {/* Home button in its own block */}
+        <div className="gamesroom-home-btn">
+          <Link href="/" className="">
+            Home
+          </Link>
         </div>
-      )}
+        <div>
+          <h1>Do You Know Ball?</h1>
+          <p>
+            Welcome to The Pub’s game room. Who is an elite Ball Knower? Find out now.
+          </p>
+          <p>
+            Select a game below to get started!
+          </p>
+        </div>
+        <div className="gamesroom-links">
+          <Link
+            href="/game"
+            className="gamesroom-link"
+          >
+            Name that Player
+          </Link>
+          <Link
+            href="/college-game"
+            className="gamesroom-link"
+          >
+            Name their College
+          </Link>
+          <Link
+            href="/trivia-game"
+            className="gamesroom-link"
+          >
+            Trivia
+          </Link>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default GamesRoom;
