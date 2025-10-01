@@ -4,10 +4,10 @@ import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
-  collection,
-  addDoc,
   getDoc,
   doc,
+  addDoc,
+  collection,
   query,
   where,
   getDocs,
@@ -92,9 +92,7 @@ function generateSmsLink(results: boolean[]) {
   return "sms:?body=" + encodeURIComponent(msg);
 }
 function getCurrentUserId(user: User | null) {
-  if (user) {
-    return user.uid;
-  }
+  if (user) return user.uid;
   let anonId = typeof window !== "undefined" ? localStorage.getItem("anonUserId") : null;
   if (!anonId) {
     anonId = "anon-" + Math.random().toString(36).substring(2, 15);
@@ -257,7 +255,6 @@ const GuessThePlayer: React.FC = () => {
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctName = player.name.toLowerCase();
     setFeedback("");
-    let result = false;
     if (guess === correctName) {
       setScore((s) => s + 5);
       setFeedback("Nailed it! +5 points! 🏀");
@@ -365,11 +362,13 @@ const GuessThePlayer: React.FC = () => {
           text-align: center;
           text-decoration: none;
           transition: background 0.13s, color 0.13s, transform 0.12s;
+          flex: 1 1 0;
+          min-width: 0;
         }
         .gtp-nav-btn:hover {
           background: #e0a92b;
           color: #fffbe7;
-          transform: scale(1.06);
+          transform: scale(1.02);
         }
         .gtp-title {
           color: #ffe066;
@@ -578,6 +577,8 @@ const GuessThePlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gtp-card, .modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gtp-img-wrap { max-width: 98vw; height: 34vw; min-height: 120px;}
+          .gtp-nav-row { flex-direction: column; gap: 0.7rem; }
+          .gtp-nav-btn { width: 100%; }
         }
       `}</style>
       <div className="gtp-card">
