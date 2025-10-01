@@ -35,7 +35,7 @@ const GamesRoom: React.FC = () => {
         }
         .gamesroom-panel {
           width: 100%;
-          max-width: 330px;
+          max-width: 430px;
           text-align: center;
           background: rgba(146, 64, 14, 0.93); /* amber-800/90 */
           border: 2px solid #facc15; /* yellow-600 */
@@ -79,23 +79,26 @@ const GamesRoom: React.FC = () => {
         }
         .gamesroom-links {
           margin-top: 1.2rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.7rem;
         }
         .gamesroom-link {
           display: block;
           width: 100%;
-          max-width: 340px;
+          max-width: 200px; /* NARROWER BUTTONS */
           margin-left: auto;
           margin-right: auto;
           background: #d97706;
           color: #fff;
           font-weight: bold;
-          padding: 1.05rem 0.2rem 0.8rem 0.2rem;
+          padding: 0.7rem 0.2rem 0.6rem 0.2rem;
           border-radius: 12px;
-          margin-top: 0.7rem;
           text-decoration: none;
           border: 2px solid #facc15;
           box-shadow: 0 2px 10px #0002;
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           transition: background 0.16s, transform 0.12s;
           text-align: center;
         }
@@ -106,8 +109,8 @@ const GamesRoom: React.FC = () => {
         @media (max-width: 600px) {
           .gamesroom-panel { padding: 1rem 0.3rem 2rem 0.3rem; }
           .gamesroom-link {
-            max-width: 100%;
-            padding: 0.8rem 0.2rem;
+            max-width: 90vw;
+            padding: 0.7rem 0.2rem 0.6rem 0.2rem;
             font-size: 1rem;
           }
         }
