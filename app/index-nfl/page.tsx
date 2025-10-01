@@ -35,7 +35,7 @@ const GamesRoom: React.FC = () => {
         }
         .gamesroom-panel {
           width: 100%;
-          max-width: 430px;
+          max-width: 330px;
           text-align: center;
           background: rgba(146, 64, 14, 0.93); /* amber-800/90 */
           border: 2px solid #facc15; /* yellow-600 */
