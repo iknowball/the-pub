@@ -9,14 +9,14 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth,
   onAuthStateChanged,
   User,
   signInWithPopup,
-  GoogleAuthProvider
+  GoogleAuthProvider,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -49,10 +49,7 @@ function BulletinPage() {
 
   // Listen for messages, newest first
   useEffect(() => {
-    const q = query(
-      collection(db, "bulletin"),
-      orderBy("timestamp", "desc")
-    );
+    const q = query(collection(db, "bulletin"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const msgs: Message[] = [];
       snapshot.forEach((doc) => {
@@ -62,7 +59,7 @@ function BulletinPage() {
           message: data.message,
           displayName: data.displayName || "Anonymous",
           uid: data.uid,
-          timestamp: data.timestamp
+          timestamp: data.timestamp,
         });
       });
       setMessages(msgs);
@@ -82,7 +79,7 @@ function BulletinPage() {
       message: input.trim(),
       displayName: user?.displayName || user?.email || "Anonymous",
       uid: user?.uid,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
     };
     await addDoc(collection(db, "bulletin"), msg);
     setInput("");
@@ -95,30 +92,63 @@ function BulletinPage() {
 
   // Styling
   useEffect(() => {
-    document.body.style.backgroundImage = "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
+    document.body.style.backgroundImage =
+      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
     document.body.style.backgroundColor = "#2f2e22";
+    document.body.style.fontFamily = "'Montserrat', Arial, sans-serif";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.fontFamily = "";
+    };
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen font-montserrat pb-16">
+    <div className="bulletin-bg">
       <style>{`
+        .bulletin-bg {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Montserrat', Arial, sans-serif;
+          padding-bottom: 4rem;
+        }
         .glass-panel {
           background: rgba(33, 28, 18, 0.78);
           backdrop-filter: blur(3px);
           border-radius: 1.25rem;
           box-shadow: 0 8px 36px 0 rgba(0,0,0,0.6);
           border: 2px solid #d4a827;
+          width: 100%;
+          max-width: 430px;
+          padding: 2rem 1.3rem 2.1rem 1.3rem;
+          margin: 0 auto;
         }
         .sports-bar-header {
           font-family: 'Montserrat', sans-serif;
           color: #fbbf24;
           text-shadow: 0 2px 12px #1e293b;
+          font-size: 2.3rem;
+          font-weight: bold;
+          letter-spacing: 0.03em;
+          margin-bottom: 1.4rem;
+        }
+        .main-bar-title {
+          font-size: 1.4rem;
+          font-weight: bold;
+          color: #fff;
+          margin-bottom: 0.6rem;
         }
         .chat-bubble {
-          max-width: 85%;
+          max-width: 87%;
           margin-bottom: 1.1rem;
           background: linear-gradient(90deg, #3f3f2e 0%, #523b1d 100%);
           border-radius: 0.85rem;
@@ -129,6 +159,7 @@ function BulletinPage() {
           flex-direction: column;
           transition: background 0.2s;
           border: 1.5px solid #d4a827;
+          word-break: break-word;
         }
         .chat-bubble .username {
           font-weight: 700;
@@ -157,9 +188,48 @@ function BulletinPage() {
         .glass-panel button {
           font-family: 'Montserrat', sans-serif;
         }
+        .glass-panel input {
+          width: 100%;
+          font-size: 1.09rem;
+          background: #57523c;
+          border: 2px solid #d4a827;
+          color: #ffe066;
+          border-radius: 0.8rem;
+          padding: 0.82rem 1rem;
+          margin-bottom: 0.68rem;
+          outline: none;
+        }
+        .glass-panel input:focus {
+          border-color: #fbbf24;
+          background: #6d5e3e;
+        }
         .glass-panel input::placeholder {
           color: #d6cfa7;
           font-style: italic;
+        }
+        .glass-panel button[type="submit"] {
+          width: 100%;
+          background: #fbbf24;
+          color: #31260b;
+          font-weight: bold;
+          padding: 0.92rem 0;
+          border-radius: 0.9rem;
+          border: 2px solid #d4a827;
+          font-size: 1.14rem;
+          box-shadow: 0 2px 12px #1a1a1a22;
+          transition: background 0.15s, color 0.15s, transform 0.12s;
+          margin-bottom: 0.2rem;
+          cursor: pointer;
+        }
+        .glass-panel button[type="submit"]:hover:enabled {
+          background: #fde68a;
+          color: #26221a;
+          transform: scale(1.03);
+        }
+        .glass-panel button[type="submit"]:disabled {
+          background: #b7a45a;
+          color: #fff;
+          cursor: not-allowed;
         }
         .user-bar {
           display: flex;
@@ -210,18 +280,41 @@ function BulletinPage() {
           box-shadow: 0 2px 12px #1a1a1a22;
           transition: background 0.15s, color 0.15s, transform 0.12s;
           text-decoration: none;
+          cursor: pointer;
         }
         .profile-link-btn:hover {
           background: #fde68a;
           color: #26221a;
           transform: scale(1.04);
         }
+        .back-home-btn {
+          display: block;
+          width: 100%;
+          margin-top: 1.5rem;
+          background: #fbbf24;
+          color: #3f3f2e;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 0.8rem;
+          border: 2px solid #d4a827;
+          font-size: 1.18rem;
+          box-shadow: 0 2px 12px #1a1a1a22;
+          transition: background 0.15s, color 0.15s, transform 0.12s;
+          text-align: center;
+          text-decoration: none;
+        }
+        .back-home-btn:hover {
+          background: #fde68a;
+          color: #26221a;
+          transform: scale(1.03);
+        }
         @media (max-width: 500px) {
           .glass-panel { padding: 0.7rem; }
           .profile-link-btn { padding: 0.5rem 0.7rem; font-size: 0.9rem; }
+          .sports-bar-header { font-size: 1.5rem; }
         }
       `}</style>
-      <div className="w-full max-w-md glass-panel p-6 shadow-xl">
+      <div className="glass-panel">
         <div className="profile-btn-bar">
           {user && (
             <Link
@@ -240,10 +333,10 @@ function BulletinPage() {
             </button>
           )}
         </div>
-        <h1 className="text-4xl font-bold sports-bar-header mb-7 text-center">
+        <h1 className="sports-bar-header mb-7 text-center">
           The Pub Social
         </h1>
-        <h2 className="text-2xl font-bold text-white mb-1 text-center">
+        <h2 className="main-bar-title text-center">
           Main Bar
         </h2>
         <div className="user-bar mb-2" id="userBar">
@@ -265,7 +358,7 @@ function BulletinPage() {
             <input
               type="text"
               id="messageInput"
-              className="w-full p-2 rounded-lg border-2 border-yellow-600 bg-amber-900/90 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-600"
+              className="message-input"
               placeholder={user ? "Type your message..." : "Sign in to post..."}
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -275,7 +368,7 @@ function BulletinPage() {
             <button
               type="submit"
               id="postMessage"
-              className="w-full mt-2 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md"
+              className=""
               disabled={!user || !input.trim()}
             >
               Send
@@ -316,7 +409,7 @@ function BulletinPage() {
         </div>
         <Link
           href="/"
-          className="block w-full mt-4 bg-amber-600 text-white font-bold p-4 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center"
+          className="back-home-btn"
         >
           Back to Home
         </Link>
