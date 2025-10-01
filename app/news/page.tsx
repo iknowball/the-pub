@@ -244,41 +244,48 @@ const PubNewsstand: React.FC = () => {
         ) : news.length === 0 ? (
           <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
         ) : (
-          news.map((data) => (
-            <div key={data.id} className="pub-story">
-              <button
-                className="pub-story-title"
-                onClick={() =>
-                  setExpanded((prev) => ({
-                    ...prev,
-                    [data.id]: !prev[data.id],
-                  }))
-                }
-                aria-expanded={!!expanded[data.id]}
-                type="button"
-              >
-                {data.title || "Untitled Story"}
-              </button>
-              <div
-                className="pub-story-content"
-                hidden={!expanded[data.id]}
-                // Basic sanitizer: only allow a few HTML tags, strip event handlers
-                dangerouslySetInnerHTML={{
-                  __html: simpleSanitize(data.content || ""),
-                }}
-              />
-              <div className="pub-story-meta" hidden={!expanded[data.id]}>
-                {data.author && (
-                  <div className="pub-author">By {data.author}</div>
-                )}
-                {data.createdAt && (
-                  <div className="pub-date-posted">
-                    Posted: {formatDate(data.createdAt)}
-                  </div>
-                )}
+          news.map((data) => {
+            const isOpen = !!expanded[data.id];
+            return (
+              <div key={data.id} className="pub-story">
+                <button
+                  className="pub-story-title"
+                  onClick={() =>
+                    setExpanded((prev) => ({
+                      ...prev,
+                      [data.id]: !prev[data.id],
+                    }))
+                  }
+                  aria-expanded={isOpen}
+                  type="button"
+                >
+                  {data.title || "Untitled Story"}
+                </button>
+                <div
+                  className="pub-story-content"
+                  hidden={!isOpen}
+                >
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: simpleSanitize(data.content || ""),
+                    }}
+                  />
+                  {isOpen && (
+                    <div className="pub-story-meta">
+                      {data.author && (
+                        <div className="pub-author">By {data.author}</div>
+                      )}
+                      {data.createdAt && (
+                        <div className="pub-date-posted">
+                          Posted: {formatDate(data.createdAt)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
       <footer className="pub-footer">
