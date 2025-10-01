@@ -19,6 +19,7 @@ import {
   signInAnonymously,
   User,
 } from "firebase/auth";
+import { getStorage, ref as storageRef, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
@@ -28,6 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 type Player = {
   image: string;
@@ -119,10 +121,12 @@ const GuessThePlayer: React.FC = () => {
   const [showStats, setShowStats] = useState(false);
   const [statsHistory, setStatsHistory] = useState<HistoryEntry[]>([]);
   const [cloudAvg, setCloudAvg] = useState<number | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
 
   const guessInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Styling
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -141,6 +145,7 @@ const GuessThePlayer: React.FC = () => {
     };
   }, []);
 
+  // Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -148,6 +153,7 @@ const GuessThePlayer: React.FC = () => {
     });
   }, []);
 
+  // Load daily players
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
@@ -162,17 +168,36 @@ const GuessThePlayer: React.FC = () => {
     fetchDailyPlayers();
   }, []);
 
+  // Get image download URL if needed
+  const player = players[currentLevel - 1];
   useEffect(() => {
-    if (!timerActive || gameOver) return;
-    timerRef.current = setInterval(() => setElapsedTime((t) => t + 1), 1000);
+    let isMounted = true;
+    if (!player?.image) {
+      setImgUrl(null);
+      return;
+    }
+    // If player.image is already an https url, use it; otherwise, assume Firebase Storage path
+    if (player.image.startsWith("http")) {
+      setImgUrl(player.image);
+    } else {
+      getDownloadURL(storageRef(storage, player.image))
+        .then((url) => { if (isMounted) setImgUrl(url); })
+        .catch(() => { if (isMounted) setImgUrl(null); });
+    }
+    return () => { isMounted = false; };
+  }, [player]);
+
+  // Timer logic
+  useEffect(() => {
+    if (players.length > 0 && !gameOver && !timerActive) setTimerActive(true);
+  }, [players, gameOver, timerActive]);
+  useEffect(() => {
+    if (!timerActive) return;
+    timerRef.current = setInterval(() => setElapsedTime(e => e + 1), 1000);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerActive, gameOver]);
-
-  useEffect(() => {
-    if (currentLevel === 1 && !timerActive && players.length > 0) setTimerActive(true);
-  }, [currentLevel, players.length, timerActive]);
+  }, [timerActive]);
 
   useEffect(() => {
     const history =
@@ -237,8 +262,6 @@ const GuessThePlayer: React.FC = () => {
       });
     } catch (err) {}
   };
-
-  const player = players[currentLevel - 1];
 
   const handleSubmitGuess = () => {
     if (!player || gameOver) return;
@@ -580,9 +603,9 @@ const GuessThePlayer: React.FC = () => {
         <div className="gtp-title">Who is This?</div>
         <div className="gtp-level">Level: {currentLevel}/{maxLevels}</div>
         <div className="gtp-img-wrap">
-          {player && (
+          {imgUrl && (
             <img
-              src={player.image}
+              src={imgUrl}
               alt="Athlete"
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
