@@ -322,14 +322,156 @@ const GuessThePlayer: React.FC = () => {
   const closeStats = () => setShowStats(false);
 
   return (
-    <div className="font-montserrat" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+    <div className="gtp-bg">
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .gtp-bg {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
+          font-family: 'Montserrat', Arial, sans-serif;
         }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .gtp-card {
+          background: rgba(146, 84, 14, 0.93);
+          border: 3px solid #ffc233;
+          border-radius: 22px;
+          box-shadow: 0 8px 32px #0003;
+          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
+          max-width: 420px;
+          width: 95vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .gtp-nav-row {
+          width: 100%;
+          display: flex;
+          gap: 1.1rem;
+          justify-content: center;
+          margin-bottom: 1.2rem;
+        }
+        .gtp-nav-btn {
+          background: #ea9800;
+          color: #fff;
+          font-weight: bold;
+          font-size: 1.25rem;
+          border: 2px solid #ffc233;
+          border-radius: 14px;
+          padding: 0.7rem 2.2rem;
+          margin-bottom: 0.2rem;
+          box-shadow: 0 2px 10px #0002;
+          cursor: pointer;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+        }
+        .gtp-nav-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.06);
+        }
+        .gtp-title {
+          color: #ffe066;
+          font-size: 2.5rem;
+          font-weight: 900;
+          text-align: center;
+          margin-bottom: 0.5rem;
+          letter-spacing: 0.02em;
+        }
+        .gtp-level {
+          color: #ffe066;
+          font-size: 1.3rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 1.3rem;
+        }
+        .gtp-img-wrap {
+          background: #442200;
+          border: 3px solid #ffc233;
+          border-radius: 16px;
+          overflow: hidden;
+          margin-bottom: 1.5rem;
+          width: 100%;
+          max-width: 340px;
+          height: 240px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .gtp-img-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .gtp-input {
+          width: 100%;
+          background: #ad6e1b;
+          border: 2.5px solid #ffc233;
+          color: #ffe066;
+          border-radius: 14px;
+          font-size: 1.2rem;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.3rem;
+          font-weight: 500;
+        }
+        .gtp-input::placeholder {
+          color: #ffe066cc;
+          opacity: 1;
+        }
+        .gtp-submit-btn {
+          width: 100%;
+          background: #ea9800;
+          color: #fff;
+          font-size: 1.35rem;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          margin-bottom: 0.7rem;
+          margin-top: 0;
+          transition: background 0.16s, transform 0.13s;
+        }
+        .gtp-submit-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
+        .feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.45rem 0.95rem;
+          font-weight: bold;
+          font-size: 1rem;
+        }
+        .share-buttons-row {
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
+        }
         .clipboard-btn, .sms-btn {
           background: #f9e38f;
           color: #533e1f;
@@ -368,128 +510,6 @@ const GuessThePlayer: React.FC = () => {
         .share-link-ball:hover {
           color: #ffbb33;
           text-decoration: underline;
-        }
-        .share-buttons-row {
-          display: flex;
-          flex-direction: row;
-          gap: 14px;
-          justify-content: center;
-          align-items: center;
-        }
-        .game-card {
-          background: rgba(70,38,19,0.93);
-          padding: 1.5rem;
-          border-radius: 18px;
-          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-          max-width: 410px;
-          width: 100%;
-          border: 2px solid #facc15;
-          position: relative;
-        }
-        .navbar {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.6rem;
-          justify-content: center;
-          margin-bottom: 1.2rem;
-        }
-        .navbar a {
-          flex: 1 1 120px;
-          background: #d97706;
-          color: #fff;
-          font-weight: bold;
-          padding: 0.7rem 0.6rem;
-          border-radius: 10px;
-          border: 2px solid #facc15;
-          text-decoration: none;
-          box-shadow: 0 2px 10px #0002;
-          text-align: center;
-          transition: background 0.16s, transform 0.12s;
-          font-size: 1rem;
-        }
-        .navbar a:hover {
-          background: #b45309;
-          transform: scale(1.05);
-        }
-        .player-img-card {
-          position: relative;
-          width: 100%;
-          max-width: 220px;
-          height: 170px;
-          margin: 0 auto 1.2rem auto;
-          border-radius: 14px;
-          overflow: hidden;
-          border: 2px solid #facc15;
-          background: #222;
-        }
-        .player-img-card img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-        .guess-input {
-          width: 100%;
-          padding: 1rem;
-          background: rgba(146, 64, 14, 0.93);
-          color: #fff;
-          border: 2px solid #facc15;
-          border-radius: 10px;
-          margin-bottom: 1rem;
-          font-size: 1.08rem;
-        }
-        .submit-btn,
-        .next-btn,
-        .again-btn {
-          width: 100%;
-          max-width: 200px;
-          margin-left: auto;
-          margin-right: auto;
-          background: #d97706;
-          color: #fff;
-          font-weight: bold;
-          padding: 0.95rem 0.2rem 0.8rem 0.2rem;
-          border-radius: 12px;
-          margin-top: 0.7rem;
-          text-decoration: none;
-          border: 2px solid #facc15;
-          box-shadow: 0 2px 10px #0002;
-          font-size: 1.1rem;
-          transition: background 0.16s, transform 0.12s;
-          text-align: center;
-          cursor: pointer;
-          display: block;
-        }
-        .submit-btn:hover,
-        .next-btn:hover,
-        .again-btn:hover {
-          background: #b45309;
-          transform: scale(1.03);
-        }
-        .feedback {
-          text-align: center;
-          margin-top: 1rem;
-          font-size: 1.18rem;
-          font-weight: bold;
-          color: #fde68a;
-          min-height: 1.3rem;
-        }
-        .score-row {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-          gap: 1.1rem;
-          margin-top: 1.2rem;
-        }
-        .timer-box {
-          background: rgba(146, 64, 14, 0.93);
-          color: #fde68a;
-          border: 2px solid #facc15;
-          border-radius: 8px;
-          padding: 0.45rem 0.95rem;
-          font-weight: bold;
-          font-size: 1rem;
         }
         .modal-bg {
           position: fixed;
@@ -556,40 +576,20 @@ const GuessThePlayer: React.FC = () => {
           transform: scale(1.03);
         }
         @media (max-width: 600px) {
-          .game-card, .modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
-          .player-img-card { max-width: 93vw; height: 37vw; min-height: 110px; }
+          .gtp-card, .modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
+          .gtp-img-wrap { max-width: 98vw; height: 34vw; min-height: 120px;}
         }
       `}</style>
-      <header
-        style={{
-          width: "100%",
-          maxWidth: 410,
-          background: "rgba(146, 64, 14, 0.93)",
-          color: "#fde68a",
-          textAlign: "center",
-          padding: "0.9rem 0.2rem",
-          border: "2px solid #facc15",
-          borderRadius: 16,
-          marginBottom: "1.3rem",
-          fontWeight: "bold",
-          fontSize: "1.18rem",
-          boxShadow: "0 2px 12px #0003"
-        }}
-      >
-        <p style={{ margin: 0 }}>New Games Daily at Midnight Eastern</p>
-      </header>
-      <div className="game-card">
-        <div className="navbar">
-          <Link href="/" className="">Home</Link>
-          <Link href="/news" className="">News</Link>
-          <Link href="/trivia-game" className="">Trivia</Link>
-          <Link href="/college-game" className="">College</Link>
+      <div className="gtp-card">
+        <div className="gtp-nav-row">
+          <Link href="/" className="gtp-nav-btn">Home</Link>
+          <Link href="/news" className="gtp-nav-btn">News</Link>
+          <Link href="/trivia-game" className="gtp-nav-btn">Trivia</Link>
+          <Link href="/college-game" className="gtp-nav-btn">College</Link>
         </div>
-        <h1 style={{ color: "#fde68a", fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>Who is This?</h1>
-        <p style={{ color: "#fde68a", fontSize: "1.08rem" }}>
-          Level: <span>{currentLevel}</span>/{maxLevels}
-        </p>
-        <div className="player-img-card">
+        <div className="gtp-title">Who is This?</div>
+        <div className="gtp-level">Level: {currentLevel}/{maxLevels}</div>
+        <div className="gtp-img-wrap">
           {player && (
             <img
               src={player.image}
@@ -600,33 +600,28 @@ const GuessThePlayer: React.FC = () => {
             />
           )}
         </div>
-        {imageError && (
-          <p className="feedback" style={{ color: "#ffb4b4" }}>
-            Image failed to load. Keep guessing!
-          </p>
-        )}
         {!gameOver && player && (
           <>
             <input
               ref={guessInputRef}
               type="text"
               placeholder="Who's this athlete?"
-              className="guess-input"
+              className="gtp-input"
               autoComplete="off"
               onKeyDown={e => {
                 if (e.key === "Enter") handleSubmitGuess();
               }}
               disabled={gameOver}
             />
-            <button className="submit-btn" onClick={handleSubmitGuess} disabled={gameOver}>
+            <button className="gtp-submit-btn" onClick={handleSubmitGuess} disabled={gameOver}>
               Submit Answer
             </button>
           </>
         )}
         {gameOver && (
           <>
-            <button className="again-btn" onClick={handlePlayAgain}>Play Again</button>
-            <button className="again-btn" style={{marginTop:"8px"}} onClick={()=>setShowStats(true)}>View Stats</button>
+            <button className="gtp-submit-btn" onClick={handlePlayAgain}>Play Again</button>
+            <button className="gtp-submit-btn" style={{marginTop:"8px"}} onClick={()=>setShowStats(true)}>View Stats</button>
           </>
         )}
         <div className="feedback">{feedback}</div>
