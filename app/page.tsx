@@ -36,6 +36,24 @@ const App: React.FC = () => {
   const [signupMsg, setSignupMsg] = useState('');
 
   useEffect(() => {
+    document.body.style.backgroundImage =
+      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.backgroundColor = "#451a03";
+    document.body.style.fontFamily = "'Montserrat', Arial, sans-serif";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.fontFamily = "";
+    };
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
       setCurrentUser(user);
       if (user) {
@@ -155,24 +173,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'Montserrat', Arial, sans-serif",
-        paddingBottom: "4rem",
-        backgroundImage: "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        backgroundColor: '#451a03',
-      }}
-    >
+    <div className="auth-container">
       <style>
         {`
+        .auth-container {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-family: 'Montserrat', Arial, sans-serif;
+          padding-bottom: 4rem;
+        }
         .main-card {
           width: 100%;
           max-width: 430px;
@@ -180,21 +192,9 @@ const App: React.FC = () => {
           background: rgba(146, 64, 14, 0.93);
           border: 2px solid #facc15;
           border-radius: 16px;
-          padding: 1.5rem 1.3rem 1.5rem 1.3rem;
+          padding: 2.5rem 1.3rem 2.5rem 1.3rem;
           box-shadow: 0 6px 32px rgba(0,0,0,0.18);
           position: relative;
-          padding-top: 3.2rem;
-        }
-        .main-card h1 {
-          color: #fde68a;
-          font-size: 2.2rem;
-          font-weight: bold;
-          margin-bottom: 0.5rem;
-        }
-        .main-card p {
-          color: #fde68a;
-          font-size: 1rem;
-          margin-bottom: 2rem;
         }
         .user-btn {
           position: absolute;
@@ -213,27 +213,48 @@ const App: React.FC = () => {
         .user-btn:hover {
           background: #fef08a;
         }
+        .main-card h1 {
+          color: #fde68a;
+          font-size: 2.2rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+        }
+        .main-card p {
+          color: #fde68a;
+          font-size: 1rem;
+          margin-bottom: 2rem;
+        }
+        .main-links {
+          margin-top: 1.2rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.7rem;
+        }
         .main-link {
           display: block;
           width: 100%;
+          max-width: 200px;
+          margin-left: auto;
+          margin-right: auto;
           background: #d97706;
           color: #fff;
           font-weight: bold;
-          padding: 1.05rem 0.2rem 0.8rem 0.2rem;
+          padding: 0.85rem 0.2rem 0.7rem 0.2rem;
           border-radius: 12px;
-          margin-top: 0.7rem;
           text-decoration: none;
           border: 2px solid #facc15;
           box-shadow: 0 2px 10px #0002;
-          font-size: 1.5rem;
+          font-size: 1.1rem;
           transition: background 0.16s, transform 0.12s;
+          text-align: center;
         }
         .main-link:hover {
           background: #b45309;
           transform: scale(1.03);
         }
         .main-link span {
-          font-size: 2rem;
+          font-size: 1.3rem;
           font-weight: bold;
           color: #fff;
         }
@@ -354,6 +375,7 @@ const App: React.FC = () => {
         @media (max-width: 600px) {
           .main-card { padding: 1rem 0.3rem 1rem 0.3rem; }
           .modal-content { padding: 1.2rem 0.5rem 1.2rem 0.5rem; }
+          .main-link { max-width: 90vw; font-size: 1rem; }
         }
         `}
       </style>
@@ -366,27 +388,29 @@ const App: React.FC = () => {
         </button>
         <h1>Welcome to the Pub</h1>
         <p>Your ultimate sports bar and media experience. Grab a seat.</p>
-        <a
-          href="index-nfl"
-          className="main-link"
-        >
-          <span>Games</span>
-          <p>Prove that you know ball.</p>
-        </a>
-        <a
-          href="news"
-          className="main-link"
-        >
-          <span>News</span>
-          <p>Pick up The Pub Times for the most ridiculous takes in sports.</p>
-        </a>
-        <a
-          href="index-bar"
-          className="main-link"
-        >
-          <span>Take a Seat</span>
-          <p>Sit at the Pub Bar, or join a table or booth.</p>
-        </a>
+        <div className="main-links">
+          <a
+            href="index-nfl"
+            className="main-link"
+          >
+            <span>Games</span>
+            <p>Prove that you know ball.</p>
+          </a>
+          <a
+            href="news"
+            className="main-link"
+          >
+            <span>News</span>
+            <p>Pick up The Pub Times for the most ridiculous takes in sports.</p>
+          </a>
+          <a
+            href="index-bar"
+            className="main-link"
+          >
+            <span>Take a Seat</span>
+            <p>Sit at the Pub Bar, or join a table or booth.</p>
+          </a>
+        </div>
       </div>
       {isModalOpen && (
         <div
