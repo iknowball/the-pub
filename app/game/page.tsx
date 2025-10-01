@@ -41,7 +41,6 @@ type HistoryEntry = {
 
 const maxLevels = 5;
 
-// Helper functions
 function getTodayEasternMidnight() {
   const now = new Date();
   const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
@@ -153,7 +152,7 @@ const GuessThePlayer: React.FC = () => {
     });
   }, []);
 
-  // Fetch daily players
+  // Fetch daily players from Firebase
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
