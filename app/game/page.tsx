@@ -75,7 +75,7 @@ function formatTime(seconds: number) {
   return `${minutes}:${secs}`;
 }
 function emojiShareMessage(results: boolean[]): string {
-  const emojis = results.map((r) => (r ? "✅" : "❌"));
+  const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
   while (emojis.length < maxLevels) emojis.push("❓");
   return emojis.join("");
 }
@@ -180,8 +180,7 @@ const GuessThePlayer: React.FC = () => {
   // Start timer on first level
   useEffect(() => {
     if (currentLevel === 1 && !timerActive && players.length > 0) setTimerActive(true);
-    // eslint-disable-next-line
-  }, [currentLevel, players.length]);
+  }, [currentLevel, players.length, timerActive]);
 
   // Stats history
   useEffect(() => {
