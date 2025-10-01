@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-// Firebase Modular SDK Imports
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
@@ -13,7 +12,6 @@ import {
   where,
   getDocs,
   setDoc,
-  serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -111,17 +109,210 @@ const generateSmsLink = (results: boolean[]) => {
   return "sms:?body=" + encodeURIComponent(msg);
 };
 
+const maxLevels = 5;
+
 const GuessThePlayer: React.FC = () => {
-  // ...[state and hooks remain unchanged]...
+  const [user, setUser] = useState<User | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [score, setScore] = useState(0);
+  const [answerResults, setAnswerResults] = useState<boolean[]>([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [showStats, setShowStats] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [statsHistory, setStatsHistory] = useState<HistoryEntry[]>([]);
+  const [cloudAvg, setCloudAvg] = useState<number | null>(null);
+  const [clipboardMsg, setClipboardMsg] = useState("Copy to Clipboard");
+  const [showShare, setShowShare] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // All state, logic, and hooks from your previous code remain unchanged.
-  // The only change below is the styling.
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const guessInputRef = useRef<HTMLInputElement>(null);
 
-  // ...full useState, useEffect, and logic from your code above...
+  useEffect(() => {
+    document.body.style.backgroundImage =
+      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.backgroundColor = "#451a03";
+    document.body.style.fontFamily = "'Montserrat', Arial, sans-serif";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.fontFamily = "";
+    };
+  }, []);
 
-  // (For brevity, the logic is unchanged from your previous code block.)
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) signInAnonymously(auth);
+    });
+  }, []);
 
-  // Insert your entire logic code here, then change only the rendered JSX below:
+  useEffect(() => {
+    const fetchDailyPlayers = async () => {
+      const dateKey = getTodayEasternMidnight();
+      const docRef = doc(db, "dailyPlayers", dateKey);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists() && Array.isArray(docSnap.data().players)) {
+        setPlayers(docSnap.data().players);
+      } else {
+        setPlayers([]);
+      }
+    };
+    fetchDailyPlayers();
+  }, []);
+
+  useEffect(() => {
+    if (!timerActive) return;
+    timerRef.current = setInterval(() => {
+      setElapsedTime((t) => t + 1);
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive]);
+
+  useEffect(() => {
+    const history =
+      JSON.parse(localStorage.getItem("scoreHistory") || "[]") as HistoryEntry[];
+    setStatsHistory(history);
+  }, [showStats, gameOver]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCloudAvg = async () => {
+      const docRef = doc(db, "userAverages", getCurrentUserId(user));
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setCloudAvg(docSnap.data().averageScore);
+      }
+    };
+    fetchCloudAvg();
+  }, [user, showStats]);
+
+  const saveScoreHistory = (score: number, time: number) => {
+    const history = JSON.parse(localStorage.getItem("scoreHistory") || "[]") as HistoryEntry[];
+    history.push({
+      score,
+      time,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("scoreHistory", JSON.stringify(history));
+    setStatsHistory(history);
+  };
+
+  const recordGameScore = async (score: number, time: number) => {
+    try {
+      const userId = getCurrentUserId(user);
+      await addDoc(collection(db, "gameScores"), {
+        userId,
+        score,
+        time,
+        playedAt: new Date().toISOString(),
+      });
+      await updateUserAverageScore(userId);
+    } catch (err) {}
+  };
+
+  const updateUserAverageScore = async (userId: string) => {
+    try {
+      const q = query(collection(db, "gameScores"), where("userId", "==", userId));
+      const snap = await getDocs(q);
+      let total = 0,
+        count = 0;
+      snap.forEach((doc) => {
+        total += doc.data().score;
+        count += 1;
+      });
+      const avg = count === 0 ? 0 : total / count;
+      await setDoc(doc(db, "userAverages", userId), {
+        userId,
+        averageScore: avg,
+        lastUpdated: new Date().toISOString(),
+        gamesPlayed: count,
+      });
+    } catch (err) {}
+  };
+
+  const player = players[currentLevel - 1];
+
+  const handleSubmitGuess = () => {
+    if (!player) return;
+    const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
+    const correctName = player.name.toLowerCase();
+    setFeedback("");
+    if (guess === correctName) {
+      setScore((s) => s + 5);
+      setFeedback("Nailed it! +5 points! 🏀");
+      setAnswerResults((arr) => [...arr, true]);
+    } else {
+      const distance = getLevenshteinDistance(guess, correctName);
+      if (distance <= 2 && guess.length > 0) {
+        setFeedback("So close! Try again, you're off by a letter or two!");
+        if (guessInputRef.current) guessInputRef.current.value = "";
+        return;
+      } else {
+        setFeedback(`Swing and a miss! It was ${player.name}.`);
+        setAnswerResults((arr) => [...arr, false]);
+      }
+    }
+  };
+
+  const handleNextLevel = () => {
+    if (currentLevel < maxLevels) {
+      setCurrentLevel((lvl) => lvl + 1);
+      setFeedback("");
+      setImageError(false);
+      if (guessInputRef.current) guessInputRef.current.value = "";
+    } else {
+      setGameOver(true);
+      setShowShare(true);
+      setTimerActive(false);
+      saveScoreHistory(score, elapsedTime);
+      recordGameScore(score, elapsedTime);
+    }
+  };
+
+  const handlePlayAgain = () => {
+    setCurrentLevel(1);
+    setScore(0);
+    setAnswerResults([]);
+    setElapsedTime(0);
+    setFeedback("");
+    setGameOver(false);
+    setShowShare(false);
+    setImageError(false);
+    if (guessInputRef.current) guessInputRef.current.value = "";
+  };
+
+  const handleClipboard = () => {
+    const textToCopy = generateClipboardText(answerResults);
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        setClipboardMsg("Copied!");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      })
+      .catch(() => {
+        setClipboardMsg("Copy Failed");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      });
+  };
+
+  useEffect(() => {
+    if (players.length > 0 && !gameOver) {
+      setTimerActive(true);
+      setElapsedTime(0);
+    }
+  }, [players, gameOver]);
 
   return (
     <div className="gtp-container">
@@ -197,8 +388,8 @@ const GuessThePlayer: React.FC = () => {
         .gtp-img-card {
           position: relative;
           width: 100%;
-          max-width: 320px;
-          height: 280px;
+          max-width: 220px;
+          height: 170px;
           margin: 0 auto 1.2rem auto;
           border-radius: 14px;
           overflow: hidden;
@@ -223,6 +414,9 @@ const GuessThePlayer: React.FC = () => {
         }
         .gtp-btn {
           width: 100%;
+          max-width: 200px;
+          margin-left: auto;
+          margin-right: auto;
           background: #d97706;
           color: #fff;
           font-weight: bold;
@@ -236,10 +430,7 @@ const GuessThePlayer: React.FC = () => {
           transition: background 0.16s, transform 0.12s;
           text-align: center;
           cursor: pointer;
-        }
-        .gtp-btn:hover {
-          background: #b45309;
-          transform: scale(1.03);
+          display: block;
         }
         .gtp-btn.green {
           background: #22c55e;
@@ -254,6 +445,10 @@ const GuessThePlayer: React.FC = () => {
         }
         .gtp-btn.red:hover {
           background: #b91c1c;
+        }
+        .gtp-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
         }
         .gtp-feedback {
           text-align: center;
@@ -399,7 +594,7 @@ const GuessThePlayer: React.FC = () => {
           .gtp-img-card {
             max-width: 93vw;
             height: 37vw;
-            min-height: 180px;
+            min-height: 110px;
           }
         }
       `}</style>
@@ -455,7 +650,7 @@ const GuessThePlayer: React.FC = () => {
               className={`gtp-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
               onClick={handleNextLevel}
             >
-              {currentLevel < 5 ? "Next Level" : "Finish"}
+              {currentLevel < maxLevels ? "Next Level" : "Finish"}
             </button>
           </>
         )}
