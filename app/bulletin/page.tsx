@@ -42,12 +42,10 @@ function BulletinPage() {
   const [input, setInput] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null);
 
-  // Auth state
   useEffect(() => {
     return onAuthStateChanged(auth, setUser);
   }, []);
 
-  // Listen for messages, newest first
   useEffect(() => {
     const q = query(collection(db, "bulletin"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
@@ -71,7 +69,6 @@ function BulletinPage() {
     return () => unsub();
   }, []);
 
-  // Send message
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -85,12 +82,10 @@ function BulletinPage() {
     setInput("");
   };
 
-  // Sign in with Google
   const handleSignIn = () => {
     signInWithPopup(auth, new GoogleAuthProvider());
   };
 
-  // Styling
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -132,6 +127,55 @@ function BulletinPage() {
           padding: 2rem 1.3rem 2.1rem 1.3rem;
           margin: 0 auto;
         }
+        .top-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.7rem;
+          margin-bottom: 1.3rem;
+        }
+        .profile-btn-bar {
+          display: flex;
+          align-items: center;
+          gap: 0.7rem;
+        }
+        .topnav-btn {
+          background: #fbbf24;
+          color: #3f3f2e;
+          font-weight: bold;
+          padding: 0.6rem 1.1rem;
+          border-radius: 0.8rem;
+          border: 2px solid #d4a827;
+          font-size: 1rem;
+          box-shadow: 0 2px 12px #1a1a1a22;
+          transition: background 0.15s, color 0.15s, transform 0.12s;
+          text-decoration: none;
+          cursor: pointer;
+          margin-left: 0.5rem;
+        }
+        .topnav-btn:hover {
+          background: #fde68a;
+          color: #26221a;
+          transform: scale(1.04);
+        }
+        .profile-link-btn {
+          background: #fbbf24;
+          color: #3f3f2e;
+          font-weight: bold;
+          padding: 0.6rem 1.3rem;
+          border-radius: 1rem;
+          border: 2px solid #d4a827;
+          font-size: 1rem;
+          box-shadow: 0 2px 12px #1a1a1a22;
+          transition: background 0.15s, color 0.15s, transform 0.12s;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .profile-link-btn:hover {
+          background: #fde68a;
+          color: #26221a;
+          transform: scale(1.04);
+        }
         .sports-bar-header {
           font-family: 'Montserrat', sans-serif;
           color: #fbbf24;
@@ -148,7 +192,7 @@ function BulletinPage() {
           margin-bottom: 0.6rem;
         }
         .chat-bubble {
-          max-width: 87%;
+          max-width: 95%;
           margin-bottom: 1.1rem;
           background: linear-gradient(90deg, #3f3f2e 0%, #523b1d 100%);
           border-radius: 0.85rem;
@@ -262,30 +306,7 @@ function BulletinPage() {
           background: rgba(255, 245, 191, 0.07);
           border-radius: 1rem;
           border: 1.5px solid #d4a827;
-        }
-        .profile-btn-bar {
-          display: flex;
-          justify-content: flex-end;
-          gap: 0.75rem;
-          margin-bottom: 0.75rem;
-        }
-        .profile-link-btn {
-          background: #fbbf24;
-          color: #3f3f2e;
-          font-weight: bold;
-          padding: 0.6rem 1.3rem;
-          border-radius: 1rem;
-          border: 2px solid #d4a827;
-          font-size: 1rem;
-          box-shadow: 0 2px 12px #1a1a1a22;
-          transition: background 0.15s, color 0.15s, transform 0.12s;
-          text-decoration: none;
-          cursor: pointer;
-        }
-        .profile-link-btn:hover {
-          background: #fde68a;
-          color: #26221a;
-          transform: scale(1.04);
+          margin-bottom: 1.1rem;
         }
         .back-home-btn {
           display: block;
@@ -310,36 +331,43 @@ function BulletinPage() {
         }
         @media (max-width: 500px) {
           .glass-panel { padding: 0.7rem; }
-          .profile-link-btn { padding: 0.5rem 0.7rem; font-size: 0.9rem; }
+          .profile-link-btn, .topnav-btn { padding: 0.5rem 0.7rem; font-size: 0.9rem; }
           .sports-bar-header { font-size: 1.5rem; }
+          .top-bar { flex-direction: column; gap: 0.5rem; }
         }
       `}</style>
       <div className="glass-panel">
-        <div className="profile-btn-bar">
-          {user && (
-            <Link
-              href="/myprofile"
-              className="profile-link-btn"
-            >
-              My Profile
-            </Link>
-          )}
-          {!user && (
-            <button
-              onClick={handleSignIn}
-              className="profile-link-btn"
-            >
-              Sign In
-            </button>
-          )}
+        <div className="top-bar">
+          <div className="profile-btn-bar">
+            {user && (
+              <Link
+                href="/myprofile"
+                className="profile-link-btn"
+              >
+                My Profile
+              </Link>
+            )}
+            {!user && (
+              <button
+                onClick={handleSignIn}
+                className="profile-link-btn"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <Link href="/game" className="topnav-btn">Games</Link>
+            <Link href="/news" className="topnav-btn">News</Link>
+          </div>
         </div>
-        <h1 className="sports-bar-header mb-7 text-center">
+        <h1 className="sports-bar-header text-center">
           The Pub Social
         </h1>
         <h2 className="main-bar-title text-center">
           Main Bar
         </h2>
-        <div className="user-bar mb-2" id="userBar">
+        <div className="user-bar" id="userBar">
           <img
             className="user-avatar"
             src={user
@@ -353,8 +381,8 @@ function BulletinPage() {
               : "Anonymous"}
           </span>
         </div>
-        <div className="mb-4">
-          <form className="flex flex-col" onSubmit={handleSend}>
+        <div>
+          <form className="message-form" onSubmit={handleSend} style={{ width: "100%" }}>
             <input
               type="text"
               id="messageInput"
@@ -364,12 +392,17 @@ function BulletinPage() {
               onChange={e => setInput(e.target.value)}
               disabled={!user}
               autoComplete="off"
+              style={{
+                width: "100%",
+                marginBottom: "0.4rem",
+                boxSizing: "border-box"
+              }}
             />
             <button
               type="submit"
               id="postMessage"
-              className=""
               disabled={!user || !input.trim()}
+              style={{ width: "100%" }}
             >
               Send
             </button>
@@ -378,7 +411,13 @@ function BulletinPage() {
         <div
           id="messageList"
           ref={messagesRef}
-          className="max-h-72 overflow-y-auto message-list-bg p-4 mb-1"
+          className="max-h-72 overflow-y-auto message-list-bg p-4"
+          style={{
+            maxHeight: "320px",
+            overflowY: "auto",
+            width: "100%",
+            marginTop: "1.05rem"
+          }}
         >
           {messages.map((msg, idx) => {
             const isOwn = user && msg.uid === user?.uid;
@@ -397,6 +436,9 @@ function BulletinPage() {
               <div
                 key={msg.id || idx}
                 className={`chat-bubble${isOwn ? " own ml-auto" : ""}`}
+                style={{
+                  marginLeft: isOwn ? "auto" : undefined,
+                }}
               >
                 <span className={`username${!msg.displayName ? " anonymous" : ""}`}>
                   {msg.displayName || "Anonymous"}
