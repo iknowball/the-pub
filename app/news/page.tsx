@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { db } from "../firebase";
+import { db } from "../firebase"; // Make sure your Firebase initialization is correct!
 import {
   collection,
   getDocs,
@@ -10,40 +9,47 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-// --- Types & Utilities ---
+// --- Types ---
 type NewsArticle = {
   id: string;
   title?: string;
   content?: string;
   author?: string;
   createdAt?: Timestamp | { seconds: number } | number;
-  date?: string;
-  image?: string;
-  source?: string;
 };
 
+// Helper to format Firestore Timestamp or millis
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
-      return new Date(ts.seconds * 1000).toLocaleDateString();
+      // Firestore Timestamp or {seconds: number}
+      return new Date(ts.seconds * 1000).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     } else if (typeof ts === "number") {
-      return new Date(ts).toLocaleDateString();
+      // Milliseconds
+      return new Date(ts).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     }
-  } catch {}
+  } catch (e) {}
   return "";
 }
 
-// --- Component ---
 const PubNewsstand: React.FC = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<{ [id: string]: boolean }>({});
 
   useEffect(() => {
-    document.body.style.background = "radial-gradient(circle, #fffbe9 60%, #ece5d8 100%)";
-    document.body.style.fontFamily = "'Merriweather', 'Times New Roman', Times, serif";
+    document.body.style.backgroundColor = "#f3f4f6";
+    document.body.style.fontFamily = "'Times New Roman', Times, serif";
     return () => {
-      document.body.style.background = "";
+      document.body.style.backgroundColor = "";
       document.body.style.fontFamily = "";
     };
   }, []);
@@ -51,9 +57,9 @@ const PubNewsstand: React.FC = () => {
   useEffect(() => {
     const loadNewsArticles = async () => {
       setLoading(true);
-      const articles: NewsArticle[] = [];
       const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(q);
+      const articles: NewsArticle[] = [];
       snapshot.forEach((doc) => {
         articles.push({ id: doc.id, ...doc.data() });
       });
@@ -64,84 +70,174 @@ const PubNewsstand: React.FC = () => {
   }, []);
 
   // Today's date
-  const todayDate = new Date().toLocaleDateString("en-US", {
+  const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
   return (
-    <div className="flex flex-col items-center min-h-screen py-8 bg-transparent">
+    <div className="pub-root">
       <style>{`
         body {
-          background: radial-gradient(circle, #fffbe9 60%, #ece5d8 100%) !important;
-          font-family: 'Merriweather', 'Times New Roman', Times, serif !important;
+          background-color: #f3f4f6 !important;
+          font-family: 'Times New Roman', Times, serif !important;
+          margin: 0;
         }
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .pub-root {
+          min-height: 100vh;
+          width: 100vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          color: #111827; /* Tailwind gray-900 */
+          background-color: #f3f4f6;
         }
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
+        .pub-header {
+          width: 100%;
+          max-width: 900px;
+          background: #fff;
+          padding: 2rem 1.5rem 1rem 1.5rem;
+          border-bottom: 4px double #1f2937;
+          margin-bottom: 1.5rem;
+          box-sizing: border-box;
         }
-        .newspaper-border {
-          border: 1.5px solid #b8b8b8;
-          box-shadow: 0 4px 16px rgba(50,50,45,0.05);
-        }
-        .masthead {
-          border-bottom: 8px double #444;
-          letter-spacing: 0.05em;
-        }
-        .pub-dropcap::first-letter {
-          font-size: 2.3em;
+        .pub-title {
+          font-size: 3rem;
           font-weight: bold;
-          float: left;
-          line-height: 1;
-          margin-right: 0.1em;
-          color: #ad974f;
-          font-family: Georgia, serif;
+          text-align: center;
+          margin: 0;
+          color: #111827;
+          letter-spacing: 0.03em;
         }
-        .title-shadow {
-          text-shadow: 1px 2px 0 #e2d9c2;
+        .pub-date {
+          text-align: center;
+          font-size: 1.2rem;
+          color: #4b5563;
+          margin-top: 0.5em;
+        }
+        .pub-nav {
+          width: 100%;
+          max-width: 900px;
+          background: #e5e7eb;
+          border-top: 2px solid #1f2937;
+          border-bottom: 2px solid #1f2937;
+          margin-bottom: 1.5rem;
+          padding: 1rem 1.5rem;
+          box-sizing: border-box;
+        }
+        .pub-nav-inner {
+          display: flex;
+          justify-content: space-between;
         }
         .pub-link {
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-        .pub-link:hover {
-          color: #ad974f !important;
+          color: #111827;
+          font-weight: bold;
           text-decoration: none;
+          transition: color 0.2s;
+        }
+        .pub-link:hover, .pub-link:focus {
+          color: #374151;
+        }
+        .pub-main {
+          width: 100%;
+          max-width: 700px;
+          margin: 0 auto 2rem auto;
+          padding: 1rem 0.5rem;
+          box-sizing: border-box;
+        }
+        .pub-story {
+          margin-bottom: 1.5rem;
+          animation: fade-in 0.3s ease-out;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px);}
+          to { opacity: 1; transform: translateY(0);}
+        }
+        .pub-story-title {
+          width: 100%;
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: #1e3a8a;
+          background: #fff;
+          border: 1px solid #1e3a8a;
+          border-radius: 7px;
+          padding: 0.7em 1em;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.2s, color 0.2s;
+        }
+        .pub-story-title:hover, .pub-story-title:focus {
+          background: #f1f5f9;
+        }
+        .pub-story-content {
+          margin-top: 0.5em;
+          padding: 1em;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 7px;
+          color: #1f2937;
+          display: block;
+        }
+        .pub-story-content[hidden] {
+          display: none;
+        }
+        .pub-story-meta {
+          margin-top: 0.8em;
+          display: flex;
+          flex-direction: column;
+          gap: 0.15em;
+        }
+        .pub-author {
+          font-size: 0.98em;
+          color: #6b7280;
+        }
+        .pub-date-posted {
+          font-size: 0.85em;
+          color: #9ca3af;
+        }
+        .pub-footer {
+          width: 100%;
+          max-width: 900px;
+          background: #e5e7eb;
+          border-top: 2px solid #1f2937;
+          text-align: center;
+          color: #4b5563;
+          padding: 1.2em 1.5em;
+          box-sizing: border-box;
+          font-size: 1.05em;
+        }
+        @media (max-width: 700px) {
+          .pub-header, .pub-nav, .pub-footer, .pub-main {
+            max-width: 99vw;
+            padding-left: 0.5rem; padding-right: 0.5rem;
+          }
+          .pub-title { font-size: 2.1rem;}
         }
       `}</style>
-
-      {/* Newspaper Masthead */}
-      <header className="w-full max-w-3xl bg-white px-8 pt-10 pb-5 masthead newspaper-border rounded-t-3xl shadow title-shadow">
-        <h1 className="text-6xl font-extrabold text-center text-gray-900 font-serif tracking-wide leading-tight title-shadow">
-          The Pub Times
-        </h1>
-        <p className="text-center text-lg text-gray-700 mt-3 font-serif">
+      <header className="pub-header">
+        <h1 className="pub-title">The Pub Times</h1>
+        <p className="pub-date">
           <span>{todayDate}</span>
         </p>
       </header>
-
-      {/* Classic nav bar */}
-      <nav className="w-full max-w-3xl bg-white px-8 py-3 border-b-2 border-t newspaper-border font-serif text-lg mb-2 flex justify-between">
-        <Link href="/" className="text-gray-900 pub-link font-bold">Home</Link>
-        <Link href="/bar" className="text-gray-900 pub-link font-bold">Hit the Bar</Link>
-        <Link href="/games-room" className="text-gray-900 pub-link font-bold">Games</Link>
+      <nav className="pub-nav">
+        <div className="pub-nav-inner">
+          <a href="/" className="pub-link">Home</a>
+          <a href="/bar" className="pub-link">Hit the Bar</a>
+          <a href="/games-room" className="pub-link">Games</a>
+        </div>
       </nav>
-
-      {/* News Articles */}
-      <main className="w-full max-w-2xl mx-auto px-4 py-6 bg-white newspaper-border rounded-b-3xl shadow flex flex-col gap-8 font-serif">
+      <main className="pub-main" id="news-list">
         {loading ? (
-          <div className="text-center text-gray-400 text-xl font-semibold py-10">Loading...</div>
+          <div style={{ textAlign: "center", color: "#6b7280" }}>Loading...</div>
         ) : news.length === 0 ? (
-          <div className="text-center text-gray-400 text-xl font-semibold py-10">No news found.</div>
+          <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
         ) : (
           news.map((data) => (
-            <article key={data.id} className="animate-fade-in">
+            <div key={data.id} className="pub-story">
               <button
-                className="w-full text-2xl font-bold text-gray-900 bg-transparent border-b border-gray-400 pb-2 mb-2 text-left hover:text-yellow-700 transition"
+                className="pub-story-title"
                 onClick={() =>
                   setExpanded((prev) => ({
                     ...prev,
@@ -154,41 +250,27 @@ const PubNewsstand: React.FC = () => {
                 {data.title || "Untitled Story"}
               </button>
               <div
-                className={`mt-1 px-0 py-0 rounded text-gray-900`}
-                style={{ display: expanded[data.id] ? "block" : "none" }}
+                className="pub-story-content"
+                hidden={!expanded[data.id]}
               >
-                {data.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={data.image}
-                    alt=""
-                    className="w-full h-60 object-cover mb-3 border border-gray-300 newspaper-border"
-                    style={{ filter: "grayscale(80%)", borderRadius: "0.5em" }}
-                  />
-                )}
-                <div className="mb-2 pub-dropcap text-lg leading-relaxed">{data.content || ""}</div>
-                <div className="flex flex-wrap items-center justify-between mt-2">
+                <div>{data.content || ""}</div>
+                <div className="pub-story-meta">
                   {data.author && (
-                    <span className="text-sm text-gray-500 mr-2">By {data.author}</span>
+                    <div className="pub-author">By {data.author}</div>
                   )}
-                  {(data.createdAt || data.date) && (
-                    <span className="text-xs text-gray-400">
-                      Posted: {data.date || formatDate(data.createdAt)}
-                    </span>
-                  )}
-                  {data.source && (
-                    <span className="text-xs text-gray-500 ml-2">Source: {data.source}</span>
+                  {data.createdAt && (
+                    <div className="pub-date-posted">
+                      Posted: {formatDate(data.createdAt)}
+                    </div>
                   )}
                 </div>
               </div>
-            </article>
+            </div>
           ))
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="w-full max-w-3xl bg-white px-8 py-4 text-center text-gray-700 border-t-2 newspaper-border font-serif rounded-b-3xl">
-        <p className="italic">Published by The Pub Times &mdash; All the ball that's fit to print.</p>
+      <footer className="pub-footer">
+        <p>Published by The Pub Times</p>
       </footer>
     </div>
   );
