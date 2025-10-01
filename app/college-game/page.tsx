@@ -49,15 +49,11 @@ type ScoreRowProps = {
 };
 
 const ScoreRow: React.FC<ScoreRowProps> = ({ entry, index }) => (
-  <tr className="hover:bg-amber-600">
-    <td className="p-2 border border-yellow-600">{index + 1}</td>
-    <td className="p-2 border border-yellow-600">{entry.score}/25</td>
-    <td className="p-2 border border-yellow-600">
-      {formatTime(entry.time)}
-    </td>
-    <td className="p-2 border border-yellow-600">
-      {new Date(entry.timestamp).toLocaleString()}
-    </td>
+  <tr className="cg-table-row">
+    <td>{index + 1}</td>
+    <td>{entry.score}/25</td>
+    <td>{formatTime(entry.time)}</td>
+    <td>{new Date(entry.timestamp).toLocaleString()}</td>
   </tr>
 );
 
@@ -108,13 +104,11 @@ function getCurrentUserId(user: User | null) {
   return anonId;
 }
 
-// ---- FIXED FUNCTION ----
 const emojiShareMessage = (results: boolean[]): string => {
   const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 };
-// ---- END FIXED FUNCTION ----
 
 const CollegeGuess: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -143,6 +137,15 @@ const CollegeGuess: React.FC = () => {
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
     document.body.style.backgroundColor = "#451a03";
+    document.body.style.fontFamily = "'Montserrat', sans-serif";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.fontFamily = "";
+    };
   }, []);
 
   // Auth state
@@ -224,9 +227,7 @@ const CollegeGuess: React.FC = () => {
         playedAt: new Date().toISOString(),
       });
       await updateCollegeAverageScore(userId);
-    } catch (err) {
-      // silently fail
-    }
+    } catch (err) {}
   };
 
   // Update average score in Firestore
@@ -250,9 +251,7 @@ const CollegeGuess: React.FC = () => {
         lastUpdated: new Date().toISOString(),
         gamesPlayed: count,
       });
-    } catch (err) {
-      // silently fail
-    }
+    } catch (err) {}
   };
 
   // Share logic
@@ -349,68 +348,302 @@ const CollegeGuess: React.FC = () => {
   }, [athletes, gameOver]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen font-montserrat">
+    <div className="cg-bg">
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .cg-bg {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          font-family: 'Montserrat', sans-serif;
         }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .cg-header {
+          width: 100%;
+          max-width: 430px;
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          text-align: center;
+          padding: 0.9rem 0.2rem;
+          border: 2px solid #facc15;
+          border-radius: 16px;
+          margin-bottom: 1.3rem;
+          font-weight: bold;
+          font-size: 1.18rem;
+          box-shadow: 0 2px 12px #0003;
+        }
+        .cg-card {
+          background: rgba(70, 38, 19, 0.93);
+          padding: 1.5rem 1.2rem 2rem 1.2rem;
+          border-radius: 16px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          border: 2px solid #facc15;
+          position: relative;
+          width: 100%;
+          max-width: 430px;
+        }
+        .cg-navbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.6rem;
+          justify-content: center;
+          margin-bottom: 1.2rem;
+        }
+        .cg-navbar a {
+          flex: 1 1 120px;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.7rem 0.6rem;
+          border-radius: 10px;
+          border: 2px solid #facc15;
+          text-decoration: none;
+          box-shadow: 0 2px 10px #0002;
+          text-align: center;
+          transition: background 0.16s, transform 0.12s;
+          font-size: 1rem;
+        }
+        .cg-navbar a:hover {
+          background: #b45309;
+          transform: scale(1.05);
+        }
+        .cg-title {
+          color: #fde68a;
+          font-size: 2rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+        }
+        .cg-level {
+          color: #fde68a;
+          font-size: 1.08rem;
+        }
+        .cg-input {
+          width: 100%;
+          padding: 1rem;
+          background: rgba(146, 64, 14, 0.93);
+          color: #fff;
+          border: 2px solid #facc15;
+          border-radius: 10px;
+          margin-bottom: 1rem;
+          font-size: 1.08rem;
+        }
+        .cg-btn {
+          width: 100%;
+          max-width: 200px;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.95rem 0.2rem 0.8rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 0.7rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.1rem;
+          transition: background 0.16s, transform 0.12s;
+          text-align: center;
+          cursor: pointer;
+          display: block;
+        }
+        .cg-btn.green {
+          background: #22c55e;
+          border-color: #16a34a;
+        }
+        .cg-btn.green:hover {
+          background: #16a34a;
+        }
+        .cg-btn.red {
+          background: #ef4444;
+          border-color: #b91c1c;
+        }
+        .cg-btn.red:hover {
+          background: #b91c1c;
+        }
+        .cg-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        .cg-feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .cg-score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .cg-timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.45rem 0.95rem;
+          font-weight: bold;
+          font-size: 1rem;
+        }
         .share-buttons-row {
-          display: flex; flex-direction: row; gap: 14px; justify-content: center; align-items: center;
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
         }
         .clipboard-btn, .sms-btn {
-          background: #f9e38f; color: #533e1f; font-weight: bold; border-radius: 8px; border: 2px solid #cfb467;
-          padding: 7px 18px; cursor: pointer; box-shadow: 0 2px 8px #cfb46733; margin-top: 8px; margin-bottom: 8px;
-          transition: background 0.2s, color 0.2s; display: inline-block;
+          background: #f9e38f;
+          color: #533e1f;
+          font-weight: bold;
+          border-radius: 8px;
+          border: 2px solid #cfb467;
+          padding: 7px 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #cfb46733;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          transition: background 0.2s, color 0.2s;
+          display: inline-block;
         }
-        .clipboard-btn:hover, .sms-btn:hover { background: #fffbe7; color: #b88340; }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe7;
+          color: #b88340;
+        }
         .share-preview {
-          font-size: 1.15rem; color: #f9e38f; font-weight: bold; margin-top: 10px; margin-bottom: 6px; text-align: center; word-break: break-word;
+          font-size: 1.15rem;
+          color: #f9e38f;
+          font-weight: bold;
+          margin-top: 10px;
+          margin-bottom: 6px;
+          text-align: center;
+          word-break: break-word;
         }
         .share-link-ball {
-          color: #ffd700; text-decoration: underline; font-size: 1.15rem; font-weight: bold; margin-left: 6px; cursor: pointer;
+          color: #ffd700;
+          text-decoration: underline;
+          font-size: 1.15rem;
+          font-weight: bold;
+          margin-left: 6px;
+          cursor: pointer;
         }
-        .share-link-ball:hover { color: #ffbb33; text-decoration: underline; }
+        .share-link-ball:hover {
+          color: #ffbb33;
+          text-decoration: underline;
+        }
+        .cg-modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .cg-modal-content {
+          background: rgba(146, 64, 14, 0.97);
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
+          width: 100%;
+          max-width: 430px;
+          border: 2px solid #facc15;
+          color: #fde68a;
+          position: relative;
+        }
+        .cg-modal-content h2 {
+          color: #fde68a;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .cg-table {
+          width: 100%;
+          color: #fde68a;
+          border-collapse: collapse;
+          font-size: 1rem;
+        }
+        .cg-table th,
+        .cg-table td {
+          border: 1.5px solid #facc15;
+          padding: 0.6rem 0.3rem;
+          text-align: center;
+        }
+        .cg-table thead {
+          background: #b45309;
+        }
+        .cg-table-row:hover {
+          background: #d97706;
+        }
+        .cg-close-btn {
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 1.3rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: background 0.16s, transform 0.12s;
+        }
+        .cg-close-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        @media (max-width: 600px) {
+          .cg-header,
+          .cg-card,
+          .cg-modal-content {
+            max-width: 97vw;
+            padding-left: 0.15rem;
+            padding-right: 0.15rem;
+          }
+        }
       `}</style>
-      <header className="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-        <p className="text-lg font-bold">New Games Daily at Midnight Eastern</p>
-      </header>
-      <div className="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative" id="gameContainer">
-        <div className="flex flex-wrap gap-2 justify-center mb-4">
-          <Link href="/" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</Link>
-          <Link href="/news" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</Link>
-          <Link href="/game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Players</Link>
-          <Link href="/trivia-game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Trivia</Link>
+      <div className="cg-header">
+        New Games Daily at Midnight Eastern
+      </div>
+      <div className="cg-card" id="gameContainer">
+        <div className="cg-navbar">
+          <Link href="/" className="">Home</Link>
+          <Link href="/news" className="">News</Link>
+          <Link href="/game" className="">Players</Link>
+          <Link href="/trivia-game" className="">Trivia</Link>
         </div>
-        <h1 className="text-3xl font-bold text-center text-yellow-300 mb-4">College Guess</h1>
-        <p className="text-center text-yellow-300 mb-2 text-lg">Level: <span>{currentLevel}</span>/5</p>
+        <h1 className="cg-title">College Guess</h1>
+        <p className="cg-level">Level: <span>{currentLevel}</span>/5</p>
         {!gameOver && athlete && (
           <>
-            <p className="text-center text-yellow-300 mb-4 text-lg">
-              Guess the college for <span>{athlete.name}</span>
+            <p className="cg-level" style={{ marginBottom: "1.3rem" }}>
+              Guess the college for <span style={{ fontWeight: 700 }}>{athlete.name}</span>
             </p>
             <input
               ref={guessInputRef}
               type="text"
               placeholder="Enter college name..."
-              className="w-full p-3 bg-amber-800/90 text-white border-2 border-yellow-600 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-600"
+              className="cg-input"
               autoComplete="off"
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmitGuess();
               }}
               disabled={gameOver}
             />
             <button
-              className={`w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md ${answerResults.length === currentLevel ? "hidden" : ""}`}
+              className={`cg-btn${answerResults.length === currentLevel ? " hidden" : ""}`}
               onClick={handleSubmitGuess}
               disabled={gameOver}
             >
               Submit Answer
             </button>
             <button
-              className={`w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold ${answerResults.length !== currentLevel ? "hidden" : ""}`}
+              className={`cg-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
               onClick={handleNextLevel}
             >
               {currentLevel < maxLevels ? "Next Level" : "Finish"}
@@ -419,59 +652,62 @@ const CollegeGuess: React.FC = () => {
         )}
         <Link
           href="/"
-          className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold ${gameOver ? "" : "hidden"} border-2 border-yellow-600 shadow-md text-center`}
+          className={`cg-btn red${gameOver ? "" : " hidden"}`}
         >
           Back to Home
         </Link>
         <button
-          className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold mt-2 border-2 border-yellow-600 shadow-md ${gameOver ? "" : "hidden"}`}
+          className={`cg-btn red${gameOver ? "" : " hidden"}`}
           onClick={() => setShowStats(true)}
         >
           View Stats
         </button>
-        <p className="text-center mt-4 text-xl font-bold animate-fade-in">{feedback}</p>
-        <div className="flex flex-row items-center justify-center gap-4 mt-4">
-          <div className="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">
-            {formatTime(elapsedTime)}
-          </div>
-          <p className="text-yellow-300 text-center mb-0">
-            Score: <span>{score}</span>/25
-          </p>
+        <div className="cg-feedback">{feedback}</div>
+        <div className="cg-score-row">
+          <div className="cg-timer-box">{formatTime(elapsedTime)}</div>
+          <div className="score">Score: <span>{score}</span>/25</div>
         </div>
-        <div className={`text-center mt-4 ${showShare ? "" : "hidden"} text-yellow-300`} id="shareLink">
-          <div className="share-buttons-row">
-            <button className="clipboard-btn" onClick={handleClipboard}>
-              {clipboardMsg}
-            </button>
-            <a className="sms-btn" href={generateSmsLink(answerResults)} target="_blank">
-              Send as SMS
-            </a>
-          </div>
-          <div className="share-preview" dangerouslySetInnerHTML={{ __html: generateShareText(answerResults) }}></div>
+        <div className="share-buttons-row" style={{ marginTop: 16, display: showShare ? "flex" : "none" }}>
+          <button className="clipboard-btn" onClick={handleClipboard}>
+            {clipboardMsg}
+          </button>
+          <a className="sms-btn" href={generateSmsLink(answerResults)} target="_blank" rel="noopener noreferrer">
+            Send as SMS
+          </a>
         </div>
+        <div
+          className="share-preview"
+          style={{ display: showShare ? "block" : "none" }}
+          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults) }}
+        />
       </div>
-
-      {/* Stats Modal */}
       {showStats && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-amber-800/90 p-6 rounded-xl w-full max-w-md border-2 border-yellow-600 shadow-lg">
-            <h2 className="text-2xl font-bold text-center text-yellow-300 mb-4">Your College Guess Stats</h2>
-            <p className="text-center text-yellow-300 mb-4 text-lg">
+        <div className="cg-modal-bg">
+          <div className="cg-modal-content">
+            <h2>Your College Guess Stats</h2>
+            <p style={{ textAlign: "center", marginBottom: "1.2rem", fontSize: "1.15rem" }}>
               {cloudAvg !== null
                 ? `Average Score (cloud): ${cloudAvg.toFixed(1)}/25`
-                : `Average Score (local): ${statsHistory.length > 0 ? (statsHistory.reduce((sum, e) => sum + e.score, 0) / statsHistory.length).toFixed(1) : "0"}/25`}
+                : `Average Score (local): ${
+                  statsHistory.length > 0
+                    ? (
+                        statsHistory.reduce((sum, e) => sum + e.score, 0) /
+                        statsHistory.length
+                      ).toFixed(1)
+                    : "0"
+                }/25`}
             </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-yellow-300 border-collapse">
+            <div style={{ overflowX: "auto" }}>
+              <table className="cg-table">
                 <thead>
-                  <tr className="bg-amber-700/90">
-                    <th className="p-2 border border-yellow-600">Attempt</th>
-                    <th className="p-2 border border-yellow-600">Score</th>
-                    <th className="p-2 border border-yellow-600">Time</th>
-                    <th className="p-2 border border-yellow-600">Date</th>
+                  <tr>
+                    <th>Attempt</th>
+                    <th>Score</th>
+                    <th>Time</th>
+                    <th>Date</th>
                   </tr>
                 </thead>
-                <tbody className="text-center">
+                <tbody>
                   {statsHistory.map((entry, idx) => (
                     <ScoreRow entry={entry} index={idx} key={idx} />
                   ))}
@@ -479,7 +715,7 @@ const CollegeGuess: React.FC = () => {
               </table>
             </div>
             <button
-              className="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md"
+              className="cg-close-btn"
               onClick={() => setShowStats(false)}
             >
               Close
