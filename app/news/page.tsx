@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase"; // Make sure your Firebase initialization is correct!
+import { db } from "../firebase";
 import {
   collection,
   getDocs,
@@ -18,18 +18,28 @@ type NewsArticle = {
   createdAt?: Timestamp | { seconds: number } | number;
 };
 
+// Simple sanitizer: allow only a few tags (p, br, b, i, em, strong, ul, ol, li, a)
+function simpleSanitize(html: string) {
+  // Remove all tags not in the allowed set
+  return html.replace(
+    /<(?!\/?(p|br|b|i|em|strong|ul|ol|li|a)(\s|>|\/))/gi,
+    "&lt;"
+  )
+  // Remove all event handlers and javascript: hrefs
+  .replace(/ on\w+="[^"]*"/gi, "")
+  .replace(/javascript:/gi, "");
+}
+
 // Helper to format Firestore Timestamp or millis
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
-      // Firestore Timestamp or {seconds: number}
       return new Date(ts.seconds * 1000).toLocaleDateString(undefined, {
         year: "numeric",
         month: "long",
         day: "numeric",
       });
     } else if (typeof ts === "number") {
-      // Milliseconds
       return new Date(ts).toLocaleDateString(undefined, {
         year: "numeric",
         month: "long",
@@ -90,7 +100,7 @@ const PubNewsstand: React.FC = () => {
           display: flex;
           flex-direction: column;
           align-items: center;
-          color: #111827; /* Tailwind gray-900 */
+          color: #111827;
           background-color: #f3f4f6;
         }
         .pub-header {
@@ -252,18 +262,20 @@ const PubNewsstand: React.FC = () => {
               <div
                 className="pub-story-content"
                 hidden={!expanded[data.id]}
-              >
-                <div>{data.content || ""}</div>
-                <div className="pub-story-meta">
-                  {data.author && (
-                    <div className="pub-author">By {data.author}</div>
-                  )}
-                  {data.createdAt && (
-                    <div className="pub-date-posted">
-                      Posted: {formatDate(data.createdAt)}
-                    </div>
-                  )}
-                </div>
+                // Basic sanitizer: only allow a few HTML tags, strip event handlers
+                dangerouslySetInnerHTML={{
+                  __html: simpleSanitize(data.content || ""),
+                }}
+              />
+              <div className="pub-story-meta" hidden={!expanded[data.id]}>
+                {data.author && (
+                  <div className="pub-author">By {data.author}</div>
+                )}
+                {data.createdAt && (
+                  <div className="pub-date-posted">
+                    Posted: {formatDate(data.createdAt)}
+                  </div>
+                )}
               </div>
             </div>
           ))
