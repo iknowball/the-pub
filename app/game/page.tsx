@@ -126,7 +126,6 @@ const GuessThePlayer: React.FC = () => {
   const guessInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Styling
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -145,7 +144,6 @@ const GuessThePlayer: React.FC = () => {
     };
   }, []);
 
-  // Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -153,7 +151,6 @@ const GuessThePlayer: React.FC = () => {
     });
   }, []);
 
-  // Load daily players
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
@@ -168,7 +165,7 @@ const GuessThePlayer: React.FC = () => {
     fetchDailyPlayers();
   }, []);
 
-  // Get image download URL if needed
+  // Image URL logic
   const player = players[currentLevel - 1];
   useEffect(() => {
     let isMounted = true;
@@ -176,7 +173,6 @@ const GuessThePlayer: React.FC = () => {
       setImgUrl(null);
       return;
     }
-    // If player.image is already an https url, use it; otherwise, assume Firebase Storage path
     if (player.image.startsWith("http")) {
       setImgUrl(player.image);
     } else {
