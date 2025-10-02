@@ -126,7 +126,7 @@ const GuessThePlayer: React.FC = () => {
   const guessInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Local CSS only
+  // Set up background and font
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -145,7 +145,7 @@ const GuessThePlayer: React.FC = () => {
     };
   }, []);
 
-  // Firebase User Auth
+  // Firebase Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -153,22 +153,31 @@ const GuessThePlayer: React.FC = () => {
     });
   }, []);
 
-  // Fetch daily players
+  // Fetch daily players data (with debug logging)
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
       const docRef = doc(db, "dailyPlayers", dateKey);
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && Array.isArray(docSnap.data().players)) {
-        setPlayers(docSnap.data().players);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Debug log
+        console.log("Fetched dailyPlayers doc:", data);
+        if (Array.isArray(data.players)) {
+          setPlayers(data.players);
+        } else {
+          setPlayers([]);
+          console.warn("No 'players' array in Firestore for", dateKey);
+        }
       } else {
         setPlayers([]);
+        console.warn("No dailyPlayers doc found for", dateKey);
       }
     };
     fetchDailyPlayers();
   }, []);
 
-  // Load correct image url
+  // Load correct image url for current player (with debug logging)
   const player = players[currentLevel - 1];
   useEffect(() => {
     let isMounted = true;
@@ -181,7 +190,10 @@ const GuessThePlayer: React.FC = () => {
     } else {
       getDownloadURL(storageRef(storage, player.image))
         .then((url) => { if (isMounted) setImgUrl(url); })
-        .catch(() => { if (isMounted) setImgUrl(null); });
+        .catch((err) => {
+          if (isMounted) setImgUrl(null);
+          console.warn("Could not load image from storage for", player.image, err);
+        });
     }
     return () => { isMounted = false; };
   }, [player]);
@@ -198,6 +210,7 @@ const GuessThePlayer: React.FC = () => {
     };
   }, [timerActive]);
 
+  // Stats history local
   useEffect(() => {
     const history =
       typeof window !== "undefined"
@@ -206,6 +219,7 @@ const GuessThePlayer: React.FC = () => {
     setStatsHistory(history);
   }, [showStats, gameOver]);
 
+  // Cloud average
   useEffect(() => {
     if (!user) return;
     const fetchCloudAvg = async () => {
