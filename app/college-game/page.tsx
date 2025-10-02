@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-// Firebase modular imports
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
@@ -13,8 +12,6 @@ import {
   query,
   where,
   getDocs,
-  onSnapshot,
-  serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -43,28 +40,15 @@ type HistoryEntry = {
   timestamp: string;
 };
 
-type ScoreRowProps = {
-  entry: HistoryEntry;
-  index: number;
-};
+const maxLevels = 5;
 
-const ScoreRow: React.FC<ScoreRowProps> = ({ entry, index }) => (
-  <tr className="cg-table-row">
-    <td>{index + 1}</td>
-    <td>{entry.score}/25</td>
-    <td>{formatTime(entry.time)}</td>
-    <td>{new Date(entry.timestamp).toLocaleString()}</td>
-  </tr>
-);
-
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = (seconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${secs}`;
+function getTodayEasternMidnight() {
+  const now = new Date();
+  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+  const nyDate = new Date(nyString);
+  nyDate.setHours(0, 0, 0, 0);
+  return nyDate.toISOString().slice(0, 10);
 }
-
 function getLevenshteinDistance(a: string, b: string) {
   const matrix = Array(b.length + 1)
     .fill(null)
@@ -83,15 +67,13 @@ function getLevenshteinDistance(a: string, b: string) {
   }
   return matrix[b.length][a.length];
 }
-
-function getTodayEasternMidnight() {
-  const now = new Date();
-  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-  const nyDate = new Date(nyString);
-  nyDate.setHours(0, 0, 0, 0);
-  return nyDate.toISOString().slice(0, 10);
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${secs}`;
 }
-
 function getCurrentUserId(user: User | null) {
   if (user) {
     return user.uid;
@@ -103,10 +85,9 @@ function getCurrentUserId(user: User | null) {
   }
   return anonId;
 }
-
 const emojiShareMessage = (results: boolean[]): string => {
   const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
-  while (emojis.length < 5) emojis.push("❓");
+  while (emojis.length < maxLevels) emojis.push("❓");
   return emojis.join("");
 };
 
@@ -269,14 +250,12 @@ const CollegeGuess: React.FC = () => {
 
   // Game logic
   const athlete = athletes[currentLevel - 1];
-  const maxLevels = 5;
 
   const handleSubmitGuess = () => {
-    if (!athlete) return;
+    if (!athlete || gameOver) return;
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctCollege = athlete.college.toLowerCase();
     setFeedback("");
-    let result = false;
     if (guess === correctCollege) {
       setScore((s) => s + 5);
       setFeedback("Nailed it! +5 points! 🏀");
@@ -618,7 +597,7 @@ const CollegeGuess: React.FC = () => {
           <Link href="/trivia-game" className="">Trivia</Link>
         </div>
         <h1 className="cg-title">College Guess</h1>
-        <p className="cg-level">Level: <span>{currentLevel}</span>/5</p>
+        <p className="cg-level">Level: <span>{currentLevel}</span>/{maxLevels}</p>
         {!gameOver && athlete && (
           <>
             <p className="cg-level" style={{ marginBottom: "1.3rem" }}>
@@ -709,7 +688,12 @@ const CollegeGuess: React.FC = () => {
                 </thead>
                 <tbody>
                   {statsHistory.map((entry, idx) => (
-                    <ScoreRow entry={entry} index={idx} key={idx} />
+                    <tr className="cg-table-row" key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.score}/25</td>
+                      <td>{formatTime(entry.time)}</td>
+                      <td>{new Date(entry.timestamp).toLocaleString()}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
