@@ -14,7 +14,6 @@ import {
   getDocs,
   query,
   where,
-  Timestamp,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -61,7 +60,7 @@ function getEasternMidnightDateKey() {
   return nyDate.toISOString().slice(0, 10);
 }
 
-async function getOrGenerateDailyQuestions(): Promise<{ question: string; answer: string }[]> {
+async function getOrGenerateDailyQuestions() {
   const dateKey = getEasternMidnightDateKey();
   const docRef = doc(db, "dailyTrivia", dateKey);
   const docSnap = await getDoc(docRef);
@@ -70,7 +69,7 @@ async function getOrGenerateDailyQuestions(): Promise<{ question: string; answer
   } else {
     const shuffled = NFL_QUESTION_POOL.slice().sort(() => 0.5 - Math.random());
     const questions = shuffled.slice(0, 5);
-    await setDoc(docRef, { questions: questions });
+    await setDoc(docRef, { questions });
     return questions;
   }
 }
@@ -160,13 +159,11 @@ function formatTime(seconds: number) {
   return `${minutes}:${secs}`;
 }
 
-// ---- FIXED FUNCTION ----
 function emojiShareMessage(results: boolean[]) {
   const emojis: string[] = results.map(r => r ? "✅" : "❌");
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 }
-// ---- END FIXED FUNCTION ----
 
 function generateShareText(results: boolean[]) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/trivia-game" : "";
@@ -218,14 +215,14 @@ const NFLTrivia: React.FC = () => {
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
     document.body.style.backgroundColor = "#451a03";
-    document.body.classList.add("font-montserrat");
+    document.body.style.fontFamily = "'Montserrat', sans-serif";
     return () => {
       document.body.style.backgroundImage = "";
       document.body.style.backgroundSize = "";
       document.body.style.backgroundPosition = "";
       document.body.style.backgroundAttachment = "";
       document.body.style.backgroundColor = "";
-      document.body.classList.remove("font-montserrat");
+      document.body.style.fontFamily = "";
     };
   }, []);
 
@@ -365,76 +362,297 @@ const NFLTrivia: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen font-montserrat">
+    <div className="trivia-bg">
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .trivia-bg {
+          min-height: 100vh;
+          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
+          font-family: 'Montserrat', Arial, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-bottom: 3rem;
         }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .trivia-card {
+          background: rgba(146, 84, 14, 0.93);
+          border: 3px solid #ffc233;
+          border-radius: 22px;
+          box-shadow: 0 8px 32px #0003;
+          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
+          max-width: 430px;
+          width: 95vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .trivia-navbar {
+          width: 100%;
+          display: flex;
+          gap: 1.1rem;
+          justify-content: center;
+          margin-bottom: 1.2rem;
+        }
+        .trivia-nav-btn {
+          background: #ea9800;
+          color: #fff;
+          font-weight: bold;
+          font-size: 1.13rem;
+          border: 2px solid #ffc233;
+          border-radius: 14px;
+          padding: 0.7rem 1.5rem;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+          box-shadow: 0 2px 10px #0002;
+          min-width: 0;
+        }
+        .trivia-nav-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.02);
+        }
+        .trivia-title {
+          color: #ffe066;
+          font-size: 2.1rem;
+          font-weight: 900;
+          text-align: center;
+          margin-bottom: 0.6rem;
+          letter-spacing: 0.02em;
+        }
+        .trivia-level {
+          color: #ffe066;
+          font-size: 1.08rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 1.2rem;
+        }
+        .trivia-question-text {
+          color: #fde68a;
+          font-size: 1.12rem;
+          margin-bottom: 1.5rem;
+          text-align: center;
+        }
+        .trivia-input {
+          width: 100%;
+          background: #ad6e1b;
+          border: 2.5px solid #ffc233;
+          color: #ffe066;
+          border-radius: 14px;
+          font-size: 1.18rem;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.1rem;
+          font-weight: 500;
+        }
+        .trivia-input::placeholder {
+          color: #ffe066cc;
+          opacity: 1;
+        }
+        .trivia-btn {
+          width: 100%;
+          background: #ea9800;
+          color: #fff;
+          font-size: 1.18rem;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          margin-bottom: 0.7rem;
+          margin-top: 0.2rem;
+          transition: background 0.16s, transform 0.13s;
+        }
+        .trivia-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
+        .trivia-btn.green {
+          background: #22c55e;
+          border-color: #16a34a;
+        }
+        .trivia-btn.green:hover {
+          background: #16a34a;
+        }
+        .trivia-btn.red {
+          background: #ef4444;
+          border-color: #b91c1c;
+        }
+        .trivia-btn.red:hover {
+          background: #b91c1c;
+        }
+        .trivia-feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .trivia-score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .trivia-timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-weight: bold;
+        }
         .share-buttons-row {
-          display: flex; flex-direction: row; gap: 14px; justify-content: center; align-items: center;
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
         }
         .clipboard-btn, .sms-btn {
-          background: #f9e38f; color: #533e1f; font-weight: bold; border-radius: 8px; border: 2px solid #cfb467;
-          padding: 7px 18px; cursor: pointer; box-shadow: 0 2px 8px #cfb46733; margin-top: 8px; margin-bottom: 8px;
-          transition: background 0.2s, color 0.2s; display: inline-block;
+          background: #f9e38f;
+          color: #533e1f;
+          font-weight: bold;
+          border-radius: 8px;
+          border: 2px solid #cfb467;
+          padding: 7px 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #cfb46733;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          transition: background 0.2s, color 0.2s;
+          display: inline-block;
         }
-        .clipboard-btn:hover, .sms-btn:hover { background: #fffbe7; color: #b88340; }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe7;
+          color: #b88340;
+        }
         .share-preview {
-          font-size: 1.15rem; color: #f9e38f; font-weight: bold; margin-top: 10px; margin-bottom: 6px; text-align: center; word-break: break-word;
+          font-size: 1.15rem;
+          color: #f9e38f;
+          font-weight: bold;
+          margin-top: 10px;
+          margin-bottom: 6px;
+          text-align: center;
+          word-break: break-word;
         }
         .share-link-ball {
-          color: #ffd700; text-decoration: underline; font-size: 1.15rem; font-weight: bold; margin-left: 6px; cursor: pointer;
+          color: #ffd700;
+          text-decoration: underline;
+          font-size: 1.15rem;
+          font-weight: bold;
+          margin-left: 6px;
+          cursor: pointer;
         }
-        .share-link-ball:hover { color: #ffbb33; text-decoration: underline; }
+        .share-link-ball:hover {
+          color: #ffbb33;
+          text-decoration: underline;
+        }
+        .trivia-modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .trivia-modal-content {
+          background: rgba(146, 64, 14, 0.97);
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
+          width: 100%;
+          max-width: 430px;
+          border: 2px solid #facc15;
+          color: #fde68a;
+          position: relative;
+        }
+        .trivia-modal-content h2 {
+          color: #fde68a;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .trivia-table {
+          width: 100%;
+          color: #fde68a;
+          border-collapse: collapse;
+          font-size: 1rem;
+        }
+        .trivia-table th,
+        .trivia-table td {
+          border: 1.5px solid #facc15;
+          padding: 0.6rem 0.3rem;
+          text-align: center;
+        }
+        .trivia-table thead {
+          background: #b45309;
+        }
+        .trivia-table-row:hover {
+          background: #d97706;
+        }
+        .trivia-close-btn {
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 1.3rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: background 0.16s, transform 0.12s;
+        }
+        .trivia-close-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        @media (max-width: 600px) {
+          .trivia-card, .trivia-modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
+        }
       `}</style>
-      <header className="w-full max-w-md bg-amber-800/90 text-yellow-300 text-center py-2 border-2 border-yellow-600 rounded-lg mb-4 shadow-lg transform hover:shadow-xl transition duration-200">
-        <p className="text-lg font-bold">New Games Daily at Midnight Eastern</p>
-      </header>
-      <div className="bg-amber-900/90 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-yellow-600 relative" id="gameContainer">
-        <div className="flex flex-wrap gap-2 justify-center mb-4">
-          <Link href="/" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Home</Link>
-          <Link href="/news" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">News</Link>
-          <Link href="/game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">Players</Link>
-          <Link href="/college-game" className="flex-1 bg-amber-600 text-white font-bold p-2 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 border-2 border-yellow-600 shadow-md text-center">College</Link>
+      <div className="trivia-card">
+        <div className="trivia-navbar">
+          <Link href="/" className="trivia-nav-btn">Home</Link>
+          <Link href="/news" className="trivia-nav-btn">News</Link>
+          <Link href="/game" className="trivia-nav-btn">Players</Link>
+          <Link href="/college-game" className="trivia-nav-btn">College</Link>
         </div>
-        <h1 className="text-3xl font-bold text-center text-yellow-300 mb-4">Trivia</h1>
-        <p className="text-center text-yellow-300 mb-2 text-lg">
-          Question: <span>{currentLevel}</span>/5
-        </p>
-        <p className="text-center text-yellow-300 mb-4 text-lg" id="questionText">
+        <div className="trivia-title">Trivia</div>
+        <div className="trivia-level">Question: {currentLevel}/5</div>
+        <div className="trivia-question-text">
           {questions.length ? questions[currentLevel - 1]?.question : "Loading..."}
-        </p>
+        </div>
         {!gameOver && questions.length > 0 && (
           <>
             <input
               ref={guessInputRef}
               type="text"
               placeholder="Enter your answer..."
-              className="w-full p-3 bg-amber-800/90 text-white border-2 border-yellow-600 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-600"
+              className="trivia-input"
               autoComplete="off"
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmitGuess();
               }}
               disabled={gameOver}
             />
             <button
-              type="button"
-              className={`w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 transform hover:scale-105 transition duration-200 font-bold mb-2 border-2 border-yellow-600 shadow-md ${
-                answerResults.length === currentLevel ? "hidden" : ""
-              }`}
+              className={`trivia-btn${answerResults.length === currentLevel ? " hidden" : ""}`}
               onClick={handleSubmitGuess}
               disabled={gameOver}
             >
               Submit Answer
             </button>
             <button
-              type="button"
-              className={`w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transform hover:scale-105 transition duration-200 font-bold ${
-                answerResults.length !== currentLevel ? "hidden" : ""
-              } border-2 border-yellow-600 shadow-md`}
+              className={`trivia-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
               onClick={handleNextLevel}
             >
               {currentLevel < 5 ? "Next Question" : "Finish"}
@@ -442,87 +660,76 @@ const NFLTrivia: React.FC = () => {
           </>
         )}
         <Link
-          id="backToHome"
           href="/"
-          className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold ${gameOver ? "" : "hidden"} border-2 border-yellow-600 shadow-md text-center`}
+          className={`trivia-btn red${gameOver ? "" : " hidden"}`}
         >
           Back to Home
         </Link>
         <button
-          type="button"
-          id="viewStats"
-          className={`w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 transform hover:scale-105 transition duration-200 font-bold mt-2 border-2 border-yellow-600 shadow-md ${gameOver ? "" : "hidden"}`}
+          className={`trivia-btn red${gameOver ? "" : " hidden"}`}
           onClick={() => setShowStats(true)}
         >
           View Stats
         </button>
-        <p className="text-center mt-4 text-xl font-bold animate-fade-in">{feedback}</p>
-        <div className="flex flex-row items-center justify-center gap-4 mt-4">
-          <div className="bg-amber-800/90 text-yellow-300 border-2 border-yellow-600 rounded px-2 py-1 text-sm font-bold">
-            {formatTime(elapsedTime)}
-          </div>
-          <p className="text-yellow-300 text-center mb-0">
-            Score: <span>{score}</span>/25
-          </p>
+        <div className="trivia-feedback">{feedback}</div>
+        <div className="trivia-score-row">
+          <div className="trivia-timer-box">{formatTime(elapsedTime)}</div>
+          <div className="score">Score: <span>{score}</span>/25</div>
         </div>
-        <div className={`text-center mt-4 ${showShare ? "" : "hidden"} text-yellow-300`} id="shareLink">
-          <div className="share-buttons-row">
-            <button className="clipboard-btn" onClick={handleClipboard}>
-              {clipboardMsg}
-            </button>
-            <a className="sms-btn" href={generateSmsLink(answerResults)} target="_blank">
-              Send as SMS
-            </a>
-          </div>
-          <div className="share-preview" dangerouslySetInnerHTML={{ __html: generateShareText(answerResults) }}></div>
+        <div className="share-buttons-row" style={{ marginTop: 16, display: showShare ? "flex" : "none" }}>
+          <button className="clipboard-btn" onClick={handleClipboard}>
+            {clipboardMsg}
+          </button>
+          <a className="sms-btn" href={generateSmsLink(answerResults)} target="_blank" rel="noopener noreferrer">
+            Send as SMS
+          </a>
         </div>
+        <div
+          className="share-preview"
+          style={{ display: showShare ? "block" : "none" }}
+          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults) }}
+        />
       </div>
-      {/* Stats Modal */}
       {showStats && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-amber-800/90 p-6 rounded-xl w-full max-w-md border-2 border-yellow-600 shadow-lg">
-            <h2 className="text-2xl font-bold text-center text-yellow-300 mb-4">
-              Your NFL Trivia Stats
-            </h2>
-            <p className="text-center text-yellow-300 mb-4 text-lg">
+        <div className="trivia-modal-bg">
+          <div className="trivia-modal-content">
+            <h2>Your NFL Trivia Stats</h2>
+            <p style={{ textAlign: "center", marginBottom: "1.2rem", fontSize: "1.15rem" }}>
               {cloudAvg !== null
                 ? `Average Score (cloud): ${cloudAvg.toFixed(1)}/25`
                 : `Average Score (local): ${
-                    statsHistory.length > 0
-                      ? (
-                          statsHistory.reduce((sum, e) => sum + e.score, 0) /
-                          statsHistory.length
-                        ).toFixed(1)
-                      : "0"
-                  }/25`}
+                  statsHistory.length > 0
+                    ? (
+                        statsHistory.reduce((sum, e) => sum + e.score, 0) /
+                        statsHistory.length
+                      ).toFixed(1)
+                    : "0"
+                }/25`}
             </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-yellow-300 border-collapse">
+            <div style={{ overflowX: "auto" }}>
+              <table className="trivia-table">
                 <thead>
-                  <tr className="bg-amber-700/90">
-                    <th className="p-2 border border-yellow-600">Attempt</th>
-                    <th className="p-2 border border-yellow-600">Score</th>
-                    <th className="p-2 border border-yellow-600">Time</th>
-                    <th className="p-2 border border-yellow-600">Date</th>
+                  <tr>
+                    <th>Attempt</th>
+                    <th>Score</th>
+                    <th>Time</th>
+                    <th>Date</th>
                   </tr>
                 </thead>
-                <tbody className="text-center">
+                <tbody>
                   {statsHistory.map((entry, idx) => (
-                    <tr className="hover:bg-amber-600" key={idx}>
-                      <td className="p-2 border border-yellow-600">{idx + 1}</td>
-                      <td className="p-2 border border-yellow-600">{entry.score}/25</td>
-                      <td className="p-2 border border-yellow-600">{formatTime(entry.time)}</td>
-                      <td className="p-2 border border-yellow-600">
-                        {new Date(entry.timestamp).toLocaleString()}
-                      </td>
+                    <tr className="trivia-table-row" key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.score}/25</td>
+                      <td>{formatTime(entry.time)}</td>
+                      <td>{new Date(entry.timestamp).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <button
-              type="button"
-              className="w-full bg-amber-600 text-white p-3 rounded-lg hover:bg-amber-700 font-bold mt-4 border-2 border-yellow-600 shadow-md"
+              className="trivia-close-btn"
               onClick={() => setShowStats(false)}
             >
               Close
