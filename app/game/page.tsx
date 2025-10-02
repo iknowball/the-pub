@@ -4,14 +4,14 @@ import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
-  getDoc,
   doc,
   addDoc,
+  getDoc,
+  setDoc,
   collection,
   query,
   where,
   getDocs,
-  setDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -75,11 +75,22 @@ function formatTime(seconds: number) {
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${minutes}:${secs}`;
 }
-function emojiShareMessage(results: boolean[]): string {
-  const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
-  while (emojis.length < maxLevels) (emojis as string[]).push("❓");
-  return emojis.join("");
+function getCurrentUserId(user: User | null) {
+  if (user) return user.uid;
+  let anonId = typeof window !== "undefined" ? localStorage.getItem("anonUserId") : null;
+  if (!anonId) {
+    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("anonUserId", anonId);
+    }
+  }
+  return anonId;
 }
+const emojiShareMessage = (results: boolean[]): string => {
+  const emojis: string[] = results.map((r) => (r ? "✅" : "❌"));
+  while (emojis.length < maxLevels) emojis.push("❓");
+  return emojis.join("");
+};
 function generateShareText(results: boolean[]) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
   return `${emojiShareMessage(results)} <a href="${homepage}" class="share-link-ball" target="_blank">Do you know ball?</a>`;
@@ -92,17 +103,6 @@ function generateSmsLink(results: boolean[]) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/game" : "";
   const msg = `${emojiShareMessage(results)} Do you know ball? ${homepage}`;
   return "sms:?body=" + encodeURIComponent(msg);
-}
-function getCurrentUserId(user: User | null) {
-  if (user) return user.uid;
-  let anonId = typeof window !== "undefined" ? localStorage.getItem("anonUserId") : null;
-  if (!anonId) {
-    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("anonUserId", anonId);
-    }
-  }
-  return anonId;
 }
 
 const GuessThePlayer: React.FC = () => {
@@ -126,6 +126,7 @@ const GuessThePlayer: React.FC = () => {
   const guessInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Local CSS only
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -144,6 +145,7 @@ const GuessThePlayer: React.FC = () => {
     };
   }, []);
 
+  // Firebase User Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -151,6 +153,7 @@ const GuessThePlayer: React.FC = () => {
     });
   }, []);
 
+  // Fetch daily players
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
@@ -165,7 +168,7 @@ const GuessThePlayer: React.FC = () => {
     fetchDailyPlayers();
   }, []);
 
-  // Image URL logic
+  // Load correct image url
   const player = players[currentLevel - 1];
   useEffect(() => {
     let isMounted = true;
