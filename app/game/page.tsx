@@ -254,7 +254,9 @@ const GuessDailyPlayer: React.FC = () => {
           display: block;
         }
         .gdp-input {
-          width: 100%;
+          width: 50%;
+          min-width: 140px;
+          max-width: 100%;
           background: #ad6e1b;
           border: 2.5px solid #ffc233;
           color: #ffe066;
@@ -263,6 +265,9 @@ const GuessDailyPlayer: React.FC = () => {
           padding: 1rem 1.2rem;
           margin-bottom: 1.1rem;
           font-weight: 500;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
         }
         .gdp-input::placeholder {
           color: #ffe066cc;
@@ -315,6 +320,7 @@ const GuessDailyPlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gdp-img-wrap { max-width: 98vw; height: 34vw; min-height: 120px;}
+          .gdp-input { width: 90vw; min-width: 80px; }
         }
       `}</style>
       <div className="gdp-card">
