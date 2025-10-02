@@ -273,10 +273,11 @@ const GuessDailyPlayer: React.FC = () => {
           color: #ffe066cc;
           opacity: 1;
         }
-        .gdp-btn {
-          width: 100%;
-          background: #ea9800;
-          color: #fff;
+        .gdp-btn,
+        .gdp-btn-green {
+          width: 50%;
+          min-width: 140px;
+          max-width: 100%;
           font-size: 1.2rem;
           font-weight: bold;
           padding: 1rem 0;
@@ -287,11 +288,26 @@ const GuessDailyPlayer: React.FC = () => {
           margin-bottom: 0.8rem;
           margin-top: 0.2rem;
           transition: background 0.16s, transform 0.13s;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .gdp-btn {
+          background: #ea9800;
+          color: #fff;
         }
         .gdp-btn:hover {
           background: #e0a92b;
           color: #fffbe7;
           transform: scale(1.04);
+        }
+        .gdp-btn-green {
+          background: #22c55e;
+          color: #fff;
+          border-color: #a3e635;
+        }
+        .gdp-btn-green:hover {
+          background: #16a34a;
         }
         .gdp-feedback {
           text-align: center;
@@ -320,7 +336,7 @@ const GuessDailyPlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gdp-img-wrap { max-width: 98vw; height: 34vw; min-height: 120px;}
-          .gdp-input { width: 90vw; min-width: 80px; }
+          .gdp-input, .gdp-btn, .gdp-btn-green { width: 90vw; min-width: 80px; }
         }
       `}</style>
       <div className="gdp-card">
@@ -353,11 +369,13 @@ const GuessDailyPlayer: React.FC = () => {
                 if (e.key === "Enter") handleGuess();
               }}
             />
-            <button className="gdp-btn" onClick={handleGuess} disabled={guessed}>
-              Submit Guess
-            </button>
+            {!guessed && (
+              <button className="gdp-btn" onClick={handleGuess} disabled={guessed}>
+                Submit Guess
+              </button>
+            )}
             {guessed && (
-              <button className="gdp-btn" style={{marginTop: "0.3rem"}} onClick={handleNext}>
+              <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
                 {currentLevel < maxLevels ? "Next Player" : "Finish"}
               </button>
             )}
