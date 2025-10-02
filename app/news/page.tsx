@@ -234,8 +234,8 @@ const PubNewsstand: React.FC = () => {
       <nav className="pub-nav">
         <div className="pub-nav-inner">
           <a href="/" className="pub-link">Home</a>
-          <a href="/bar" className="pub-link">Hit the Bar</a>
-          <a href="/games-room" className="pub-link">Games</a>
+          <a href="/bulletin" className="pub-link">Hit the Bar</a>
+          <a href="/index-nfl" className="pub-link">Games</a>
         </div>
       </nav>
       <main className="pub-main" id="news-list">
