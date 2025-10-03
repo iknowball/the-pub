@@ -370,13 +370,23 @@ const NFLTrivia: React.FC = () => {
     }
   }, [questions, gameOver]);
 
-  // Handle answer submit
+  // ---- ANSWER LOGIC: give credit if any word matches ----
   const handleSubmitGuess = () => {
     if (!questions.length) return;
-    const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
+    const guessRaw = guessInputRef.current?.value.trim() || "";
+    const guess = guessRaw.toLowerCase();
     const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
     setFeedback("");
-    if (guess === correctAnswer) {
+
+    // Partial match logic: split both into words, check if any word in correctAnswer is in guess
+    const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
+    const guessWords = guess.split(/\s+/).filter(Boolean);
+
+    const wordMatch =
+      correctWords.some((cw) => guessWords.includes(cw)) ||
+      guessWords.some((gw) => correctWords.includes(gw));
+
+    if (wordMatch) {
       setScore((s) => s + 5);
       setFeedback("Nailed it! +5 points! 🏀");
       setAnswerResults((arr) => [...arr, true]);
