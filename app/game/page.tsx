@@ -5,7 +5,13 @@ import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  addDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
 import { getStorage, ref as storageRef, getDownloadURL } from "firebase/storage";
@@ -40,6 +46,48 @@ function formatTime(seconds: number) {
     .padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${minutes}:${secs}`;
+}
+
+function getCurrentUserId(user: User | null) {
+  if (user) return user.uid;
+  let anonId = typeof window !== "undefined" ? localStorage.getItem("anonUserId") : null;
+  if (!anonId) {
+    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("anonUserId", anonId);
+    }
+  }
+  return anonId;
+}
+
+// Record score to gameScores and update average in userAverages
+async function recordGameScore(user: User | null, score: number, time: number) {
+  try {
+    const userId = getCurrentUserId(user);
+    await addDoc(collection(db, "gameScores"), {
+      userId,
+      score,
+      time,
+      playedAt: new Date().toISOString(),
+    });
+    // Update user average
+    const q = query(collection(db, "gameScores"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    let total = 0, count = 0;
+    snap.forEach((doc) => {
+      total += doc.data().score;
+      count += 1;
+    });
+    const avg = count === 0 ? 0 : total / count;
+    await setDoc(doc(db, "userAverages", userId), {
+      userId,
+      averageScore: avg,
+      lastUpdated: new Date().toISOString(),
+      gamesPlayed: count,
+    });
+  } catch (err) {
+    // Optionally handle error
+  }
 }
 
 const GuessDailyPlayer: React.FC = () => {
@@ -159,6 +207,8 @@ const GuessDailyPlayer: React.FC = () => {
     } else {
       setGameOver(true);
       setFeedback(`Game Over! You scored ${score} out of ${maxLevels}.`);
+      // RECORD SCORE TO FIREBASE
+      recordGameScore(user, score, elapsedTime);
     }
   };
 
@@ -242,7 +292,6 @@ const GuessDailyPlayer: React.FC = () => {
           margin-bottom: 1.5rem;
           width: 100%;
           max-width: 340px;
-          /* Make image taller */
           height: 400px;
           display: flex;
           align-items: center;
@@ -336,7 +385,6 @@ const GuessDailyPlayer: React.FC = () => {
         }
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
-          /* Make the image taller on mobile */
           .gdp-img-wrap { max-width: 98vw; height: 65vw; min-height: 220px;}
           .gdp-input, .gdp-btn, .gdp-btn-green { width: 90vw; min-width: 80px; }
         }
