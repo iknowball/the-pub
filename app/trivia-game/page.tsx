@@ -314,7 +314,6 @@ const NFLTrivia: React.FC = () => {
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
     setFeedback("");
-    let result = false;
     if (guess === correctAnswer) {
       setScore((s) => s + 5);
       setFeedback("Nailed it! +5 points! 🏀");
@@ -390,7 +389,9 @@ const NFLTrivia: React.FC = () => {
           display: flex;
           gap: 1.1rem;
           justify-content: center;
+          align-items: center;
           margin-bottom: 1.2rem;
+          text-align: center;
         }
         .trivia-nav-btn {
           background: #ea9800;
