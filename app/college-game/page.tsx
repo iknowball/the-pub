@@ -4,11 +4,11 @@ import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore,
-  collection,
   doc,
   addDoc,
   getDoc,
   setDoc,
+  collection,
   query,
   where,
   getDocs,
@@ -90,6 +90,43 @@ const emojiShareMessage = (results: boolean[]): string => {
   while (emojis.length < maxLevels) emojis.push("❓");
   return emojis.join("");
 };
+
+function normalizeWord(word: string) {
+  // normalize common abbreviations and remove punctuation
+  return word
+    .replace(/st\.$/i, "state")
+    .replace(/st$/i, "state")
+    .replace(/[\W_]+/g, "")
+    .toLowerCase();
+}
+
+function wordsMatch(guess: string, answer: string) {
+  // If any word in answer is present (normalized) in guess, or vice versa, count as correct
+  const norm = (str: string) =>
+    str
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(normalizeWord)
+      .filter(Boolean);
+
+  const guessWords = norm(guess);
+  const answerWords = norm(answer);
+
+  // Try for any exact word match
+  for (const gw of guessWords) {
+    if (answerWords.includes(gw)) return true;
+  }
+  for (const aw of answerWords) {
+    if (guessWords.includes(aw)) return true;
+  }
+  // If not, try forgiving for Levenshtein distance of 1 for any word
+  for (const gw of guessWords) {
+    for (const aw of answerWords) {
+      if (getLevenshteinDistance(gw, aw) <= 1) return true;
+    }
+  }
+  return false;
+}
 
 const CollegeGuess: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -253,16 +290,16 @@ const CollegeGuess: React.FC = () => {
 
   const handleSubmitGuess = () => {
     if (!athlete || gameOver) return;
-    const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
-    const correctCollege = athlete.college.toLowerCase();
+    const guess = guessInputRef.current?.value.trim() || "";
+    const correctCollege = athlete.college;
     setFeedback("");
-    if (guess === correctCollege) {
+    if (wordsMatch(guess, correctCollege)) {
       setScore((s) => s + 5);
       setFeedback("Nailed it! +5 points! 🏀");
       setAnswerResults((arr) => [...arr, true]);
       setTimerActive(false);
     } else {
-      const distance = getLevenshteinDistance(guess, correctCollege);
+      const distance = getLevenshteinDistance(guess.toLowerCase(), correctCollege.toLowerCase());
       if (distance <= 2 && guess.length > 0) {
         setFeedback("So close! Try again, you're off by a letter or two!");
         if (guessInputRef.current) guessInputRef.current.value = "";
@@ -394,6 +431,28 @@ const CollegeGuess: React.FC = () => {
         .cg-level {
           color: #fde68a;
           font-size: 1.08rem;
+        }
+        .cg-player-name-wrap {
+          background: #442200;
+          border: 3px solid #ffc233;
+          border-radius: 16px;
+          overflow: hidden;
+          margin-bottom: 1.5rem;
+          width: 100%;
+          max-width: 340px;
+          height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cg-player-name {
+          color: #ffd700;
+          font-size: 2.1rem;
+          font-weight: bold;
+          text-align: center;
+          width: 100%;
+          word-break: break-word;
+          padding: 0.5rem 1rem;
         }
         .cg-input {
           width: 100%;
@@ -598,11 +657,11 @@ const CollegeGuess: React.FC = () => {
         </div>
         <h1 className="cg-title">College Guess</h1>
         <p className="cg-level">Level: <span>{currentLevel}</span>/{maxLevels}</p>
+        <div className="cg-player-name-wrap">
+          {athlete && <div className="cg-player-name">{athlete.name}</div>}
+        </div>
         {!gameOver && athlete && (
           <>
-            <p className="cg-level" style={{ marginBottom: "1.3rem" }}>
-              Guess the college for <span style={{ fontWeight: 700 }}>{athlete.name}</span>
-            </p>
             <input
               ref={guessInputRef}
               type="text"
