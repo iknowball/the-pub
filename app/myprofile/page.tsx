@@ -73,6 +73,7 @@ const PubProfile: React.FC = () => {
   const [passwordError, setPasswordError] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  // STATS: Direct from Firebase
   const [stats, setStats] = useState<{ triviaAvg: string; playerAvg: string; collegeAvg: string }>({
     triviaAvg: "N/A",
     playerAvg: "N/A",
@@ -141,24 +142,31 @@ const PubProfile: React.FC = () => {
     });
   }, [viewedUsername]);
 
-  // STATS MODAL LOADING
-  const loadStats = async () => {
-    if (!viewedUid) return setStats({ triviaAvg: "N/A", playerAvg: "N/A", collegeAvg: "N/A" });
-    let triviaAvg = "N/A";
-    let playerAvg = "N/A";
-    let collegeAvg = "N/A";
-    try {
-      const triviaDoc = await getDoc(doc(db, "triviaAverages", viewedUid));
-      if (triviaDoc.exists()) triviaAvg = (triviaDoc.data().averageScore ?? "N/A").toFixed(2);
-      const userAvgDoc = await getDoc(doc(db, "userAverages", viewedUid));
-      if (userAvgDoc.exists()) playerAvg = (userAvgDoc.data().averageScore ?? "N/A").toFixed(2);
-      const collegeDoc = await getDoc(doc(db, "collegeAverages", viewedUid));
-      if (collegeDoc.exists()) collegeAvg = (collegeDoc.data().averageScore ?? "N/A").toFixed(2);
-      setStats({ triviaAvg, playerAvg, collegeAvg });
-    } catch {
-      setStats({ triviaAvg: "N/A", playerAvg: "N/A", collegeAvg: "N/A" });
-    }
-  };
+  // STATS MODAL LOADING - DIRECT FROM FIREBASE
+  useEffect(() => {
+    if (!statsModalOpen) return;
+    const loadStats = async () => {
+      if (!viewedUid) {
+        setStats({ triviaAvg: "N/A", playerAvg: "N/A", collegeAvg: "N/A" });
+        return;
+      }
+      try {
+        const [triviaDoc, playerDoc, collegeDoc] = await Promise.all([
+          getDoc(doc(db, "triviaAverages", viewedUid)),
+          getDoc(doc(db, "userAverages", viewedUid)),
+          getDoc(doc(db, "collegeAverages", viewedUid)),
+        ]);
+        setStats({
+          triviaAvg: triviaDoc.exists() && triviaDoc.data().averageScore != null ? Number(triviaDoc.data().averageScore).toFixed(2) : "N/A",
+          playerAvg: playerDoc.exists() && playerDoc.data().averageScore != null ? Number(playerDoc.data().averageScore).toFixed(2) : "N/A",
+          collegeAvg: collegeDoc.exists() && collegeDoc.data().averageScore != null ? Number(collegeDoc.data().averageScore).toFixed(2) : "N/A",
+        });
+      } catch {
+        setStats({ triviaAvg: "N/A", playerAvg: "N/A", collegeAvg: "N/A" });
+      }
+    };
+    loadStats();
+  }, [statsModalOpen, viewedUid]);
 
   // SETTINGS MODAL LOGIC
   const handleSignOut = async () => {
@@ -602,7 +610,7 @@ const PubProfile: React.FC = () => {
           <div className="profile-email">{viewedUser?.email || loggedInUser?.email || ""}</div>
         </div>
         <div className="profile-actions">
-          <button className="profile-btn" onClick={() => { setStatsModalOpen(true); loadStats(); }}>
+          <button className="profile-btn" onClick={() => setStatsModalOpen(true)}>
             Stats
           </button>
           {ownProfile && (
