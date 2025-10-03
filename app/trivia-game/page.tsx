@@ -32,7 +32,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// === EXTENDED NFL_QUESTION_POOL: 75 Medium Difficulty Trivia Questions ===
+// 75 medium difficulty NFL trivia questions (see previous code for full list)
 const NFL_QUESTION_POOL = [
   { question: "Which team won the Super Bowl in 2010?", answer: "Saints" },
   { question: "Who was the NFL MVP in 2018?", answer: "Patrick Mahomes" },
@@ -548,6 +548,13 @@ const NFLTrivia: React.FC = () => {
           margin-top: 0.2rem;
           transition: background 0.16s, transform 0.13s;
         }
+        .trivia-btn.submit {
+          width: 50%;
+          min-width: 120px;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
         .trivia-btn:hover {
           background: #e0a92b;
           color: #fffbe7;
@@ -731,7 +738,7 @@ const NFLTrivia: React.FC = () => {
               disabled={gameOver}
             />
             <button
-              className={`trivia-btn${answerResults.length === currentLevel ? " hidden" : ""}`}
+              className={`trivia-btn submit${answerResults.length === currentLevel ? " hidden" : ""}`}
               onClick={handleSubmitGuess}
               disabled={gameOver}
             >
