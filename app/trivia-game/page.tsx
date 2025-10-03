@@ -32,7 +32,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// NFL trivia pool
+// === EXTENDED NFL_QUESTION_POOL: 75 Medium Difficulty Trivia Questions ===
 const NFL_QUESTION_POOL = [
   { question: "Which team won the Super Bowl in 2010?", answer: "Saints" },
   { question: "Who was the NFL MVP in 2018?", answer: "Patrick Mahomes" },
@@ -50,6 +50,68 @@ const NFL_QUESTION_POOL = [
   { question: "Which QB started for the Eagles in the 2018 Super Bowl?", answer: "Nick Foles" },
   { question: "Which wide receiver was known as 'Megatron'?", answer: "Calvin Johnson" },
   { question: "Who led the NFL in rushing yards in 2016?", answer: "Ezekiel Elliott" },
+  { question: "Who holds the NFL record for most receiving yards in a single season?", answer: "Calvin Johnson" },
+  { question: "Who wore number 21 for the Chargers and was known for his running ability?", answer: "LaDainian Tomlinson" },
+  { question: "Which team drafted Aaron Rodgers?", answer: "Packers" },
+  { question: "Who was the MVP of Super Bowl XLIX?", answer: "Tom Brady" },
+  { question: "Which team did Peyton Manning finish his career with?", answer: "Broncos" },
+  { question: "Who is the NFL's all-time leading scorer?", answer: "Adam Vinatieri" },
+  { question: "Which team lost four straight Super Bowls in the 1990s?", answer: "Bills" },
+  { question: "Who was known as 'The Bus'?", answer: "Jerome Bettis" },
+  { question: "What team was Brett Favre traded to after leaving the Packers?", answer: "Jets" },
+  { question: "Who was the first overall pick in the 2016 NFL Draft?", answer: "Jared Goff" },
+  { question: "Which tight end caught the most touchdowns in a single season?", answer: "Rob Gronkowski" },
+  { question: "Who was the quarterback for the 2007 undefeated Patriots?", answer: "Tom Brady" },
+  { question: "Which city hosted the first Super Bowl?", answer: "Los Angeles" },
+  { question: "Which kicker set the longest field goal record in 2013?", answer: "Matt Prater" },
+  { question: "Who replaced Tony Romo as Cowboys starting QB in 2016?", answer: "Dak Prescott" },
+  { question: "Which player won both NFL and Super Bowl MVP in 1989?", answer: "Joe Montana" },
+  { question: "Which team drafted Larry Fitzgerald?", answer: "Cardinals" },
+  { question: "Who led the league in passing yards in 2019?", answer: "Jameis Winston" },
+  { question: "Which head coach won a Super Bowl with two different teams?", answer: "Don Shula" },
+  { question: "Who is the all-time leader in interceptions thrown?", answer: "Brett Favre" },
+  { question: "Which team did Marshawn Lynch play for during the 'Beast Quake' run?", answer: "Seahawks" },
+  { question: "Who was the first rookie QB to start for the Patriots after Tom Brady?", answer: "Mac Jones" },
+  { question: "Which running back was drafted by the Rams in 2010 and later played for the Patriots?", answer: "Steven Jackson" },
+  { question: "Who set the record for most consecutive games with a touchdown pass?", answer: "Drew Brees" },
+  { question: "Who was the Browns' starting QB in 2020?", answer: "Baker Mayfield" },
+  { question: "Which team won Super Bowl LIII?", answer: "Patriots" },
+  { question: "Who led the league in receptions in 2020?", answer: "Stefon Diggs" },
+  { question: "Who was the 2017 NFL MVP?", answer: "Tom Brady" },
+  { question: "Who was the first African American coach to win a Super Bowl?", answer: "Tony Dungy" },
+  { question: "Which player holds the record for most career fumble recoveries?", answer: "Rod Woodson" },
+  { question: "Which franchise has the most regular season wins all-time?", answer: "Bears" },
+  { question: "Who caught the Minneapolis Miracle?", answer: "Stefon Diggs" },
+  { question: "Who won Defensive Player of the Year in 2019?", answer: "Stephon Gilmore" },
+  { question: "Which team plays home games at Arrowhead Stadium?", answer: "Chiefs" },
+  { question: "Who was the 2021 NFL Draft's number one overall pick?", answer: "Trevor Lawrence" },
+  { question: "Which owner bought the Cowboys in 1989?", answer: "Jerry Jones" },
+  { question: "Who led the league in rushing touchdowns in 2015?", answer: "Devonta Freeman" },
+  { question: "Who became the NFL’s all-time leading rusher in 2002?", answer: "Emmitt Smith" },
+  { question: "Which team upset the Patriots in Super Bowl XLII?", answer: "Giants" },
+  { question: "Who was the 2014 NFL MVP?", answer: "Aaron Rodgers" },
+  { question: "Which linebacker was drafted by the Bears in 2000 and became a Hall of Famer?", answer: "Brian Urlacher" },
+  { question: "Who replaced Peyton Manning as Colts quarterback?", answer: "Andrew Luck" },
+  { question: "Who was the 2013 NFL rushing leader?", answer: "LeSean McCoy" },
+  { question: "Which team has the most playoff wins in NFL history?", answer: "Patriots" },
+  { question: "Who was the 2020 NFL Defensive Rookie of the Year?", answer: "Chase Young" },
+  { question: "Which coach won Super Bowls with both the Packers and Seahawks?", answer: "Mike Holmgren" },
+  { question: "Which player scored the first touchdown in Super Bowl history?", answer: "Max McGee" },
+  { question: "Who is the only player to win MVP and Comeback Player in the same season?", answer: "Tom Brady" },
+  { question: "Who was the first player to rush for 2,000 yards in a season?", answer: "O.J. Simpson" },
+  { question: "Which kicker is the NFL’s all-time field goals made leader?", answer: "Adam Vinatieri" },
+  { question: "Who was the first head coach of the Carolina Panthers?", answer: "Dom Capers" },
+  { question: "Which running back was known as 'The Nigerian Nightmare'?", answer: "Christian Okoye" },
+  { question: "Who had the most sacks in the 2022 NFL season?", answer: "Nick Bosa" },
+  { question: "Who was the only undefeated team in NFL history?", answer: "Dolphins" },
+  { question: "Which team is known as the 'Dawg Pound'?", answer: "Browns" },
+  { question: "Who was the 2009 NFL Comeback Player of the Year?", answer: "Tom Brady" },
+  { question: "Which team did Kurt Warner win a Super Bowl with?", answer: "Rams" },
+  { question: "Who was the first NFL player to catch 100 passes in a season?", answer: "Lionel Taylor" },
+  { question: "Which QB was known as 'Broadway Joe'?", answer: "Joe Namath" },
+  { question: "Who is the all-time leader in forced fumbles?", answer: "Robert Mathis" },
+  { question: "Who was the first overall pick in the 2012 NFL Draft?", answer: "Andrew Luck" },
+  { question: "Which team did Shannon Sharpe win his last Super Bowl with?", answer: "Ravens" }
 ];
 
 function getEasternMidnightDateKey() {
@@ -387,7 +449,7 @@ const NFLTrivia: React.FC = () => {
         .trivia-navbar {
           width: 100%;
           display: flex;
-          gap: 1.1rem;
+          gap: 0.7rem;
           justify-content: center;
           align-items: center;
           margin-bottom: 1.2rem;
@@ -397,15 +459,23 @@ const NFLTrivia: React.FC = () => {
           background: #ea9800;
           color: #fff;
           font-weight: bold;
-          font-size: 1.13rem;
+          font-size: 0.93rem;
           border: 2px solid #ffc233;
           border-radius: 14px;
-          padding: 0.7rem 1.5rem;
+          padding: 0.5rem 0.7rem;
           text-align: center;
           text-decoration: none;
           transition: background 0.13s, color 0.13s, transform 0.12s;
           box-shadow: 0 2px 10px #0002;
           min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 80px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .trivia-nav-btn:hover {
           background: #e0a92b;
@@ -434,7 +504,8 @@ const NFLTrivia: React.FC = () => {
           text-align: center;
         }
         .trivia-input {
-          width: 100%;
+          width: 50%;
+          min-width: 120px;
           background: #ad6e1b;
           border: 2.5px solid #ffc233;
           color: #ffe066;
@@ -443,6 +514,10 @@ const NFLTrivia: React.FC = () => {
           padding: 1rem 1.2rem;
           margin-bottom: 1.1rem;
           font-weight: 500;
+          box-sizing: border-box;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
         }
         .trivia-input::placeholder {
           color: #ffe066cc;
