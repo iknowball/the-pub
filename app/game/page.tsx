@@ -242,7 +242,8 @@ const GuessDailyPlayer: React.FC = () => {
           margin-bottom: 1.5rem;
           width: 100%;
           max-width: 340px;
-          height: 240px;
+          /* Make image taller */
+          height: 400px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -335,7 +336,8 @@ const GuessDailyPlayer: React.FC = () => {
         }
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
-          .gdp-img-wrap { max-width: 98vw; height: 34vw; min-height: 120px;}
+          /* Make the image taller on mobile */
+          .gdp-img-wrap { max-width: 98vw; height: 65vw; min-height: 220px;}
           .gdp-input, .gdp-btn, .gdp-btn-green { width: 90vw; min-width: 80px; }
         }
       `}</style>
