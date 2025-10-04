@@ -303,28 +303,6 @@ const GuessDailyPlayer: React.FC = () => {
           object-fit: cover;
           display: block;
         }
-        .gdp-player-bar-wrap {
-          width: 50%;
-          min-width: 140px;
-          max-width: 100%;
-          margin-left: auto;
-          margin-right: auto;
-          margin-bottom: 1.1rem;
-          display: block;
-        }
-        .gdp-player-bar {
-          background: #ffe066;
-          color: #442200;
-          font-size: 1.13rem;
-          font-weight: bold;
-          border-radius: 14px;
-          padding: 0.9rem 1.1rem;
-          text-align: center;
-          box-shadow: 0 2px 10px #0002;
-          border: 2px solid #ffc233;
-          width: 100%;
-          box-sizing: border-box;
-        }
         .gdp-input {
           width: 50%;
           min-width: 140px;
@@ -408,7 +386,7 @@ const GuessDailyPlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gdp-img-wrap { max-width: 98vw; height: 65vw; min-height: 220px;}
-          .gdp-input, .gdp-btn, .gdp-btn-green, .gdp-player-bar-wrap { width: 90vw; min-width: 80px; }
+          .gdp-input, .gdp-btn, .gdp-btn-green { width: 90vw; min-width: 80px; }
         }
       `}</style>
       <div className="gdp-card">
@@ -430,9 +408,6 @@ const GuessDailyPlayer: React.FC = () => {
         </div>
         {!gameOver && player && (
           <>
-            <div className="gdp-player-bar-wrap">
-              <div className="gdp-player-bar">{player.name}</div>
-            </div>
             <input
               ref={guessInputRef}
               type="text"
