@@ -304,15 +304,15 @@ const GuessDailyPlayer: React.FC = () => {
           display: block;
         }
         .gdp-input {
-          width: 45%;
-          min-width: 120px;
-          max-width: 100%;
+          width: 48%;
+          min-width: 90px;
+          max-width: 190px;
           background: #ad6e1b;
           border: 2.5px solid #ffc233;
           color: #ffe066;
           border-radius: 14px;
-          font-size: 1.1rem;
-          padding: 0.85rem 1.1rem;
+          font-size: 1.04rem;
+          padding: 0.72rem 0.9rem;
           margin-bottom: 1.1rem;
           font-weight: 500;
           display: block;
@@ -325,12 +325,12 @@ const GuessDailyPlayer: React.FC = () => {
         }
         .gdp-btn,
         .gdp-btn-green {
-          width: 45%;
-          min-width: 120px;
-          max-width: 100%;
-          font-size: 1.1rem;
+          width: 48%;
+          min-width: 90px;
+          max-width: 190px;
+          font-size: 1.04rem;
           font-weight: bold;
-          padding: 0.85rem 0;
+          padding: 0.72rem 0;
           border-radius: 14px;
           border: 2px solid #ffc233;
           box-shadow: 0 2px 12px #0002;
@@ -386,7 +386,7 @@ const GuessDailyPlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gdp-img-wrap { max-width: 98vw; height: 65vw; min-height: 220px;}
-          .gdp-input, .gdp-btn, .gdp-btn-green { width: 72vw; min-width: 70px; font-size: 1rem; padding: 0.7rem 0.9rem; }
+          .gdp-input, .gdp-btn, .gdp-btn-green { width: 70vw; min-width: 70px; max-width: 160px; font-size: 0.98rem; padding: 0.55rem 0.6rem; }
         }
       `}</style>
       <div className="gdp-card">
