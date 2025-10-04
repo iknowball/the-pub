@@ -20,6 +20,7 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // FIREBASE CONFIG
 const firebaseConfig = {
@@ -31,6 +32,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 // Helper: get ?user=username from URL
 function getQueryParam(name: string) {
@@ -69,10 +71,13 @@ const PubProfile: React.FC = () => {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [editUsernameOpen, setEditUsernameOpen] = useState(false);
   const [editPasswordOpen, setEditPasswordOpen] = useState(false);
+  const [editAvatarOpen, setEditAvatarOpen] = useState(false);
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [avatarError, setAvatarError] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   // STATS: Direct from Firebase
   const [stats, setStats] = useState<{ triviaAvg: string; playerAvg: string; collegeAvg: string }>({
     triviaAvg: "N/A",
@@ -86,7 +91,7 @@ const PubProfile: React.FC = () => {
 
   // STYLING
   useEffect(() => {
-    document.body.style.background = "linear-gradient(135deg, #f3f4fa 0%, #e9e5e0 100%)";
+    document.body.style.background = "linear-gradient(135deg, #181c23 0%, #2c2e36 100%)";
     document.body.style.fontFamily = "'Montserrat', 'Segoe UI', Arial, sans-serif";
     return () => {
       document.body.style.background = "";
@@ -176,14 +181,22 @@ const PubProfile: React.FC = () => {
   const handleEditUsername = () => {
     setEditUsernameOpen(true);
     setEditPasswordOpen(false);
+    setEditAvatarOpen(false);
     setUsernameError("");
     setNewUsername("");
   };
   const handleEditPassword = () => {
     setEditPasswordOpen(true);
     setEditUsernameOpen(false);
+    setEditAvatarOpen(false);
     setPasswordError("");
     setNewPassword("");
+  };
+  const handleEditAvatar = () => {
+    setEditAvatarOpen(true);
+    setEditUsernameOpen(false);
+    setEditPasswordOpen(false);
+    setAvatarError("");
   };
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,6 +235,38 @@ const PubProfile: React.FC = () => {
     } else {
       setPasswordError("Not signed in.");
     }
+  };
+
+  // Avatar upload logic
+  const handleAvatarUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAvatarError("");
+    setAvatarUploading(true);
+    const fileInput = document.getElementById("avatarFile") as HTMLInputElement;
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+      setAvatarError("Please select an image file.");
+      setAvatarUploading(false);
+      return;
+    }
+    const file = fileInput.files[0];
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("File must be an image.");
+      setAvatarUploading(false);
+      return;
+    }
+    try {
+      if (loggedInUid) {
+        const storageRef = ref(storage, `avatars/${loggedInUid}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        await updateDoc(doc(db, "users", loggedInUid), { avatar: url });
+        setViewedUser((u) => u ? { ...u, avatar: url } : u);
+        setAvatarError("Profile image updated!");
+      }
+    } catch (err: any) {
+      setAvatarError("Failed to upload. Try a different file.");
+    }
+    setAvatarUploading(false);
   };
 
   // SEARCH LOGIC
@@ -390,41 +435,44 @@ const PubProfile: React.FC = () => {
       <style>{`
         .profile-bg {
           min-height: 100vh;
-          background: linear-gradient(135deg, #f3f4fa 0%, #e9e5e0 100%);
+          background: linear-gradient(135deg, #181c23 0%, #2c2e36 100%);
         }
         .profile-card {
-          background: #fff;
-          box-shadow: 0 6px 32px rgba(76,52,23,0.15);
+          background: #222936;
+          box-shadow: 0 8px 40px 8px #000d2f44;
           border-radius: 2rem;
-          max-width: 520px;
+          max-width: 560px;
           width: 100%;
-          padding: 2.5rem 2rem;
+          padding: 2.7rem 2rem;
           margin: 1rem;
+          border: 3px solid #e1b40c;
         }
         .profile-header {
           text-align: center;
           margin-bottom: 1.5rem;
         }
         .profile-avatar {
-          width: 100px;
-          height: 100px;
+          width: 110px;
+          height: 110px;
           border-radius: 50%;
           object-fit: cover;
-          box-shadow: 0 2px 14px rgba(76,52,23,0.08);
-          border: 2.5px solid #a97c50;
+          box-shadow: 0 2px 18px #e1b40c66;
+          border: 3.5px solid #e1b40c;
           margin-bottom: 1rem;
-          background: #f3f4fa;
+          background: #fffbe3;
         }
         .profile-username {
-          font-size: 2.1rem;
+          font-size: 2.2rem;
           font-weight: bold;
-          color: #2b2b2b;
+          color: #ffe146;
           margin-bottom: 0.25rem;
+          letter-spacing: 1px;
+          text-shadow: 1px 2px 7px #000c;
         }
         .profile-email {
           font-size: 1rem;
-          color: #a3927b;
-          margin-bottom: 1.5rem;
+          color: #ffc107b5;
+          margin-bottom: 1.4rem;
         }
         .profile-actions {
           display: flex;
@@ -433,65 +481,70 @@ const PubProfile: React.FC = () => {
           margin-bottom: 1.8rem;
         }
         .profile-btn {
-          background: #f3e7cf;
-          color: #3a2c18;
+          background: linear-gradient(90deg, #e1b40c 50%, #f8be37 100%);
+          color: #222936;
           font-weight: bold;
           border-radius: 1rem;
-          border: 2px solid #d9b16e;
+          border: 2px solid #ffe146;
           padding: 0.65rem 1.2rem;
-          transition: background 0.18s, color 0.18s, transform 0.14s;
-          box-shadow: 0 2px 12px #a3927b22;
+          transition: background 0.16s, color 0.14s, transform 0.14s;
+          box-shadow: 0 2px 12px #ffe14644;
+          text-shadow: 0 1px 5px #fffac0;
         }
         .profile-btn:hover {
-          background: #ffe6a3;
-          color: #7b5625;
-          transform: scale(1.04);
+          background: #fffbe3;
+          color: #b28704;
+          transform: scale(1.06);
         }
         .profile-tabs {
           display: flex;
           gap: 1.2rem;
           justify-content: center;
-          margin-bottom: 1.8rem;
+          margin-bottom: 1.7rem;
         }
         .tab-btn {
           background: transparent;
           border: none;
-          font-size: 1.14rem;
-          font-weight: 500;
-          color: #a3927b;
-          padding: 0.5rem 1rem;
-          border-radius: 0.8rem;
+          font-size: 1.19rem;
+          font-weight: 600;
+          color: #ffe146a8;
+          padding: 0.48rem 1.05rem;
+          border-radius: 0.8rem 0.8rem 0 0;
           cursor: pointer;
-          transition: background 0.18s, color 0.14s;
+          transition: background 0.19s, color 0.14s;
+          border-bottom: 3px solid transparent;
+          letter-spacing: 0.5px;
         }
         .tab-btn.active {
-          background: #ffe6a3;
-          color: #7b5625;
+          background: #ffe14618;
+          color: #ffe146;
           font-weight: bold;
+          border-bottom: 3px solid #ffe146;
         }
         .tab-content {
           margin-bottom: 1.2rem;
         }
         .wall-post-card, .take-card, .team-card {
-          background: #f8f7f4;
+          background: linear-gradient(90deg, #222936 75%, #ffe1461a 100%);
           border-radius: 1.1rem;
           padding: 1rem 1.1rem;
           margin-bottom: 0.8rem;
-          box-shadow: 0 2px 8px #a3927b13;
-          font-size: 1.08rem;
+          box-shadow: 0 2px 10px #ffe14628;
+          font-size: 1.11rem;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          color: #fffbe3;
         }
         .wall-post-author {
           font-weight: bold;
-          color: #a97c50;
+          color: #ffe146;
           margin-right: 0.6rem;
         }
         .remove-btn {
-          background: #ffe6a3;
-          color: #7b5625;
+          background: #ffe146;
+          color: #222936;
           font-size: 0.98rem;
           border: none;
           border-radius: 0.8rem;
@@ -499,9 +552,10 @@ const PubProfile: React.FC = () => {
           font-weight: bold;
           cursor: pointer;
           margin-left: 1rem;
+          box-shadow: 0 1px 4px #ffe14644;
         }
         .remove-btn:hover {
-          background: #f3e7cf;
+          background: #fffbe3;
         }
         .post-form, .take-form, .team-form {
           display: flex;
@@ -511,14 +565,15 @@ const PubProfile: React.FC = () => {
         .post-form input, .take-form input, .team-form input {
           flex: 1;
           padding: 0.7rem 1rem;
-          border: 1.5px solid #d9b16e;
+          border: 1.5px solid #ffe146;
           border-radius: 0.9rem;
           font-size: 1rem;
-          background: #f8f7f4;
+          background: #181c23;
+          color: #ffe146;
         }
         .post-form button, .take-form button, .team-form button {
-          background: #ffe6a3;
-          color: #7b5625;
+          background: #ffe146;
+          color: #222936;
           font-weight: bold;
           border-radius: 0.9rem;
           border: none;
@@ -527,10 +582,10 @@ const PubProfile: React.FC = () => {
           cursor: pointer;
         }
         .post-form button:hover, .take-form button:hover, .team-form button:hover {
-          background: #f3e7cf;
+          background: #fffbe3;
         }
         .empty-msg {
-          color: #cfcfcf;
+          color: #ffe146a0;
           text-align: center;
           font-size: 1.1rem;
           margin-top: 0.7rem;
@@ -538,33 +593,36 @@ const PubProfile: React.FC = () => {
         .modal-bg {
           position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(40, 42, 46, 0.23);
+          background: rgba(40, 42, 46, 0.42);
           z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .modal {
-          background: #fff;
+          background: #222936;
           border-radius: 1.3rem;
           padding: 1.8rem 2.2rem;
-          box-shadow: 0 8px 36px 0 rgba(76,52,23,0.15);
+          box-shadow: 0 8px 36px 0 #ffe14633;
           min-width: 320px;
           max-width: 90vw;
           position: relative;
+          border: 3px solid #ffe146;
+          color: #ffe146;
         }
         .close-btn {
           position: absolute;
           right: 1.3rem;
           top: 1.3rem;
-          background: #ffe6a3;
-          color: #7b5625;
+          background: #ffe146;
+          color: #222936;
           border: none;
           border-radius: 1rem;
           font-weight: bold;
           font-size: 1rem;
           padding: 0.4rem 1rem;
           cursor: pointer;
+          box-shadow: 0 1px 4px #ffe14644;
         }
         .modal-list div {
           margin-bottom: 0.9rem;
@@ -575,24 +633,38 @@ const PubProfile: React.FC = () => {
           gap: 0.7rem;
         }
         .settings-btn {
-          background: #f3e7cf;
-          color: #3a2c18;
+          background: #ffe146;
+          color: #222936;
           font-weight: bold;
           border-radius: 1rem;
-          border: 2px solid #d9b16e;
+          border: 2px solid #ffe146;
           padding: 0.65rem 1.2rem;
-          transition: background 0.18s, color 0.18s, transform 0.14s;
-          box-shadow: 0 2px 12px #a3927b22;
+          transition: background 0.16s, color 0.14s, transform 0.13s;
+          box-shadow: 0 2px 12px #ffe14644;
         }
         .settings-btn:hover {
-          background: #ffe6a3;
-          color: #7b5625;
+          background: #fffbe3;
+          color: #b28704;
           transform: scale(1.04);
         }
         .modal-error {
-          color: #a97c50;
+          color: #ff6868;
           font-size: 0.98rem;
           margin-top: 0.4rem;
+        }
+        label {
+          color: #ffe146b0;
+          font-weight: 500;
+        }
+        input[type="file"]::-webkit-file-upload-button {
+          background: #ffe146;
+          color: #222936;
+          font-weight: bold;
+          border-radius: 0.55rem;
+          border: none;
+          font-size: 1rem;
+          padding: 0.5rem 1.1rem;
+          cursor: pointer;
         }
         @media (max-width: 600px) {
           .profile-card { padding: 1.2rem 0.3rem; }
@@ -611,26 +683,26 @@ const PubProfile: React.FC = () => {
         </div>
         <div className="profile-actions">
           <button className="profile-btn" onClick={() => setStatsModalOpen(true)}>
-            Stats
+            <span role="img" aria-label="stats">📊</span> Stats
           </button>
           {ownProfile && (
             <button className="profile-btn" onClick={() => setSettingsModalOpen(true)}>
-              Settings
+              <span role="img" aria-label="settings">⚙️</span> Settings
             </button>
           )}
           <Link className="profile-btn" href="/">
-            Home
+            <span role="img" aria-label="home">🏠</span> Home
           </Link>
         </div>
         <div className="profile-tabs">
           <button className={`tab-btn${currentTab === "wall" ? " active" : ""}`} onClick={() => setCurrentTab("wall")}>
-            Wall
+            <span role="img" aria-label="wall">📝</span> Wall
           </button>
           <button className={`tab-btn${currentTab === "takes" ? " active" : ""}`} onClick={() => setCurrentTab("takes")}>
-            Takes
+            <span role="img" aria-label="takes">🔥</span> Takes
           </button>
           <button className={`tab-btn${currentTab === "teams" ? " active" : ""}`} onClick={() => setCurrentTab("teams")}>
-            Teams
+            <span role="img" aria-label="teams">🏈</span> Teams
           </button>
         </div>
         <div className="tab-content">{tabContent}</div>
@@ -642,7 +714,7 @@ const PubProfile: React.FC = () => {
         <div className="modal-bg">
           <div className="modal">
             <button className="close-btn" onClick={() => setStatsModalOpen(false)}>Close</button>
-            <h2 style={{ marginBottom: "16px" }}>My Stats</h2>
+            <h2 style={{ marginBottom: "16px" }}><span role="img" aria-label="stats">📊</span> My Stats</h2>
             <div id="statsContent">
               <div className="modal-list">
                 <div>
@@ -665,14 +737,17 @@ const PubProfile: React.FC = () => {
         <div className="modal-bg">
           <div className="modal">
             <button className="close-btn" onClick={() => setSettingsModalOpen(false)}>Close</button>
-            <h2 style={{ marginBottom: "16px" }}>Settings</h2>
-            {!editUsernameOpen && !editPasswordOpen && (
+            <h2 style={{ marginBottom: "16px" }}><span role="img" aria-label="settings">⚙️</span> Settings</h2>
+            {!editUsernameOpen && !editPasswordOpen && !editAvatarOpen && (
               <div className="settings-options">
                 <button className="settings-btn" onClick={handleEditUsername}>
                   Change Username
                 </button>
                 <button className="settings-btn" onClick={handleEditPassword}>
                   Change Password
+                </button>
+                <button className="settings-btn" onClick={handleEditAvatar}>
+                  Change Profile Image
                 </button>
                 <button className="settings-btn" onClick={handleSignOut}>
                   Sign Out
@@ -707,6 +782,27 @@ const PubProfile: React.FC = () => {
                 />
                 <button type="submit" className="settings-btn" style={{ marginTop: "0.7rem" }}>Update Password</button>
                 <div className="modal-error">{passwordError}</div>
+              </form>
+            )}
+            {editAvatarOpen && (
+              <form onSubmit={handleAvatarUpload}>
+                <label htmlFor="avatarFile">Upload Profile Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="avatarFile"
+                  style={{ width: "90%", padding: "7px", borderRadius: "6px", background: "#222936", color: "#ffe146" }}
+                  disabled={avatarUploading}
+                />
+                <button
+                  type="submit"
+                  className="settings-btn"
+                  style={{ marginTop: "0.7rem", opacity: avatarUploading ? 0.7 : 1 }}
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? "Uploading..." : "Update Image"}
+                </button>
+                <div className="modal-error">{avatarError}</div>
               </form>
             )}
           </div>
