@@ -173,21 +173,12 @@ const CollegeGuess: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const guessInputRef = useRef<HTMLInputElement>(null);
 
-  // Styling
+  // Local Styling
   useEffect(() => {
-    document.body.style.backgroundImage =
-      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundColor = "#451a03";
+    document.body.style.background = "#111";
     document.body.style.fontFamily = "'Montserrat', sans-serif";
     return () => {
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundSize = "";
-      document.body.style.backgroundPosition = "";
-      document.body.style.backgroundAttachment = "";
-      document.body.style.backgroundColor = "";
+      document.body.style.background = "";
       document.body.style.fontFamily = "";
     };
   }, []);
@@ -354,7 +345,224 @@ const CollegeGuess: React.FC = () => {
 
   return (
     <div className="cg-bg">
-      {/* ...styles and layout unchanged... */}
+      <style>{`
+        .cg-bg {
+          min-height: 100vh;
+          background: #111;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+        }
+        .cg-header {
+          margin-top: 1.7rem;
+          color: #ffe146;
+          font-size: 1.23rem;
+          letter-spacing: 1px;
+          font-weight: bold;
+          text-align: center;
+        }
+        .cg-card {
+          background: #23272c;
+          box-shadow: 0 8px 40px 8px #000d2f44;
+          border-radius: 2rem;
+          width: 98%;
+          max-width: 440px;
+          padding: 2.2rem 1.5rem 2.3rem 1.5rem;
+          margin: 2.5rem auto 2.2rem auto;
+          border: 3px solid #e1b40c;
+          position: relative;
+        }
+        .cg-navbar {
+          display: flex;
+          gap: 1.15rem;
+          margin-bottom: 1rem;
+          justify-content: center;
+        }
+        .cg-navbar a {
+          color: #ffe146;
+          font-weight: 600;
+          text-decoration: none;
+          letter-spacing: 0.5px;
+          font-size: 1.1rem;
+        }
+        .cg-title {
+          font-size: 2.2rem;
+          font-weight: bold;
+          color: #ffe146;
+          letter-spacing: 1px;
+          text-align: center;
+          margin: 0.5rem 0 1.2rem 0;
+        }
+        .cg-level {
+          font-size: 1.15rem;
+          color: #ffe146a8;
+          margin-bottom: 1.2rem;
+          text-align: center;
+        }
+        .cg-player-name-wrap {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 1.3rem;
+        }
+        .cg-player-name {
+          background: #ffe146;
+          color: #23272c;
+          font-size: 1.32rem;
+          font-weight: bold;
+          border-radius: 0.9rem;
+          padding: 0.65rem 1.4rem;
+          box-shadow: 0 2px 10px #ffe14633;
+          letter-spacing: 1px;
+        }
+        .cg-input {
+          width: 100%;
+          font-size: 1.1rem;
+          padding: 0.7rem 1.1rem;
+          border-radius: 0.7rem;
+          border: 2px solid #ffe146;
+          background: #191c22;
+          color: #ffe146;
+          margin-bottom: 0.8rem;
+        }
+        .cg-btn {
+          width: 100%;
+          padding: 0.73rem 0;
+          border-radius: 0.9rem;
+          border: none;
+          font-size: 1.1rem;
+          font-weight: bold;
+          color: #23272c;
+          background: #ffe146;
+          box-shadow: 0 2px 8px #ffe14633;
+          margin-bottom: 0.7rem;
+          cursor: pointer;
+          transition: background 0.18s, color 0.16s, transform 0.14s;
+        }
+        .cg-btn.green {
+          background: #7ff759;
+        }
+        .cg-btn.red {
+          background: #ff6868;
+          color: #fff;
+        }
+        .cg-btn.hidden {
+          display: none;
+        }
+        .cg-feedback {
+          min-height: 2.0rem;
+          color: #ffe146;
+          font-size: 1.13rem;
+          margin: 0.9rem 0 0.3rem 0;
+          text-align: center;
+        }
+        .cg-score-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 1rem;
+          margin-bottom: 0.8rem;
+        }
+        .cg-timer-box {
+          background: #191c22;
+          color: #ffe146;
+          border-radius: 0.8rem;
+          padding: 0.48rem 1.1rem;
+          font-weight: bold;
+          font-size: 1.1rem;
+          box-shadow: 0 1px 6px #ffe14622;
+        }
+        .score {
+          color: #ffe146;
+          font-weight: bold;
+          font-size: 1.1rem;
+        }
+        .share-buttons-row {
+          display: flex;
+          gap: 0.9rem;
+          justify-content: center;
+          margin-top: 1.3rem;
+        }
+        .clipboard-btn, .sms-btn {
+          background: #ffe146;
+          color: #23272c;
+          font-weight: bold;
+          border-radius: 0.9rem;
+          border: none;
+          padding: 0.55rem 1.3rem;
+          font-size: 1rem;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #ffe14622;
+        }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe3;
+        }
+        .share-preview {
+          margin-top: 1.2rem;
+          color: #ffe146;
+          text-align: center;
+          font-size: 1.2rem;
+          word-break: break-word;
+        }
+        .cg-modal-bg {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(20, 20, 20, 0.82);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cg-modal-content {
+          background: #23272c;
+          border-radius: 1.3rem;
+          padding: 2.1rem 1.5rem;
+          box-shadow: 0 8px 36px 0 #ffe14633;
+          min-width: 320px;
+          max-width: 90vw;
+          position: relative;
+          color: #ffe146;
+        }
+        .cg-close-btn {
+          background: #ff6868;
+          color: #fff;
+          border: none;
+          border-radius: 1rem;
+          font-weight: bold;
+          font-size: 1rem;
+          padding: 0.4rem 1.1rem;
+          cursor: pointer;
+          box-shadow: 0 1px 4px #ffe14633;
+          margin: 1.2rem auto 0 auto;
+          display: block;
+        }
+        .cg-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 1rem;
+          margin: 0 auto;
+          color: #ffe146;
+        }
+        .cg-table th, .cg-table td {
+          padding: 0.6rem 0.5rem;
+          border-bottom: 1px solid #ffe1461a;
+          text-align: center;
+        }
+        .cg-table th {
+          background: #191c22;
+        }
+        .cg-table-row:nth-child(even) {
+          background: #23272c;
+        }
+        .cg-table-row:nth-child(odd) {
+          background: #191c22;
+        }
+        @media (max-width: 600px) {
+          .cg-card { padding: 1rem 0.3rem; }
+          .cg-modal-content { padding: 1rem 0.7rem; }
+        }
+      `}</style>
       <div className="cg-header">
         New Games Daily at Midnight Eastern
       </div>
