@@ -269,7 +269,7 @@ const PubProfile: React.FC = () => {
     setAvatarUploading(false);
   };
 
-  // SEARCH LOGIC
+  // --- SEARCH LOGIC ---
   const fetchAllUsernames = async () => {
     const snapshot = await getDocs(collection(db, "users"));
     return snapshot.docs.map((doc) => doc.data().username as string);
@@ -285,20 +285,10 @@ const PubProfile: React.FC = () => {
       allUsernames.filter((u) => u.toLowerCase().includes(e.target.value.trim().toLowerCase()))
     );
   };
-  const handleSearchBtn = async () => {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    const allUsernames = await fetchAllUsernames();
-    setSearchResults(
-      allUsernames.filter((u) => u.toLowerCase().includes(searchTerm.trim().toLowerCase()))
-    );
-  };
-  const handleViewProfile = async (username: string) => {
-    setSelectedProfile(username);
+  const handleDropdownClick = (username: string) => {
     setViewedUsername(username);
-    setSearchResults([]);
+    setDropdownUsers([]);
+    setSearchTerm("");
   };
 
   // UPDATE LOGIC
@@ -356,14 +346,15 @@ const PubProfile: React.FC = () => {
     await updateViewedUserField("teams", newTeams);
   };
 
-  // TAB CONTENT
+  // --- TABS CONTENT ---
   let tabContent;
   if (currentTab === "wall") {
     tabContent = (
       <div>
-        {ownProfile && (
+        {/* Only allow posting on wall if viewing own OR another profile */}
+        {(ownProfile || (!ownProfile && loggedInUser)) && (
           <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
-            <input type="text" id="wallInput" placeholder="Post something on your wall..." maxLength={120} />
+            <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
             <button type="submit">Post</button>
           </form>
         )}
@@ -388,9 +379,7 @@ const PubProfile: React.FC = () => {
             <button type="submit">Add Take</button>
           </form>
         )}
-        {!takes.length && (
-          <div className="empty-msg">No takes yet.</div>
-        )}
+        {!takes.length && <div className="empty-msg">No takes yet.</div>}
         {takes.slice().reverse().map((take, i) => (
           <div className="take-card" key={i}>
             {take}
@@ -413,9 +402,7 @@ const PubProfile: React.FC = () => {
             <button type="submit">Add Team</button>
           </form>
         )}
-        {!teams.length && (
-          <div className="empty-msg">No teams yet.</div>
-        )}
+        {!teams.length && <div className="empty-msg">No teams yet.</div>}
         {teams.map((team, i) => (
           <div className="team-card" key={i}>
             <span>{team.name}</span>
@@ -446,6 +433,7 @@ const PubProfile: React.FC = () => {
           padding: 2.7rem 2rem;
           margin: 1rem;
           border: 3px solid #e1b40c;
+          position: relative;
         }
         .profile-header {
           text-align: center;
@@ -666,12 +654,72 @@ const PubProfile: React.FC = () => {
           padding: 0.5rem 1.1rem;
           cursor: pointer;
         }
+        .search-users-bar {
+          margin-bottom: 0;
+        }
         @media (max-width: 600px) {
           .profile-card { padding: 1.2rem 0.3rem; }
           .modal { padding: 1.2rem 0.7rem; }
         }
       `}</style>
       <div className="profile-card">
+
+        {/* --- SEARCH BAR --- */}
+        <div style={{ marginBottom: "1.3rem", position: "relative", zIndex: 20 }}>
+          <input
+            type="text"
+            className="search-users-bar"
+            placeholder="Search for users..."
+            value={searchTerm}
+            onChange={handleSearchInput}
+            autoComplete="off"
+            style={{
+              width: "100%",
+              padding: "0.7rem 1rem",
+              borderRadius: "0.9rem",
+              border: "2px solid #ffe146",
+              fontSize: "1.09rem",
+              background: "#181c23",
+              color: "#ffe146",
+              marginBottom: dropdownUsers.length ? 0 : "1.3rem"
+            }}
+          />
+          {/* Dropdown */}
+          {dropdownUsers.length > 0 && (
+            <div
+              style={{
+                background: "#222936",
+                border: "2px solid #ffe146",
+                borderTop: "none",
+                borderRadius: "0 0 0.9rem 0.9rem",
+                boxShadow: "0 4px 20px #ffe14622",
+                position: "absolute",
+                zIndex: 100,
+                width: "100%",
+                maxHeight: "210px",
+                overflowY: "auto"
+              }}
+            >
+              {dropdownUsers.map((username, idx) => (
+                <div
+                  key={username}
+                  style={{
+                    padding: "0.83rem 1.2rem",
+                    color: "#ffe146",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    background: idx % 2 === 0 ? "#181c23" : "#222936"
+                  }}
+                  onClick={() => handleDropdownClick(username)}
+                >
+                  {username}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* --- Profile Content --- */}
         <div className="profile-header">
           <img
             className="profile-avatar"
@@ -698,12 +746,17 @@ const PubProfile: React.FC = () => {
           <button className={`tab-btn${currentTab === "wall" ? " active" : ""}`} onClick={() => setCurrentTab("wall")}>
             <span role="img" aria-label="wall">📝</span> Wall
           </button>
-          <button className={`tab-btn${currentTab === "takes" ? " active" : ""}`} onClick={() => setCurrentTab("takes")}>
-            <span role="img" aria-label="takes">🔥</span> Takes
-          </button>
-          <button className={`tab-btn${currentTab === "teams" ? " active" : ""}`} onClick={() => setCurrentTab("teams")}>
-            <span role="img" aria-label="teams">🏈</span> Teams
-          </button>
+          {/* Only show other tabs if ownProfile */}
+          {ownProfile && (
+            <>
+              <button className={`tab-btn${currentTab === "takes" ? " active" : ""}`} onClick={() => setCurrentTab("takes")}>
+                <span role="img" aria-label="takes">🔥</span> Takes
+              </button>
+              <button className={`tab-btn${currentTab === "teams" ? " active" : ""}`} onClick={() => setCurrentTab("teams")}>
+                <span role="img" aria-label="teams">🏈</span> Teams
+              </button>
+            </>
+          )}
         </div>
         <div className="tab-content">{tabContent}</div>
         {profileError && <div className="empty-msg">{profileError}</div>}
