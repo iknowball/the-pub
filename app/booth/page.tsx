@@ -103,16 +103,17 @@ const BoothChat: React.FC = () => {
     return () => unsub();
   }, [currentBooth]);
 
-  // Send message (always allow, anonymous or signed in)
+  // Send message (supports anonymous posting)
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
+    // Only add uid if user is signed in (avoid undefined)
     const msg: Message = {
       text: message.trim(),
       displayName: user?.displayName || user?.email || "Anonymous",
-      uid: user?.uid || undefined,
       timestamp: serverTimestamp(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      ...(user?.uid ? { uid: user.uid } : {})
     };
     try {
       await addDoc(collection(db, "booths", currentBooth, "messages"), msg);
