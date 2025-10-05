@@ -1,27 +1,24 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import Link from "next/link"; // <-- Import Next.js Link
+import Link from "next/link";
 
-import {
-  initializeApp
-} from "firebase/app";
+import { initializeApp } from "firebase/app";
 import {
   getFirestore,
   collection,
-  doc,
   addDoc,
   query,
   orderBy,
   limit,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
 } from "firebase/firestore";
 import {
   getAuth,
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
-  User
+  User,
 } from "firebase/auth";
 
 // Firebase config
@@ -49,7 +46,6 @@ const nflGames = [
   { id: "commanders-chargers", label: "Washington Commanders at Los Angeles Chargers (Sun, 4:25 PM ET, FOX)" },
   { id: "patriots-bills", label: "New England Patriots at Buffalo Bills (Sun, 8:20 PM ET, NBC)" },
   { id: "chiefs-jaguars", label: "Kansas City Chiefs at Jacksonville Jaguars (Mon, 8:15 PM ET, ABC/ESPN)" }
-  // Teams on Bye: Atlanta Falcons, Chicago Bears, Green Bay Packers, Pittsburgh Steelers
 ];
 
 type Message = {
@@ -92,7 +88,7 @@ const BoothChat: React.FC = () => {
           displayName: data.displayName || "Anonymous",
           uid: data.uid,
           timestamp: data.timestamp,
-          time: data.time
+          time: data.time,
         });
       });
       setMessages(msgs);
@@ -108,14 +104,12 @@ const BoothChat: React.FC = () => {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
-
-    // If user is signed in, use their info; else, allow anonymous
     const msg: Message = {
       text: message.trim(),
-      displayName: user?.displayName || "Anonymous",
-      uid: user?.uid || undefined,
+      displayName: user?.displayName || user?.email || "Anonymous",
+      uid: user?.uid || undefined, // If not signed in, uid is undefined (anonymous)
       timestamp: serverTimestamp(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
     await addDoc(collection(db, "booths", currentBooth, "messages"), msg);
     setMessage("");
@@ -129,13 +123,15 @@ const BoothChat: React.FC = () => {
   // Bar stools avatars based on users in booth
   const boothUserAvatars = React.useMemo(() => {
     const seen: { [uid: string]: string } = {};
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       seen[msg.uid || msg.displayName] = msg.displayName;
     });
-    return Object.keys(seen).slice(0, 4).map(uid => ({
-      uid,
-      displayName: seen[uid]
-    }));
+    return Object.keys(seen)
+      .slice(0, 4)
+      .map((uid) => ({
+        uid,
+        displayName: seen[uid],
+      }));
   }, [messages]);
 
   return (
@@ -227,7 +223,6 @@ const BoothChat: React.FC = () => {
             <h1 className="text-2xl font-montserrat font-bold text-blue-100 drop-shadow">🏈 Game Booths</h1>
           </div>
           <div className="flex items-center gap-2">
-            {/* Updated from <a href="index.html"> to Next.js Link */}
             <Link href="/" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300">
               Home
             </Link>
@@ -260,7 +255,7 @@ const BoothChat: React.FC = () => {
                   <span className="username">{msg.displayName || "Anonymous"}</span>
                   <span className="timestamp">
                     {msg.timestamp?.toDate
-                      ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
                       : msg.time || ""}
                   </span>
                   <div>{msg.text}</div>
@@ -269,6 +264,7 @@ const BoothChat: React.FC = () => {
             })}
             <div ref={messagesEndRef}></div>
           </div>
+          {/* Message input and send button always shown */}
           <form className="flex items-center gap-2 mt-2" onSubmit={handleSend}>
             <input
               id="messageInput"
@@ -279,8 +275,11 @@ const BoothChat: React.FC = () => {
               placeholder="What's happening in your game booth?"
               value={message}
               onChange={e => setMessage(e.target.value)}
+              autoComplete="off"
             />
-            <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+            <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">
+              Send
+            </button>
           </form>
           {!user && (
             <div className="mt-3 flex flex-col items-center space-y-3">
