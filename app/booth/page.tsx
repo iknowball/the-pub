@@ -108,10 +108,12 @@ const BoothChat: React.FC = () => {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
+
+    // If user is signed in, use their info; else, allow anonymous
     const msg: Message = {
       text: message.trim(),
       displayName: user?.displayName || "Anonymous",
-      uid: user?.uid,
+      uid: user?.uid || undefined,
       timestamp: serverTimestamp(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -232,65 +234,63 @@ const BoothChat: React.FC = () => {
           </div>
         </div>
 
-        {!user && (
-          <div className="p-6 flex flex-col items-center space-y-3">
-            <button onClick={handleSignIn} className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">
-              Sign in with Google
-            </button>
+        <div className="flex flex-col h-[60vh] px-6 pb-6">
+          <div className="flex flex-col items-center mb-3">
+            <label className="text-blue-100 font-bold text-lg mb-2" htmlFor="boothSelect">Pick a Game Booth</label>
+            <select
+              id="boothSelect"
+              value={currentBooth}
+              onChange={e => setCurrentBooth(e.target.value)}
+              className="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold"
+              style={{ maxWidth: 400 }}
+            >
+              {nflGames.map(game => (
+                <option key={game.id} value={game.id}>{game.label}</option>
+              ))}
+            </select>
           </div>
-        )}
-
-        {user && (
-          <div className="flex flex-col h-[60vh] px-6 pb-6">
-            <div className="flex flex-col items-center mb-3">
-              <label className="text-blue-100 font-bold text-lg mb-2" htmlFor="boothSelect">Pick a Game Booth</label>
-              <select
-                id="boothSelect"
-                value={currentBooth}
-                onChange={e => setCurrentBooth(e.target.value)}
-                className="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold"
-                style={{ maxWidth: 400 }}
-              >
-                {nflGames.map(game => (
-                  <option key={game.id} value={game.id}>{game.label}</option>
-                ))}
-              </select>
-            </div>
-            <div id="messages" className="flex-1 overflow-y-auto px-0 pb-2 pt-2 rounded-lg mb-2 border-2 border-blue-600 shadow-inner bg-[#23263a]">
-              {loading && (
-                <div className="text-center text-blue-400 italic my-2">Loading messages...</div>
-              )}
-              {messages.map((msg, idx) => {
-                const isMine = user && msg.uid === user.uid;
-                return (
-                  <div key={msg.id || idx} className={`twitter-chat-bubble${isMine ? " mine ml-auto" : ""}`}>
-                    <span className="username">{msg.displayName || "Anonymous"}</span>
-                    <span className="timestamp">
-                      {msg.timestamp?.toDate
-                        ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        : msg.time || ""}
-                    </span>
-                    <div>{msg.text}</div>
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef}></div>
-            </div>
-            <form className="flex items-center gap-2 mt-2" onSubmit={handleSend}>
-              <input
-                id="messageInput"
-                type="text"
-                required
-                maxLength={240}
-                className="flex-1 bg-[#292c40] border-2 border-blue-600 rounded-lg p-2 focus:outline-none focus:ring-blue-800 text-white"
-                placeholder="What's happening in your game booth?"
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-              />
-              <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
-            </form>
+          <div id="messages" className="flex-1 overflow-y-auto px-0 pb-2 pt-2 rounded-lg mb-2 border-2 border-blue-600 shadow-inner bg-[#23263a]">
+            {loading && (
+              <div className="text-center text-blue-400 italic my-2">Loading messages...</div>
+            )}
+            {messages.map((msg, idx) => {
+              const isMine = user && msg.uid === user.uid;
+              return (
+                <div key={msg.id || idx} className={`twitter-chat-bubble${isMine ? " mine ml-auto" : ""}`}>
+                  <span className="username">{msg.displayName || "Anonymous"}</span>
+                  <span className="timestamp">
+                    {msg.timestamp?.toDate
+                      ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : msg.time || ""}
+                  </span>
+                  <div>{msg.text}</div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef}></div>
           </div>
-        )}
+          <form className="flex items-center gap-2 mt-2" onSubmit={handleSend}>
+            <input
+              id="messageInput"
+              type="text"
+              required
+              maxLength={240}
+              className="flex-1 bg-[#292c40] border-2 border-blue-600 rounded-lg p-2 focus:outline-none focus:ring-blue-800 text-white"
+              placeholder="What's happening in your game booth?"
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+            />
+            <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+          </form>
+          {!user && (
+            <div className="mt-3 flex flex-col items-center space-y-3">
+              <span className="text-blue-300 text-sm italic">Sign in for your messages to display your username and avatar.</span>
+              <button onClick={handleSignIn} className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">
+                Sign in with Google
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-end mt-4" id="barStools">
         {boothUserAvatars.map((avatar, idx) => (
