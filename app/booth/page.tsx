@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import Link from "next/link"; // <-- Import Next.js Link
 
-// If using Firebase JS SDK v9 modular, import like this:
 import {
   initializeApp
 } from "firebase/app";
@@ -96,7 +96,6 @@ const BoothChat: React.FC = () => {
       });
       setMessages(msgs);
       setLoading(false);
-      // Scroll to bottom on new message
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
@@ -225,7 +224,10 @@ const BoothChat: React.FC = () => {
             <h1 className="text-2xl font-montserrat font-bold text-blue-100 drop-shadow">🏈 Game Booths</h1>
           </div>
           <div className="flex items-center gap-2">
-            <a href="index.html" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300">Home</a>
+            {/* Updated from <a href="index.html"> to Next.js Link */}
+            <Link href="/" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300">
+              Home
+            </Link>
           </div>
         </div>
 
