@@ -211,6 +211,9 @@ const BoothChat: React.FC = () => {
           color: #b9c5e1;
           margin-left: 8px;
         }
+        .twitter-chat-bubble > div {
+          color: #fff !important;
+        }
         .twitter-chat-bubble:hover {
           background: #292c40;
         }
