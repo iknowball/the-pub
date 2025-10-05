@@ -34,21 +34,21 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const nflGames = [
-  { id: "vikings-steelers", label: "Minnesota Vikings vs. Pittsburgh Steelers (9:30 AM EDT, NFL Network)" },
-  { id: "commanders-falcons", label: "Washington Commanders vs. Atlanta Falcons (1:00 PM EDT, CBS)" },
-  { id: "saints-bills", label: "New Orleans Saints vs. Buffalo Bills (1:00 PM EDT, CBS)" },
-  { id: "browns-lions", label: "Cleveland Browns vs. Detroit Lions (1:00 PM EDT, FOX)" },
-  { id: "titans-texans", label: "Tennessee Titans vs. Houston Texans (1:00 PM EDT, CBS)" },
-  { id: "panthers-patriots", label: "Carolina Panthers vs. New England Patriots (1:00 PM EDT, FOX)" },
-  { id: "chargers-giants", label: "Los Angeles Chargers vs. New York Giants (1:00 PM EDT, CBS)" },
-  { id: "eagles-buccaneers", label: "Philadelphia Eagles vs. Tampa Bay Buccaneers (1:00 PM EDT, FOX)" },
-  { id: "colts-rams", label: "Indianapolis Colts vs. Los Angeles Rams (4:05 PM EDT, FOX)" },
-  { id: "jaguars-49ers", label: "Jacksonville Jaguars vs. San Francisco 49ers (4:05 PM EDT, FOX)" },
-  { id: "ravens-chiefs", label: "Baltimore Ravens vs. Kansas City Chiefs (4:25 PM EDT, CBS)" },
-  { id: "bears-raiders", label: "Chicago Bears vs. Las Vegas Raiders (4:25 PM EDT, CBS)" },
-  { id: "packers-cowboys", label: "Green Bay Packers vs. Dallas Cowboys (8:20 PM EDT, NBC/UNIVERSO)" },
-  { id: "jets-dolphins", label: "New York Jets vs. Miami Dolphins (Monday, 7:15 PM EDT, ESPN/ESPN Deportes)" },
-  { id: "bengals-broncos", label: "Cincinnati Bengals vs. Denver Broncos (Monday, 8:15 PM EDT, ABC)" }
+  { id: "49ers-rams", label: "San Francisco 49ers at Los Angeles Rams (Thu, 8:15 PM ET, Amazon Prime Video)" },
+  { id: "vikings-browns", label: "Minnesota Vikings vs. Cleveland Browns (London, Sun, 9:30 AM ET, NFL Network)" },
+  { id: "cowboys-jets", label: "Dallas Cowboys at New York Jets (Sun, 1:00 PM ET, FOX)" },
+  { id: "raiders-colts", label: "Las Vegas Raiders at Indianapolis Colts (Sun, 1:00 PM ET, FOX)" },
+  { id: "dolphins-panthers", label: "Miami Dolphins at Carolina Panthers (Sun, 1:00 PM ET, FOX)" },
+  { id: "broncos-eagles", label: "Denver Broncos at Philadelphia Eagles (Sun, 1:00 PM ET, CBS)" },
+  { id: "texans-ravens", label: "Houston Texans at Baltimore Ravens (Sun, 1:00 PM ET, CBS)" },
+  { id: "giants-saints", label: "New York Giants at New Orleans Saints (Sun, 1:00 PM ET, CBS)" },
+  { id: "titans-cardinals", label: "Tennessee Titans at Arizona Cardinals (Sun, 4:05 PM ET, CBS)" },
+  { id: "buccaneers-seahawks", label: "Tampa Bay Buccaneers at Seattle Seahawks (Sun, 4:05 PM ET, CBS)" },
+  { id: "lions-bengals", label: "Detroit Lions at Cincinnati Bengals (Sun, 4:25 PM ET, FOX)" },
+  { id: "commanders-chargers", label: "Washington Commanders at Los Angeles Chargers (Sun, 4:25 PM ET, FOX)" },
+  { id: "patriots-bills", label: "New England Patriots at Buffalo Bills (Sun, 8:20 PM ET, NBC)" },
+  { id: "chiefs-jaguars", label: "Kansas City Chiefs at Jacksonville Jaguars (Mon, 8:15 PM ET, ABC/ESPN)" }
+  // Teams on Bye: Atlanta Falcons, Chicago Bears, Green Bay Packers, Pittsburgh Steelers
 ];
 
 type Message = {
