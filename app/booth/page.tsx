@@ -1,24 +1,27 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import Link from "next/link";
+import Link from "next/link"; // <-- Import Next.js Link
 
-import { initializeApp } from "firebase/app";
+import {
+  initializeApp
+} from "firebase/app";
 import {
   getFirestore,
   collection,
+  doc,
   addDoc,
   query,
   orderBy,
   limit,
   onSnapshot,
-  serverTimestamp,
+  serverTimestamp
 } from "firebase/firestore";
 import {
   getAuth,
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
-  User,
+  User
 } from "firebase/auth";
 
 // Firebase config
@@ -32,20 +35,21 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const nflGames = [
-  { id: "49ers-rams", label: "San Francisco 49ers at Los Angeles Rams (Thu, 8:15 PM ET, Amazon Prime Video)" },
-  { id: "vikings-browns", label: "Minnesota Vikings vs. Cleveland Browns (London, Sun, 9:30 AM ET, NFL Network)" },
-  { id: "cowboys-jets", label: "Dallas Cowboys at New York Jets (Sun, 1:00 PM ET, FOX)" },
-  { id: "raiders-colts", label: "Las Vegas Raiders at Indianapolis Colts (Sun, 1:00 PM ET, FOX)" },
-  { id: "dolphins-panthers", label: "Miami Dolphins at Carolina Panthers (Sun, 1:00 PM ET, FOX)" },
-  { id: "broncos-eagles", label: "Denver Broncos at Philadelphia Eagles (Sun, 1:00 PM ET, CBS)" },
-  { id: "texans-ravens", label: "Houston Texans at Baltimore Ravens (Sun, 1:00 PM ET, CBS)" },
-  { id: "giants-saints", label: "New York Giants at New Orleans Saints (Sun, 1:00 PM ET, CBS)" },
-  { id: "titans-cardinals", label: "Tennessee Titans at Arizona Cardinals (Sun, 4:05 PM ET, CBS)" },
-  { id: "buccaneers-seahawks", label: "Tampa Bay Buccaneers at Seattle Seahawks (Sun, 4:05 PM ET, CBS)" },
-  { id: "lions-bengals", label: "Detroit Lions at Cincinnati Bengals (Sun, 4:25 PM ET, FOX)" },
-  { id: "commanders-chargers", label: "Washington Commanders at Los Angeles Chargers (Sun, 4:25 PM ET, FOX)" },
-  { id: "patriots-bills", label: "New England Patriots at Buffalo Bills (Sun, 8:20 PM ET, NBC)" },
-  { id: "chiefs-jaguars", label: "Kansas City Chiefs at Jacksonville Jaguars (Mon, 8:15 PM ET, ABC/ESPN)" }
+  { id: "vikings-steelers", label: "Minnesota Vikings vs. Pittsburgh Steelers (9:30 AM EDT, NFL Network)" },
+  { id: "commanders-falcons", label: "Washington Commanders vs. Atlanta Falcons (1:00 PM EDT, CBS)" },
+  { id: "saints-bills", label: "New Orleans Saints vs. Buffalo Bills (1:00 PM EDT, CBS)" },
+  { id: "browns-lions", label: "Cleveland Browns vs. Detroit Lions (1:00 PM EDT, FOX)" },
+  { id: "titans-texans", label: "Tennessee Titans vs. Houston Texans (1:00 PM EDT, CBS)" },
+  { id: "panthers-patriots", label: "Carolina Panthers vs. New England Patriots (1:00 PM EDT, FOX)" },
+  { id: "chargers-giants", label: "Los Angeles Chargers vs. New York Giants (1:00 PM EDT, CBS)" },
+  { id: "eagles-buccaneers", label: "Philadelphia Eagles vs. Tampa Bay Buccaneers (1:00 PM EDT, FOX)" },
+  { id: "colts-rams", label: "Indianapolis Colts vs. Los Angeles Rams (4:05 PM EDT, FOX)" },
+  { id: "jaguars-49ers", label: "Jacksonville Jaguars vs. San Francisco 49ers (4:05 PM EDT, FOX)" },
+  { id: "ravens-chiefs", label: "Baltimore Ravens vs. Kansas City Chiefs (4:25 PM EDT, CBS)" },
+  { id: "bears-raiders", label: "Chicago Bears vs. Las Vegas Raiders (4:25 PM EDT, CBS)" },
+  { id: "packers-cowboys", label: "Green Bay Packers vs. Dallas Cowboys (8:20 PM EDT, NBC/UNIVERSO)" },
+  { id: "jets-dolphins", label: "New York Jets vs. Miami Dolphins (Monday, 7:15 PM EDT, ESPN/ESPN Deportes)" },
+  { id: "bengals-broncos", label: "Cincinnati Bengals vs. Denver Broncos (Monday, 8:15 PM EDT, ABC)" }
 ];
 
 type Message = {
@@ -88,7 +92,7 @@ const BoothChat: React.FC = () => {
           displayName: data.displayName || "Anonymous",
           uid: data.uid,
           timestamp: data.timestamp,
-          time: data.time,
+          time: data.time
         });
       });
       setMessages(msgs);
@@ -106,10 +110,10 @@ const BoothChat: React.FC = () => {
     if (!message.trim()) return;
     const msg: Message = {
       text: message.trim(),
-      displayName: user?.displayName || user?.email || "Anonymous",
-      uid: user?.uid || undefined, // If not signed in, uid is undefined (anonymous)
+      displayName: user?.displayName || "Anonymous",
+      uid: user?.uid,
       timestamp: serverTimestamp(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
     await addDoc(collection(db, "booths", currentBooth, "messages"), msg);
     setMessage("");
@@ -123,15 +127,13 @@ const BoothChat: React.FC = () => {
   // Bar stools avatars based on users in booth
   const boothUserAvatars = React.useMemo(() => {
     const seen: { [uid: string]: string } = {};
-    messages.forEach((msg) => {
+    messages.forEach(msg => {
       seen[msg.uid || msg.displayName] = msg.displayName;
     });
-    return Object.keys(seen)
-      .slice(0, 4)
-      .map((uid) => ({
-        uid,
-        displayName: seen[uid],
-      }));
+    return Object.keys(seen).slice(0, 4).map(uid => ({
+      uid,
+      displayName: seen[uid]
+    }));
   }, [messages]);
 
   return (
@@ -223,73 +225,72 @@ const BoothChat: React.FC = () => {
             <h1 className="text-2xl font-montserrat font-bold text-blue-100 drop-shadow">🏈 Game Booths</h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* Updated from <a href="index.html"> to Next.js Link */}
             <Link href="/" className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-1 px-3 rounded-lg shadow text-base transition duration-150 border-2 border-blue-300">
               Home
             </Link>
           </div>
         </div>
 
-        <div className="flex flex-col h-[60vh] px-6 pb-6">
-          <div className="flex flex-col items-center mb-3">
-            <label className="text-blue-100 font-bold text-lg mb-2" htmlFor="boothSelect">Pick a Game Booth</label>
-            <select
-              id="boothSelect"
-              value={currentBooth}
-              onChange={e => setCurrentBooth(e.target.value)}
-              className="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold"
-              style={{ maxWidth: 400 }}
-            >
-              {nflGames.map(game => (
-                <option key={game.id} value={game.id}>{game.label}</option>
-              ))}
-            </select>
-          </div>
-          <div id="messages" className="flex-1 overflow-y-auto px-0 pb-2 pt-2 rounded-lg mb-2 border-2 border-blue-600 shadow-inner bg-[#23263a]">
-            {loading && (
-              <div className="text-center text-blue-400 italic my-2">Loading messages...</div>
-            )}
-            {messages.map((msg, idx) => {
-              const isMine = user && msg.uid === user.uid;
-              return (
-                <div key={msg.id || idx} className={`twitter-chat-bubble${isMine ? " mine ml-auto" : ""}`}>
-                  <span className="username">{msg.displayName || "Anonymous"}</span>
-                  <span className="timestamp">
-                    {msg.timestamp?.toDate
-                      ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                      : msg.time || ""}
-                  </span>
-                  <div>{msg.text}</div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef}></div>
-          </div>
-          {/* Message input and send button always shown */}
-          <form className="flex items-center gap-2 mt-2" onSubmit={handleSend}>
-            <input
-              id="messageInput"
-              type="text"
-              required
-              maxLength={240}
-              className="flex-1 bg-[#292c40] border-2 border-blue-600 rounded-lg p-2 focus:outline-none focus:ring-blue-800 text-white"
-              placeholder="What's happening in your game booth?"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              autoComplete="off"
-            />
-            <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">
-              Send
+        {!user && (
+          <div className="p-6 flex flex-col items-center space-y-3">
+            <button onClick={handleSignIn} className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">
+              Sign in with Google
             </button>
-          </form>
-          {!user && (
-            <div className="mt-3 flex flex-col items-center space-y-3">
-              <span className="text-blue-300 text-sm italic">Sign in for your messages to display your username and avatar.</span>
-              <button onClick={handleSignIn} className="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg shadow-lg text-lg">
-                Sign in with Google
-              </button>
+          </div>
+        )}
+
+        {user && (
+          <div className="flex flex-col h-[60vh] px-6 pb-6">
+            <div className="flex flex-col items-center mb-3">
+              <label className="text-blue-100 font-bold text-lg mb-2" htmlFor="boothSelect">Pick a Game Booth</label>
+              <select
+                id="boothSelect"
+                value={currentBooth}
+                onChange={e => setCurrentBooth(e.target.value)}
+                className="bg-blue-100 border-2 border-blue-700 rounded p-2 mb-2 w-full text-center font-bold"
+                style={{ maxWidth: 400 }}
+              >
+                {nflGames.map(game => (
+                  <option key={game.id} value={game.id}>{game.label}</option>
+                ))}
+              </select>
             </div>
-          )}
-        </div>
+            <div id="messages" className="flex-1 overflow-y-auto px-0 pb-2 pt-2 rounded-lg mb-2 border-2 border-blue-600 shadow-inner bg-[#23263a]">
+              {loading && (
+                <div className="text-center text-blue-400 italic my-2">Loading messages...</div>
+              )}
+              {messages.map((msg, idx) => {
+                const isMine = user && msg.uid === user.uid;
+                return (
+                  <div key={msg.id || idx} className={`twitter-chat-bubble${isMine ? " mine ml-auto" : ""}`}>
+                    <span className="username">{msg.displayName || "Anonymous"}</span>
+                    <span className="timestamp">
+                      {msg.timestamp?.toDate
+                        ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        : msg.time || ""}
+                    </span>
+                    <div>{msg.text}</div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef}></div>
+            </div>
+            <form className="flex items-center gap-2 mt-2" onSubmit={handleSend}>
+              <input
+                id="messageInput"
+                type="text"
+                required
+                maxLength={240}
+                className="flex-1 bg-[#292c40] border-2 border-blue-600 rounded-lg p-2 focus:outline-none focus:ring-blue-800 text-white"
+                placeholder="What's happening in your game booth?"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+              />
+              <button type="submit" className="bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-lg shadow">Send</button>
+            </form>
+          </div>
+        )}
       </div>
       <div className="flex items-end mt-4" id="barStools">
         {boothUserAvatars.map((avatar, idx) => (
