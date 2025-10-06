@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "../../firebase";
@@ -40,7 +39,6 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-// FIX: Use Next.js App Router page conventions
 export default function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const [story, setStory] = useState<NewsArticle | null>(null);
