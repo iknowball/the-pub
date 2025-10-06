@@ -40,8 +40,8 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-// The App Router way: accept params as a prop!
-const NewsStoryPage: React.FC<{ params: { id: string } }> = ({ params }) => {
+// FIX: Use Next.js App Router page conventions
+export default function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const [story, setStory] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -298,6 +298,4 @@ const NewsStoryPage: React.FC<{ params: { id: string } }> = ({ params }) => {
       </footer>
     </div>
   );
-};
-
-export default NewsStoryPage;
+}
