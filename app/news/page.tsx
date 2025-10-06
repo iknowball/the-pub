@@ -18,9 +18,10 @@ function simpleSanitize(html: string) {
     /<(?!\/?(p|br|b|i|em|strong|ul|ol|li|a)(\s|>|\/))/gi,
     "&lt;"
   )
-  .replace(/ on\w+="[^"]*"/gi, "")
-  .replace(/javascript:/gi, "");
+    .replace(/ on\w+="[^"]*"/gi, "")
+    .replace(/javascript:/gi, "");
 }
+
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
@@ -56,14 +57,21 @@ const PubNewsstand: React.FC = () => {
   useEffect(() => {
     const loadNewsArticles = async () => {
       setLoading(true);
-      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      const articles: NewsArticle[] = [];
-      snapshot.forEach((doc) => {
-        articles.push({ id: doc.id, ...doc.data() });
-      });
-      setNews(articles);
-      setLoading(false);
+      try {
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const articles: NewsArticle[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          articles.push({ id: doc.id, ...data });
+        });
+        setNews(articles);
+        console.log("Loaded news articles:", articles.map(a => ({ id: a.id, title: a.title }))); // Temporary log for debugging IDs
+      } catch (error) {
+        console.error("Error loading news:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadNewsArticles();
   }, []);
@@ -77,7 +85,6 @@ const PubNewsstand: React.FC = () => {
   return (
     <div className="pub-root">
       <style>{`
-        /* ... styles unchanged from previous version ... */
         body {
           background-color: #f3f4f6 !important;
           font-family: 'Times New Roman', Times, serif !important;
@@ -192,7 +199,7 @@ const PubNewsstand: React.FC = () => {
           border-top: 2px solid #1f2937;
           text-align: center;
           color: #4b5563;
-          padding: 1.2em 1.5em;
+          padding: 1.2em 1.5rem;
           box-sizing: border-box;
           font-size: 1.05em;
         }
