@@ -1,13 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { db } from "../firebase";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
 
 // --- Types ---
 type NewsArticle = {
@@ -18,19 +13,14 @@ type NewsArticle = {
   createdAt?: Timestamp | { seconds: number } | number;
 };
 
-// Simple sanitizer: allow only a few tags (p, br, b, i, em, strong, ul, ol, li, a)
 function simpleSanitize(html: string) {
-  // Remove all tags not in the allowed set
   return html.replace(
     /<(?!\/?(p|br|b|i|em|strong|ul|ol|li|a)(\s|>|\/))/gi,
     "&lt;"
   )
-  // Remove all event handlers and javascript: hrefs
   .replace(/ on\w+="[^"]*"/gi, "")
   .replace(/javascript:/gi, "");
 }
-
-// Helper to format Firestore Timestamp or millis
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
@@ -50,16 +40,9 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-// Helper to generate a permalink to this post on the site
-function getStoryUrl(id: string) {
-  // You can customize this to your actual post URL pattern
-  return `${typeof window !== "undefined" ? window.location.origin : ""}/news/${id}`;
-}
-
 const PubNewsstand: React.FC = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<{ [id: string]: boolean }>({});
 
   useEffect(() => {
     document.body.style.backgroundColor = "#f3f4f6";
@@ -85,7 +68,6 @@ const PubNewsstand: React.FC = () => {
     loadNewsArticles();
   }, []);
 
-  // Today's date
   const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -95,6 +77,7 @@ const PubNewsstand: React.FC = () => {
   return (
     <div className="pub-root">
       <style>{`
+        /* ... styles unchanged from previous version ... */
         body {
           background-color: #f3f4f6 !important;
           font-family: 'Times New Roman', Times, serif !important;
@@ -182,21 +165,11 @@ const PubNewsstand: React.FC = () => {
           cursor: pointer;
           text-align: left;
           transition: background 0.2s, color 0.2s;
+          text-decoration: none;
+          display: block;
         }
         .pub-story-title:hover, .pub-story-title:focus {
           background: #f1f5f9;
-        }
-        .pub-story-content {
-          margin-top: 0.5em;
-          padding: 1em;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 7px;
-          color: #1f2937;
-          display: block;
-        }
-        .pub-story-content[hidden] {
-          display: none;
         }
         .pub-story-meta {
           margin-top: 0.8em;
@@ -211,28 +184,6 @@ const PubNewsstand: React.FC = () => {
         .pub-date-posted {
           font-size: 0.85em;
           color: #9ca3af;
-        }
-        .share-links {
-          margin-top: 1em;
-          display: flex;
-          gap: 1em;
-          align-items: center;
-        }
-        .share-link-btn {
-          font-size: 1em;
-          color: #2563eb;
-          background: #e0e7ff;
-          border: 1px solid #2563eb;
-          border-radius: 6px;
-          padding: 0.4em 1em;
-          text-decoration: none;
-          font-weight: bold;
-          transition: background 0.18s, color 0.18s;
-          cursor: pointer;
-        }
-        .share-link-btn:hover, .share-link-btn:focus {
-          background: #2563eb;
-          color: #fff;
         }
         .pub-footer {
           width: 100%;
@@ -261,9 +212,9 @@ const PubNewsstand: React.FC = () => {
       </header>
       <nav className="pub-nav">
         <div className="pub-nav-inner">
-          <a href="/" className="pub-link">Home</a>
-          <a href="/bulletin" className="pub-link">Hit the Bar</a>
-          <a href="/index-nfl" className="pub-link">Games</a>
+          <Link href="/" className="pub-link">Home</Link>
+          <Link href="/bulletin" className="pub-link">Hit the Bar</Link>
+          <Link href="/index-nfl" className="pub-link">Games</Link>
         </div>
       </nav>
       <main className="pub-main" id="news-list">
@@ -272,71 +223,26 @@ const PubNewsstand: React.FC = () => {
         ) : news.length === 0 ? (
           <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
         ) : (
-          news.map((data) => {
-            const isOpen = !!expanded[data.id];
-            const storyUrl = getStoryUrl(data.id);
-            const smsText = encodeURIComponent(`${data.title}\n${storyUrl}`);
-            const twitterText = encodeURIComponent(`${data.title} ${storyUrl}`);
-            return (
-              <div key={data.id} className="pub-story">
-                <button
-                  className="pub-story-title"
-                  onClick={() =>
-                    setExpanded((prev) => ({
-                      ...prev,
-                      [data.id]: !prev[data.id],
-                    }))
-                  }
-                  aria-expanded={isOpen}
-                  type="button"
-                >
-                  {data.title || "Untitled Story"}
-                </button>
-                <div
-                  className="pub-story-content"
-                  hidden={!isOpen}
-                >
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: simpleSanitize(data.content || ""),
-                    }}
-                  />
-                  {isOpen && (
-                    <>
-                      <div className="pub-story-meta">
-                        {data.author && (
-                          <div className="pub-author">By {data.author}</div>
-                        )}
-                        {data.createdAt && (
-                          <div className="pub-date-posted">
-                            Posted: {formatDate(data.createdAt)}
-                          </div>
-                        )}
-                      </div>
-                      <div className="share-links">
-                        <a
-                          className="share-link-btn"
-                          href={`sms:?body=${smsText}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Share via SMS
-                        </a>
-                        <a
-                          className="share-link-btn"
-                          href={`https://twitter.com/intent/tweet?text=${twitterText}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Share on Twitter
-                        </a>
-                      </div>
-                    </>
-                  )}
-                </div>
+          news.map((data) => (
+            <div key={data.id} className="pub-story">
+              <Link
+                className="pub-story-title"
+                href={`/news/${data.id}`}
+              >
+                {data.title || "Untitled Story"}
+              </Link>
+              <div className="pub-story-meta">
+                {data.author && (
+                  <div className="pub-author">By {data.author}</div>
+                )}
+                {data.createdAt && (
+                  <div className="pub-date-posted">
+                    Posted: {formatDate(data.createdAt)}
+                  </div>
+                )}
               </div>
-            );
-          })
+            </div>
+          ))
         )}
       </main>
       <footer className="pub-footer">
