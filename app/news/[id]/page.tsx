@@ -21,6 +21,7 @@ function simpleSanitize(html: string) {
     .replace(/ on\w+="[^"]*"/gi, "")
     .replace(/javascript:/gi, "");
 }
+
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
@@ -58,12 +59,21 @@ export default function Page({ params }: { params: { id: string } }) {
     if (!id) return;
     const loadStory = async () => {
       setLoading(true);
-      const docRef = doc(db, "news", id);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        setStory({ id: snap.id, ...snap.data() });
+      try {
+        console.log("Fetching story with ID:", id); // Temporary log for debugging
+        const docRef = doc(db, "news", id);
+        const snap = await getDoc(docRef);
+        console.log("Doc exists?", snap.exists(), "Data:", snap.data()); // Temporary log for debugging
+        if (snap.exists()) {
+          setStory({ id: snap.id, ...snap.data() } as NewsArticle);
+        } else {
+          console.error("Doc not found for ID:", id);
+        }
+      } catch (error) {
+        console.error("Error loading story:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     loadStory();
   }, [id]);
@@ -72,7 +82,6 @@ export default function Page({ params }: { params: { id: string } }) {
   const storyUrl = typeof window !== "undefined" ? window.location.href : "";
   const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
   const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
-
   const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -82,7 +91,6 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <div className="pub-root">
       <style>{`
-        /* ... styles unchanged from previous version ... */
         body {
           background-color: #f3f4f6 !important;
           font-family: 'Times New Roman', Times, serif !important;
@@ -221,7 +229,7 @@ export default function Page({ params }: { params: { id: string } }) {
           border-top: 2px solid #1f2937;
           text-align: center;
           color: #4b5563;
-          padding: 1.2em 1.5em;
+          padding: 1.2em 1.5rem;
           box-sizing: border-box;
           font-size: 1.05em;
         }
