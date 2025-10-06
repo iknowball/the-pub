@@ -40,6 +40,7 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
+// THIS IS THE CORRECT SIGNATURE FOR NEXT.JS APP ROUTER DYNAMIC ROUTES
 export default function Page({ params }: { params: { id: string } }) {
   const id = params.id;
   const [story, setStory] = useState<NewsArticle | null>(null);
@@ -68,7 +69,6 @@ export default function Page({ params }: { params: { id: string } }) {
     loadStory();
   }, [id]);
 
-  // Construct share text/urls
   const storyUrl = typeof window !== "undefined" ? window.location.href : "";
   const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
   const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
