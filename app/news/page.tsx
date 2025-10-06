@@ -50,6 +50,12 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
+// Helper to generate a permalink to this post on the site
+function getStoryUrl(id: string) {
+  // You can customize this to your actual post URL pattern
+  return `${typeof window !== "undefined" ? window.location.origin : ""}/news/${id}`;
+}
+
 const PubNewsstand: React.FC = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -206,6 +212,28 @@ const PubNewsstand: React.FC = () => {
           font-size: 0.85em;
           color: #9ca3af;
         }
+        .share-links {
+          margin-top: 1em;
+          display: flex;
+          gap: 1em;
+          align-items: center;
+        }
+        .share-link-btn {
+          font-size: 1em;
+          color: #2563eb;
+          background: #e0e7ff;
+          border: 1px solid #2563eb;
+          border-radius: 6px;
+          padding: 0.4em 1em;
+          text-decoration: none;
+          font-weight: bold;
+          transition: background 0.18s, color 0.18s;
+          cursor: pointer;
+        }
+        .share-link-btn:hover, .share-link-btn:focus {
+          background: #2563eb;
+          color: #fff;
+        }
         .pub-footer {
           width: 100%;
           max-width: 900px;
@@ -246,6 +274,9 @@ const PubNewsstand: React.FC = () => {
         ) : (
           news.map((data) => {
             const isOpen = !!expanded[data.id];
+            const storyUrl = getStoryUrl(data.id);
+            const smsText = encodeURIComponent(`${data.title}\n${storyUrl}`);
+            const twitterText = encodeURIComponent(`${data.title} ${storyUrl}`);
             return (
               <div key={data.id} className="pub-story">
                 <button
@@ -271,16 +302,36 @@ const PubNewsstand: React.FC = () => {
                     }}
                   />
                   {isOpen && (
-                    <div className="pub-story-meta">
-                      {data.author && (
-                        <div className="pub-author">By {data.author}</div>
-                      )}
-                      {data.createdAt && (
-                        <div className="pub-date-posted">
-                          Posted: {formatDate(data.createdAt)}
-                        </div>
-                      )}
-                    </div>
+                    <>
+                      <div className="pub-story-meta">
+                        {data.author && (
+                          <div className="pub-author">By {data.author}</div>
+                        )}
+                        {data.createdAt && (
+                          <div className="pub-date-posted">
+                            Posted: {formatDate(data.createdAt)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="share-links">
+                        <a
+                          className="share-link-btn"
+                          href={`sms:?body=${smsText}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Share via SMS
+                        </a>
+                        <a
+                          className="share-link-btn"
+                          href={`https://twitter.com/intent/tweet?text=${twitterText}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Share on Twitter
+                        </a>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
