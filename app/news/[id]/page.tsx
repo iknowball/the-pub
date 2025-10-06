@@ -1,5 +1,5 @@
 "use client";
-import React, { use } from "react";  // Add 'use' import
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "../../firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
@@ -21,7 +21,6 @@ function simpleSanitize(html: string) {
     .replace(/ on\w+="[^"]*"/gi, "")
     .replace(/javascript:/gi, "");
 }
-
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
@@ -37,17 +36,17 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
         day: "numeric",
       });
     }
-  } catch (e) {}
+  } catch (e) { }
   return "";
 }
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {  // Type params as Promise
-  const { id } = use(params);  // Resolve with use() hook
+export default function Page({ params }: { params: { id: string } }) {
+  // FIX: decodeURIComponent for Firestore ID
+  const id = decodeURIComponent(params.id);
+  const [story, setStory] = useState<NewsArticle | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [story, setStory] = React.useState<NewsArticle | null>(null);  // Explicit React.useState for clarity
-  const [loading, setLoading] = React.useState(true);  // Explicit React.useState for clarity
-
-  React.useEffect(() => {  // Explicit React.useEffect for clarity
+  useEffect(() => {
     document.body.style.backgroundColor = "#f3f4f6";
     document.body.style.fontFamily = "'Times New Roman', Times, serif";
     return () => {
@@ -56,33 +55,29 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) { 
     };
   }, []);
 
-  React.useEffect(() => {  // Explicit React.useEffect for clarity
+  useEffect(() => {
     if (!id) return;
     const loadStory = async () => {
       setLoading(true);
-      try {
-        console.log("Fetching story with ID:", id); // Temporary log for debugging
-        const docRef = doc(db, "news", id);
-        const snap = await getDoc(docRef);
-        console.log("Doc exists?", snap.exists(), "Data:", snap.data()); // Temporary log for debugging
-        if (snap.exists()) {
-          setStory({ id: snap.id, ...snap.data() } as NewsArticle);
-        } else {
-          console.error("Doc not found for ID:", id);
-        }
-      } catch (error) {
-        console.error("Error loading story:", error);
-      } finally {
-        setLoading(false);
+      console.log("Fetching story with ID:", id);
+      const docRef = doc(db, "news", id);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        console.log("Doc exists? true Data:", snap.data());
+        setStory({ id: snap.id, ...snap.data() });
+      } else {
+        console.log("Doc exists? false Data:", snap.data());
+        console.log("Doc not found for ID:", id);
       }
+      setLoading(false);
     };
     loadStory();
   }, [id]);
 
-  // Construct share text/urls
   const storyUrl = typeof window !== "undefined" ? window.location.href : "";
   const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
   const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
+
   const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -230,7 +225,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) { 
           border-top: 2px solid #1f2937;
           text-align: center;
           color: #4b5563;
-          padding: 1.2em 1.5rem;
+          padding: 1.2em 1.5em;
           box-sizing: border-box;
           font-size: 1.05em;
         }
