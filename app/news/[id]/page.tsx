@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { use } from "react";  // Add 'use' import
 import Link from "next/link";
 import { db } from "../../firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
@@ -41,12 +41,13 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const [story, setStory] = useState<NewsArticle | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function Page({ params }: { params: Promise<{ id: string }> }) {  // Type params as Promise
+  const { id } = use(params);  // Resolve with use() hook
 
-  useEffect(() => {
+  const [story, setStory] = React.useState<NewsArticle | null>(null);  // Explicit React.useState for clarity
+  const [loading, setLoading] = React.useState(true);  // Explicit React.useState for clarity
+
+  React.useEffect(() => {  // Explicit React.useEffect for clarity
     document.body.style.backgroundColor = "#f3f4f6";
     document.body.style.fontFamily = "'Times New Roman', Times, serif";
     return () => {
@@ -55,7 +56,7 @@ export default function Page({ params }: { params: { id: string } }) {
     };
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {  // Explicit React.useEffect for clarity
     if (!id) return;
     const loadStory = async () => {
       setLoading(true);
