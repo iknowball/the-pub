@@ -344,8 +344,8 @@ function BulletinPage() {
           transform: scale(1.03);
         }
         .like-btn {
-          background: #fbbf24;
-          color: #3f3f2e;
+          background: #000;
+          color: #fbbf24;
           border: 1px solid #d4a827;
           font-size: 1.05rem;
           border-radius: 0.7rem;
@@ -361,12 +361,12 @@ function BulletinPage() {
           gap: 0.32em;
         }
         .like-btn.liked {
-          background: #fde68a;
-          color: #b28704;
+          background: #222;
+          color: #eab308;
         }
         .like-count {
           font-size: 0.93em;
-          color: #eab308;
+          color: #fff;
           font-weight: bold;
           margin-left: 0.3em;
         }
