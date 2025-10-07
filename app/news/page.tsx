@@ -1,10 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { db } from "../firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";  // Removed limit
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
 
-// --- Types ---
 type NewsArticle = {
   id: string;
   title?: string;
@@ -44,6 +43,8 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
 const PubNewsstand: React.FC = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openStoryId, setOpenStoryId] = useState<string | null>(null);
+  const storyRefs = useRef<{[id: string]: HTMLDivElement | null}>({});
 
   useEffect(() => {
     document.body.style.backgroundColor = "#f3f4f6";
@@ -58,19 +59,17 @@ const PubNewsstand: React.FC = () => {
     const loadNewsArticles = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));  // Removed limit(50) to load all
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         const articles: NewsArticle[] = [];
         snapshot.forEach((doc) => {
           const id = doc.id;
           const data = doc.data();
-          // Filter: Skip if ID looks invalid (e.g., URL-encoded title slug)
-          if (id && data.title && !id.includes('%')) {  // Simple check; refine if needed
+          if (id && data.title && !id.includes('%')) {
             articles.push({ id, ...data });
           }
         });
         setNews(articles);
-        console.log("Loaded news articles:", articles.map(a => ({ id: a.id, title: a.title })));  // Temp log for verification
       } catch (error) {
         console.error("Error loading news:", error);
       } finally {
@@ -80,11 +79,25 @@ const PubNewsstand: React.FC = () => {
     loadNewsArticles();
   }, []);
 
+  // Scroll to story when openStoryId is set
+  useEffect(() => {
+    if (openStoryId && storyRefs.current[openStoryId]) {
+      storyRefs.current[openStoryId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [openStoryId]);
+
   const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  // Create anchor links for sharing
+  const getStoryAnchor = (id: string) => `${window.location.pathname}#story-${id}`;
+  const getSMSLink = (title: string, id: string) =>
+    `sms:?body=${encodeURIComponent(`${title}\n${getStoryAnchor(id)}`)}`;
+  const getTwitterLink = (title: string, id: string) =>
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${getStoryAnchor(id)}`)}`;
 
   return (
     <div className="pub-root">
@@ -182,6 +195,15 @@ const PubNewsstand: React.FC = () => {
         .pub-story-title:hover, .pub-story-title:focus {
           background: #f1f5f9;
         }
+        .pub-story-content {
+          margin-top: 0.5em;
+          padding: 1em;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 7px;
+          color: #1f2937;
+          display: block;
+        }
         .pub-story-meta {
           margin-top: 0.8em;
           display: flex;
@@ -195,6 +217,28 @@ const PubNewsstand: React.FC = () => {
         .pub-date-posted {
           font-size: 0.85em;
           color: #9ca3af;
+        }
+        .share-links {
+          margin-top: 1em;
+          display: flex;
+          gap: 1em;
+          align-items: center;
+        }
+        .share-link-btn {
+          font-size: 1em;
+          color: #2563eb;
+          background: #e0e7ff;
+          border: 1px solid #2563eb;
+          border-radius: 6px;
+          padding: 0.4em 1em;
+          text-decoration: none;
+          font-weight: bold;
+          transition: background 0.18s, color 0.18s;
+          cursor: pointer;
+        }
+        .share-link-btn:hover, .share-link-btn:focus {
+          background: #2563eb;
+          color: #fff;
         }
         .pub-footer {
           width: 100%;
@@ -235,13 +279,20 @@ const PubNewsstand: React.FC = () => {
           <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
         ) : (
           news.map((data) => (
-            <div key={data.id} className="pub-story">
-              <Link
+            <div
+              key={data.id}
+              className="pub-story"
+              id={`story-${data.id}`}
+              ref={el => storyRefs.current[data.id] = el}
+            >
+              <button
                 className="pub-story-title"
-                href={`/news/${data.id}`}
+                aria-expanded={openStoryId === data.id}
+                aria-controls={`story-content-${data.id}`}
+                onClick={() => setOpenStoryId(openStoryId === data.id ? null : data.id)}
               >
                 {data.title || "Untitled Story"}
-              </Link>
+              </button>
               <div className="pub-story-meta">
                 {data.author && (
                   <div className="pub-author">By {data.author}</div>
@@ -252,6 +303,35 @@ const PubNewsstand: React.FC = () => {
                   </div>
                 )}
               </div>
+              {openStoryId === data.id && (
+                <div
+                  className="pub-story-content"
+                  id={`story-content-${data.id}`}
+                  dangerouslySetInnerHTML={{
+                    __html: simpleSanitize(data.content || ""),
+                  }}
+                />
+              )}
+              {openStoryId === data.id && (
+                <div className="share-links">
+                  <a
+                    className="share-link-btn"
+                    href={getSMSLink(data.title || "Untitled Story", data.id)}
+                    onClick={e => { e.preventDefault(); window.location.hash = `story-${data.id}`; }}
+                  >
+                    Share via SMS
+                  </a>
+                  <a
+                    className="share-link-btn"
+                    href={getTwitterLink(data.title || "Untitled Story", data.id)}
+                    onClick={e => { e.preventDefault(); window.location.hash = `story-${data.id}`; }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Share on Twitter
+                  </a>
+                </div>
+              )}
             </div>
           ))
         )}
