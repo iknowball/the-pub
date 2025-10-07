@@ -1,9 +1,9 @@
-"use client";
-import { useEffect, useState } from "react";
+does this original news file need to be edited too "use client";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "../../firebase";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
-
+import { db } from "../firebase";
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+// --- Types ---
 type NewsArticle = {
   id: string;
   title?: string;
@@ -11,31 +11,35 @@ type NewsArticle = {
   author?: string;
   createdAt?: Timestamp | { seconds: number } | number;
 };
-
 function simpleSanitize(html: string) {
   return html.replace(
     /<(?!\/?(p|br|b|i|em|strong|ul|ol|li|a)(\s|>|\/))/gi,
     "&lt;"
   )
-    .replace(/ on\w+="[^"]*"/gi, "")
-    .replace(/javascript:/gi, "");
+  .replace(/ on\w+="[^"]*"/gi, "")
+  .replace(/javascript:/gi, "");
 }
 function formatDate(ts: NewsArticle["createdAt"]): string {
   try {
     if (ts && typeof ts === "object" && "seconds" in ts) {
-      return new Date(ts.seconds * 1000).toLocaleDateString();
+      return new Date(ts.seconds * 1000).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     } else if (typeof ts === "number") {
-      return new Date(ts).toLocaleDateString();
+      return new Date(ts).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     }
   } catch (e) {}
   return "";
 }
-
-export default function Page({ params }: { params: { id: string } }) {
-  const id = decodeURIComponent(params.id);
-  const [story, setStory] = useState<NewsArticle | null>(null);
+const PubNewsstand: React.FC = () => {
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     document.body.style.backgroundColor = "#f3f4f6";
     document.body.style.fontFamily = "'Times New Roman', Times, serif";
@@ -44,30 +48,29 @@ export default function Page({ params }: { params: { id: string } }) {
       document.body.style.fontFamily = "";
     };
   }, []);
-
   useEffect(() => {
-    if (!id) return;
-    const loadStory = async () => {
+    const loadNewsArticles = async () => {
       setLoading(true);
-      const docRef = doc(db, "news", id);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        setStory({ id: snap.id, ...snap.data() });
-      }
+      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      const articles: NewsArticle[] = [];
+      snapshot.forEach((doc) => {
+        articles.push({ id: doc.id, ...doc.data() });
+      });
+      setNews(articles);
       setLoading(false);
     };
-    loadStory();
-  }, [id]);
-
-  const storyUrl = typeof window !== "undefined" ? window.location.href : "";
-  const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
-  const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
-
-  const todayDate = new Date().toLocaleDateString();
-
+    loadNewsArticles();
+  }, []);
+  const todayDate = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
   return (
     <div className="pub-root">
       <style>{`
+        /* ... styles unchanged from previous version ... */
         body {
           background-color: #f3f4f6 !important;
           font-family: 'Times New Roman', Times, serif !important;
@@ -144,24 +147,22 @@ export default function Page({ params }: { params: { id: string } }) {
           to { opacity: 1; transform: translateY(0);}
         }
         .pub-story-title {
-          font-size: 2rem;
+          width: 100%;
+          font-size: 1.25rem;
           font-weight: bold;
           color: #1e3a8a;
           background: #fff;
           border: 1px solid #1e3a8a;
           border-radius: 7px;
           padding: 0.7em 1em;
-          margin-bottom: 0.4em;
+          cursor: pointer;
           text-align: left;
-        }
-        .pub-story-content {
-          margin-top: 0.5em;
-          padding: 1em;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 7px;
-          color: #1f2937;
+          transition: background 0.2s, color 0.2s;
+          text-decoration: none;
           display: block;
+        }
+        .pub-story-title:hover, .pub-story-title:focus {
+          background: #f1f5f9;
         }
         .pub-story-meta {
           margin-top: 0.8em;
@@ -176,28 +177,6 @@ export default function Page({ params }: { params: { id: string } }) {
         .pub-date-posted {
           font-size: 0.85em;
           color: #9ca3af;
-        }
-        .share-links {
-          margin-top: 1em;
-          display: flex;
-          gap: 1em;
-          align-items: center;
-        }
-        .share-link-btn {
-          font-size: 1em;
-          color: #2563eb;
-          background: #e0e7ff;
-          border: 1px solid #2563eb;
-          border-radius: 6px;
-          padding: 0.4em 1em;
-          text-decoration: none;
-          font-weight: bold;
-          transition: background 0.18s, color 0.18s;
-          cursor: pointer;
-        }
-        .share-link-btn:hover, .share-link-btn:focus {
-          background: #2563eb;
-          color: #fff;
         }
         .pub-footer {
           width: 100%;
@@ -231,51 +210,32 @@ export default function Page({ params }: { params: { id: string } }) {
           <Link href="/index-nfl" className="pub-link">Games</Link>
         </div>
       </nav>
-      <main className="pub-main" id="news-story">
+      <main className="pub-main" id="news-list">
         {loading ? (
           <div style={{ textAlign: "center", color: "#6b7280" }}>Loading...</div>
-        ) : !story ? (
-          <div style={{ textAlign: "center", color: "#6b7280" }}>Not found.</div>
+        ) : news.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
         ) : (
-          <div className="pub-story">
-            <div className="pub-story-title">
-              {story.title || "Untitled Story"}
-            </div>
-            <div
-              className="pub-story-content"
-              dangerouslySetInnerHTML={{
-                __html: simpleSanitize(story.content || ""),
-              }}
-            />
-            <div className="pub-story-meta">
-              {story.author && (
-                <div className="pub-author">By {story.author}</div>
-              )}
-              {story.createdAt && (
-                <div className="pub-date-posted">
-                  Posted: {formatDate(story.createdAt)}
-                </div>
-              )}
-            </div>
-            <div className="share-links">
-              <a
-                className="share-link-btn"
-                href={`sms:?body=${smsText}`}
-                target="_blank"
-                rel="noopener noreferrer"
+          news.map((data) => (
+            <div key={data.id} className="pub-story">
+              <Link
+                className="pub-story-title"
+                href={`/news/${data.id}`}
               >
-                Share via SMS
-              </a>
-              <a
-                className="share-link-btn"
-                href={`https://twitter.com/intent/tweet?text=${twitterText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Share on Twitter
-              </a>
+                {data.title || "Untitled Story"}
+              </Link>
+              <div className="pub-story-meta">
+                {data.author && (
+                  <div className="pub-author">By {data.author}</div>
+                )}
+                {data.createdAt && (
+                  <div className="pub-date-posted">
+                    Posted: {formatDate(data.createdAt)}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ))
         )}
       </main>
       <footer className="pub-footer">
@@ -283,4 +243,5 @@ export default function Page({ params }: { params: { id: string } }) {
       </footer>
     </div>
   );
-}
+};
+export default PubNewsstand;
