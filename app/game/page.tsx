@@ -90,6 +90,18 @@ async function recordGameScore(user: User | null, score: number, time: number) {
   }
 }
 
+function getInitials(name: string) {
+  return (
+    "Initials: " +
+    name
+      .split(" ")
+      .filter((w) => w.length > 0)
+      .map((w) => w[0].toUpperCase())
+      .join(".") +
+    "."
+  );
+}
+
 const GuessDailyPlayer: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -105,6 +117,9 @@ const GuessDailyPlayer: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const guessInputRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState(false);
+
+  // Hint logic
+  const [showHint, setShowHint] = useState(false);
 
   // Pub bar theme
   useEffect(() => {
@@ -171,6 +186,7 @@ const GuessDailyPlayer: React.FC = () => {
       setElapsedTime(0);
       setTimerActive(true);
     }
+    setShowHint(false);
     return () => {
       setTimerActive(false);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -203,11 +219,11 @@ const GuessDailyPlayer: React.FC = () => {
       setCurrentLevel(lvl => lvl + 1);
       setFeedback("");
       setGuessed(false);
+      setShowHint(false);
       if (guessInputRef.current) guessInputRef.current.value = "";
     } else {
       setGameOver(true);
       setFeedback(`Game Over! You scored ${score} out of ${maxLevels}.`);
-      // RECORD SCORE TO FIREBASE
       recordGameScore(user, score, elapsedTime);
     }
   };
@@ -218,6 +234,7 @@ const GuessDailyPlayer: React.FC = () => {
     setFeedback("");
     setGameOver(false);
     setGuessed(false);
+    setShowHint(false);
     if (guessInputRef.current) guessInputRef.current.value = "";
   };
 
@@ -420,9 +437,41 @@ const GuessDailyPlayer: React.FC = () => {
               }}
             />
             {!guessed && (
-              <button className="gdp-btn" onClick={handleGuess} disabled={guessed}>
-                Submit Guess
-              </button>
+              <>
+                <button className="gdp-btn" onClick={handleGuess} disabled={guessed}>
+                  Submit Guess
+                </button>
+                {!showHint ? (
+                  <button
+                    className="gdp-btn"
+                    style={{ marginTop: "0.3rem" }}
+                    onClick={() => setShowHint(true)}
+                  >
+                    Show Hint
+                  </button>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: "0.3rem",
+                      width: "48%",
+                      minWidth: "90px",
+                      maxWidth: "190px",
+                      marginLeft: "auto",
+                      marginRight: "auto",
+                      background: "#ad6e1b",
+                      color: "#ffe066",
+                      borderRadius: "14px",
+                      border: "2px solid #ffc233",
+                      padding: "0.72rem 0",
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      fontSize: "1.04rem"
+                    }}
+                  >
+                    {getInitials(player.name)}
+                  </div>
+                )}
+              </>
             )}
             {guessed && (
               <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
