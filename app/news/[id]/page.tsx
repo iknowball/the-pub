@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { db } from "../../firebase";
-import { doc, getDoc, collection, query, where, getDocs, Timestamp } from "firebase/firestore";  // Added query, where, getDocs, collection
+import { doc, getDoc, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 
 // --- Types ---
 type NewsArticle = {
@@ -42,7 +42,7 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-// Helper to decode URL-encoded title (e.g., "dpont%20wear%20gloves" -> "dpont wear gloves")
+// Helper to decode URL-encoded title (e.g., "drop%20ball" -> "drop ball")
 function decodeTitleSlug(slug: string): string {
   return decodeURIComponent(slug).trim();
 }
@@ -63,7 +63,10 @@ const NewsStoryPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     const loadStory = async () => {
       setLoading(true);
       try {
@@ -76,17 +79,21 @@ const NewsStoryPage: React.FC = () => {
           return;
         }
 
-        // If not found, assume it's a title slug: decode and search by title
-        console.log("Direct ID fetch failed; trying title search for:", id);  // Temp log
+        // If not found, assume it's a title slug: decode and search case-insensitively by title
         const decodedTitle = decodeTitleSlug(id);
-        const q = query(collection(db, "news"), where("title", "==", decodedTitle));
+        // Case-insensitive range query (assumes title index exists)
+        const lowerTitle = decodedTitle.toLowerCase();
+        const q = query(
+          collection(db, "news"),
+          where("title", ">=", lowerTitle),
+          where("title", "<=", lowerTitle + "\uf8ff")  // \uf8ff for end-of-string
+        );
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-          const matchingDoc = querySnapshot.docs[0];  // Take first match (assume unique titles)
+          const matchingDoc = querySnapshot.docs[0];  // Take first match
           setStory({ id: matchingDoc.id, ...matchingDoc.data() } as NewsArticle);
-          console.log("Found story via title search:", decodedTitle, "ID:", matchingDoc.id);  // Temp log
         } else {
-          console.error("No story found by title:", decodedTitle);
+          console.warn("No story found by title:", decodedTitle);  // Downgraded to warn
         }
       } catch (error) {
         console.error("Error loading story:", error);
@@ -97,7 +104,7 @@ const NewsStoryPage: React.FC = () => {
     loadStory();
   }, [id]);
 
-  // Construct share text/urls
+  // Construct share text/urls (client-only safe)
   const storyUrl = typeof window !== "undefined" ? window.location.href : "";
   const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
   const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
@@ -262,7 +269,7 @@ const NewsStoryPage: React.FC = () => {
       `}</style>
       <header className="pub-header">
         <h1 className="pub-title">The Pub Times</h1>
-        <p className="pub-date">
+        <p className="pub-date" suppressHydrationWarning>  {/* Suppress for date mismatch */}
           <span>{todayDate}</span>
         </p>
       </header>
@@ -299,24 +306,26 @@ const NewsStoryPage: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="share-links">
-              <a
-                className="share-link-btn"
-                href={`sms:?body=${smsText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Share via SMS
-              </a>
-              <a
-                className="share-link-btn"
-                href={`https://twitter.com/intent/tweet?text=${twitterText}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Share on Twitter
-              </a>
-            </div>
+            {story && (  {/* Render shares only if story loaded */}
+              <div className="share-links">
+                <a
+                  className="share-link-btn"
+                  href={`sms:?body=${smsText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share via SMS
+                </a>
+                <a
+                  className="share-link-btn"
+                  href={`https://twitter.com/intent/tweet?text=${twitterText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share on Twitter
+                </a>
+              </div>
+            )}
           </div>
         )}
       </main>
