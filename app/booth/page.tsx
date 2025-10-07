@@ -35,7 +35,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const nflGames = [
-  // ... unchanged ...
   { id: "49ers-rams", label: "San Francisco 49ers at Los Angeles Rams (Thu, 8:15 PM ET, Amazon Prime Video)" },
   { id: "vikings-browns", label: "Minnesota Vikings vs. Cleveland Browns (London, Sun, 9:30 AM ET, NFL Network)" },
   { id: "cowboys-jets", label: "Dallas Cowboys at New York Jets (Sun, 1:00 PM ET, FOX)" },
@@ -174,7 +173,23 @@ const BoothChat: React.FC = () => {
   return (
     <div className="flex flex-col items-center mt-8" style={{ fontFamily: "'Roboto','Montserrat',sans-serif" }}>
       <style>{`
-        /* ...styles unchanged... */
+        body { background: linear-gradient(135deg,#1a1e2d 0%,#2d3246 100%); min-height: 100vh; font-family: 'Roboto', 'Montserrat', sans-serif; }
+        .booth-bg { background: #23263a; border-radius: 1.5rem; box-shadow: 0 8px 40px 0 rgba(0,0,0,0.4); border: 0; backdrop-filter: blur(2px); }
+        .booth-top { background: linear-gradient(90deg, #2c2f48 0%, #3c4062 100%); border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; min-height: 48px; border-bottom: 1px solid #23263a; }
+        .bar-stool { width: 36px; height: 36px; background: #314276; border-radius: 50%; margin: 6px; border: 2px solid #3c4062; box-shadow: 0 2px 8px 0 rgba(0,0,0,0.18); display: inline-block; }
+        .booth-bg select, .booth-bg input { background: #292c40 !important; color: #e8eefd !important; border-color: #3c4062 !important; }
+        .booth-bg input::placeholder { color: #8695b8 !important; }
+        .booth-bg label { color: #e8eefd !important; }
+        .booth-bg .border-blue-600 { border-color: #314276 !important; }
+        .twitter-chat-bubble { background: #23263a; border-radius: 1rem; box-shadow: 0 2px 8px rgba(44,64,98,0.09); padding: 12px 18px; margin-bottom: 12px; position: relative; max-width: 460px; word-break: break-word; transition: background 0.2s; }
+        .twitter-chat-bubble.mine { background: #314276; color: #fff; }
+        .twitter-chat-bubble .username { font-weight: 700; color: #4d67a3; font-family: 'Montserrat',sans-serif; }
+        .twitter-chat-bubble.mine .username { color: #ffe477; }
+        .twitter-chat-bubble .timestamp { font-size: 0.85em; color: #b9c5e1; margin-left: 8px; }
+        .twitter-chat-bubble > div { color: #fff !important; }
+        .twitter-chat-bubble:hover { background: #292c40; }
+        #messages::-webkit-scrollbar { width: 7px; background: #23263a; }
+        #messages::-webkit-scrollbar-thumb { background: #314276; border-radius: 6px; }
       `}</style>
       <div className="booth-bg w-full max-w-2xl mx-auto">
         <div className="booth-top flex items-center justify-between px-6 py-3">
@@ -208,7 +223,7 @@ const BoothChat: React.FC = () => {
               <div className="text-center text-blue-400 italic my-2">Loading messages...</div>
             )}
             {messages.map((msg, idx) => {
-              const isMine = user && msg.uid === user.uid;
+              const isMine = user && msg.uid === user?.uid;
               // Always show the Pub username from displayNames cache (never Google name/email)
               const nameToShow = msg.uid && displayNames[msg.uid] ? displayNames[msg.uid] : msg.displayName;
               return (
