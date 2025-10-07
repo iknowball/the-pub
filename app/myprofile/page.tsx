@@ -849,74 +849,72 @@ const PubProfile: React.FC = () => {
   );
 
   // --- TABS CONTENT ---
-  function tabContent() {
-    if (currentTab === "wall") {
-      return (
-        <div>
-          {/* Always allow posting on wall */}
-          <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
-            <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
-            <button type="submit">Post</button>
+  // This block must stay inside the component and use only one declaration!
+  // (No duplicate function/variable for tabContent)
+  if (currentTab === "wall") {
+    tabContent = (
+      <div>
+        <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
+          <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
+          <button type="submit">Post</button>
+        </form>
+        {!wallPosts.length && (
+          <div className="empty-msg">No posts yet.</div>
+        )}
+        {wallPosts.slice().reverse().map((post, idx) => (
+          <div className="wall-post-card" key={idx}>
+            <span className="wall-post-author">{post.author}</span>
+            {post.text}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (currentTab === "takes") {
+    tabContent = (
+      <div>
+        {ownProfile && (
+          <form className="take-form" id="takeForm" onSubmit={handleTakePost}>
+            <input type="text" id="takeInput" placeholder="Share your take..." maxLength={120} />
+            <button type="submit">Add Take</button>
           </form>
-          {!wallPosts.length && (
-            <div className="empty-msg">No posts yet.</div>
-          )}
-          {wallPosts.slice().reverse().map((post, idx) => (
-            <div className="wall-post-card" key={idx}>
-              <span className="wall-post-author">{post.author}</span>
-              {post.text}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    if (currentTab === "takes") {
-      return (
-        <div>
-          {ownProfile && (
-            <form className="take-form" id="takeForm" onSubmit={handleTakePost}>
-              <input type="text" id="takeInput" placeholder="Share your take..." maxLength={120} />
-              <button type="submit">Add Take</button>
-            </form>
-          )}
-          {!takes.length && <div className="empty-msg">No takes yet.</div>}
-          {takes.slice().reverse().map((take, i) => (
-            <div className="take-card" key={i}>
-              {take}
-              {ownProfile && (
-                <button className="remove-btn" onClick={() => handleRemoveTake(takes.length - 1 - i)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    if (currentTab === "teams") {
-      return (
-        <div>
-          {ownProfile && (
-            <form className="team-form" id="teamForm" onSubmit={handleAddTeam}>
-              <input type="text" id="teamNameInput" placeholder="Team name..." maxLength={60} />
-              <button type="submit">Add Team</button>
-            </form>
-          )}
-          {!teams.length && <div className="empty-msg">No teams yet.</div>}
-          {teams.map((team, i) => (
-            <div className="team-card" key={i}>
-              <span>{team.name}</span>
-              {ownProfile && (
-                <button className="remove-btn" onClick={() => handleRemoveTeam(i)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
+        )}
+        {!takes.length && <div className="empty-msg">No takes yet.</div>}
+        {takes.slice().reverse().map((take, i) => (
+          <div className="take-card" key={i}>
+            {take}
+            {ownProfile && (
+              <button className="remove-btn" onClick={() => handleRemoveTake(takes.length - 1 - i)}>
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (currentTab === "teams") {
+    tabContent = (
+      <div>
+        {ownProfile && (
+          <form className="team-form" id="teamForm" onSubmit={handleAddTeam}>
+            <input type="text" id="teamNameInput" placeholder="Team name..." maxLength={60} />
+            <button type="submit">Add Team</button>
+          </form>
+        )}
+        {!teams.length && <div className="empty-msg">No teams yet.</div>}
+        {teams.map((team, i) => (
+          <div className="team-card" key={i}>
+            <span>{team.name}</span>
+            {ownProfile && (
+              <button className="remove-btn" onClick={() => handleRemoveTeam(i)}>
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    );
   }
 };
 
