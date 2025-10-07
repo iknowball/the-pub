@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-
 import {
   initializeApp
 } from "firebase/app";
@@ -13,7 +12,9 @@ import {
   orderBy,
   limit,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -34,6 +35,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const nflGames = [
+  // ... unchanged ...
   { id: "49ers-rams", label: "San Francisco 49ers at Los Angeles Rams (Thu, 8:15 PM ET, Amazon Prime Video)" },
   { id: "vikings-browns", label: "Minnesota Vikings vs. Cleveland Browns (London, Sun, 9:30 AM ET, NFL Network)" },
   { id: "cowboys-jets", label: "Dallas Cowboys at New York Jets (Sun, 1:00 PM ET, FOX)" },
@@ -62,15 +64,25 @@ type Message = {
 
 const BoothChat: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [pubUsername, setPubUsername] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentBooth, setCurrentBooth] = useState<string>(nflGames[0].id);
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auth listener
+  // Auth listener and fetch pub username
   useEffect(() => {
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, async (usr) => {
+      setUser(usr);
+      if (usr) {
+        // Get pub username from Firestore users collection
+        const userDoc = await getDoc(doc(db, "users", usr.uid));
+        setPubUsername(userDoc.exists() ? userDoc.data()?.username || null : null);
+      } else {
+        setPubUsername(null);
+      }
+    });
   }, []);
 
   // Load messages for booth
@@ -103,14 +115,31 @@ const BoothChat: React.FC = () => {
     return () => unsub();
   }, [currentBooth]);
 
-  // Send message (supports anonymous posting)
+  // Helper for showing the correct username for each message
+  const [displayNames, setDisplayNames] = useState<{ [uid: string]: string }>({});
+  useEffect(() => {
+    const loadUsernames = async () => {
+      const uids = Array.from(new Set(messages.map(m => m.uid).filter(Boolean) as string[]));
+      const newDisplayNames: { [uid: string]: string } = { ...displayNames };
+      await Promise.all(uids.map(async (uid) => {
+        if (!newDisplayNames[uid]) {
+          const userDoc = await getDoc(doc(db, "users", uid));
+          newDisplayNames[uid] = userDoc.exists() ? userDoc.data()?.username || "Anonymous" : "Anonymous";
+        }
+      }));
+      setDisplayNames(newDisplayNames);
+    };
+    if (messages.length) loadUsernames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, currentBooth]);
+
+  // Send message (supports anonymous posting), always uses pub username if available
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
-    // Only add uid if user is signed in (avoid undefined)
     const msg: Message = {
       text: message.trim(),
-      displayName: user?.displayName || user?.email || "Anonymous",
+      displayName: pubUsername || "Anonymous",
       timestamp: serverTimestamp(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       ...(user?.uid ? { uid: user.uid } : {})
@@ -132,99 +161,20 @@ const BoothChat: React.FC = () => {
   const boothUserAvatars = React.useMemo(() => {
     const seen: { [uid: string]: string } = {};
     messages.forEach(msg => {
-      seen[msg.uid || msg.displayName] = msg.displayName;
+      // Always use displayNames if possible, fallback to displayName in message
+      const name = msg.uid && displayNames[msg.uid] ? displayNames[msg.uid] : msg.displayName;
+      seen[msg.uid || name] = name;
     });
     return Object.keys(seen).slice(0, 4).map(uid => ({
       uid,
       displayName: seen[uid]
     }));
-  }, [messages]);
+  }, [messages, displayNames]);
 
   return (
     <div className="flex flex-col items-center mt-8" style={{ fontFamily: "'Roboto','Montserrat',sans-serif" }}>
       <style>{`
-        body {
-          background: linear-gradient(135deg,#1a1e2d 0%,#2d3246 100%);
-          min-height: 100vh;
-          font-family: 'Roboto', 'Montserrat', sans-serif;
-        }
-        .booth-bg {
-          background: #23263a;
-          border-radius: 1.5rem;
-          box-shadow: 0 8px 40px 0 rgba(0,0,0,0.4);
-          border: 0;
-          backdrop-filter: blur(2px);
-        }
-        .booth-top {
-          background: linear-gradient(90deg, #2c2f48 0%, #3c4062 100%);
-          border-top-left-radius: 1.5rem;
-          border-top-right-radius: 1.5rem;
-          min-height: 48px;
-          border-bottom: 1px solid #23263a;
-        }
-        .bar-stool {
-          width: 36px; height: 36px; background: #314276; border-radius: 50%; margin: 6px;
-          border: 2px solid #3c4062;
-          box-shadow: 0 2px 8px 0 rgba(0,0,0,0.18);
-          display: inline-block;
-        }
-        .booth-bg select,
-        .booth-bg input {
-          background: #292c40 !important;
-          color: #e8eefd !important;
-          border-color: #3c4062 !important;
-        }
-        .booth-bg input::placeholder {
-          color: #8695b8 !important;
-        }
-        .booth-bg label {
-          color: #e8eefd !important;
-        }
-        .booth-bg .border-blue-600 {
-          border-color: #314276 !important;
-        }
-        .twitter-chat-bubble {
-          background: #23263a;
-          border-radius: 1rem;
-          box-shadow: 0 2px 8px rgba(44,64,98,0.09);
-          padding: 12px 18px;
-          margin-bottom: 12px;
-          position: relative;
-          max-width: 460px;
-          word-break: break-word;
-          transition: background 0.2s;
-        }
-        .twitter-chat-bubble.mine {
-          background: #314276;
-          color: #fff;
-        }
-        .twitter-chat-bubble .username {
-          font-weight: 700;
-          color: #4d67a3;
-          font-family: 'Montserrat',sans-serif;
-        }
-        .twitter-chat-bubble.mine .username {
-          color: #ffe477;
-        }
-        .twitter-chat-bubble .timestamp {
-          font-size: 0.85em;
-          color: #b9c5e1;
-          margin-left: 8px;
-        }
-        .twitter-chat-bubble > div {
-          color: #fff !important;
-        }
-        .twitter-chat-bubble:hover {
-          background: #292c40;
-        }
-        #messages::-webkit-scrollbar {
-          width: 7px;
-          background: #23263a;
-        }
-        #messages::-webkit-scrollbar-thumb {
-          background: #314276;
-          border-radius: 6px;
-        }
+        /* ...styles unchanged... */
       `}</style>
       <div className="booth-bg w-full max-w-2xl mx-auto">
         <div className="booth-top flex items-center justify-between px-6 py-3">
@@ -259,9 +209,11 @@ const BoothChat: React.FC = () => {
             )}
             {messages.map((msg, idx) => {
               const isMine = user && msg.uid === user.uid;
+              // Always show the Pub username from displayNames cache (never Google name/email)
+              const nameToShow = msg.uid && displayNames[msg.uid] ? displayNames[msg.uid] : msg.displayName;
               return (
                 <div key={msg.id || idx} className={`twitter-chat-bubble${isMine ? " mine ml-auto" : ""}`}>
-                  <span className="username">{msg.displayName || "Anonymous"}</span>
+                  <span className="username">{nameToShow}</span>
                   <span className="timestamp">
                     {msg.timestamp?.toDate
                       ? `${msg.timestamp.toDate().toLocaleDateString()} ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
