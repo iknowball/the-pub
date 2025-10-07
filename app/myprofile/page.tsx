@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { initializeApp } from "firebase/app";
 import {
@@ -12,7 +12,6 @@ import {
 import {
   getFirestore,
   doc,
-  setDoc,
   getDoc,
   updateDoc,
   collection,
@@ -86,8 +85,6 @@ const PubProfile: React.FC = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownUsers, setDropdownUsers] = useState<string[]>([]);
-  const [searchResults, setSearchResults] = useState<string[]>([]);
-  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
 
   // STYLING
   useEffect(() => {
@@ -291,59 +288,58 @@ const PubProfile: React.FC = () => {
     setSearchTerm("");
   };
 
-  // UPDATE LOGIC
-  const updateViewedUserField = async (field: string, value: any) => {
-    if (!viewedUid) return;
-    try {
-      await updateDoc(doc(db, "users", viewedUid), { [field]: value });
-    } catch {
-      setProfileError("Failed to post. Please try again.");
-    }
-  };
-  // WALL
+  // WALL: always allow posting, never allow editing/removing others' posts
   const handleWallPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("wallInput") as HTMLInputElement;
-    if (inputEl?.value.trim() && loggedInUsername) {
+    if (
+      inputEl?.value.trim() &&
+      loggedInUsername &&
+      viewedUid // always allow posting, regardless of profile
+    ) {
       const newWall = [...wallPosts, { author: loggedInUsername, text: inputEl.value.trim() }];
       setWallPosts(newWall);
-      await updateViewedUserField("wall", newWall);
+      await updateDoc(doc(db, "users", viewedUid), { wall: newWall });
       inputEl.value = "";
     }
   };
-  // TAKES
+
+  // TAKES: ONLY allow editing/removing/adding for own profile
   const handleTakePost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("takeInput") as HTMLInputElement;
-    if (inputEl?.value.trim()) {
+    if (inputEl?.value.trim() && ownProfile) {
       const newTakes = [...takes, inputEl.value.trim()];
       setTakes(newTakes);
-      await updateViewedUserField("takes", newTakes);
+      await updateDoc(doc(db, "users", viewedUid!), { takes: newTakes });
       inputEl.value = "";
     }
   };
   const handleRemoveTake = async (idx: number) => {
+    if (!ownProfile) return;
     const newTakes = takes.slice();
     newTakes.splice(idx, 1);
     setTakes(newTakes);
-    await updateViewedUserField("takes", newTakes);
+    await updateDoc(doc(db, "users", viewedUid!), { takes: newTakes });
   };
-  // TEAMS
+
+  // TEAMS: ONLY allow editing/removing/adding for own profile
   const handleAddTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("teamNameInput") as HTMLInputElement;
-    if (inputEl?.value.trim()) {
+    if (inputEl?.value.trim() && ownProfile) {
       const newTeams = [...teams, { name: inputEl.value.trim() }];
       setTeams(newTeams);
-      await updateViewedUserField("teams", newTeams);
+      await updateDoc(doc(db, "users", viewedUid!), { teams: newTeams });
       inputEl.value = "";
     }
   };
   const handleRemoveTeam = async (idx: number) => {
+    if (!ownProfile) return;
     const newTeams = teams.slice();
     newTeams.splice(idx, 1);
     setTeams(newTeams);
-    await updateViewedUserField("teams", newTeams);
+    await updateDoc(doc(db, "users", viewedUid!), { teams: newTeams });
   };
 
   // --- TABS CONTENT ---
@@ -351,13 +347,11 @@ const PubProfile: React.FC = () => {
   if (currentTab === "wall") {
     tabContent = (
       <div>
-        {/* Only allow posting on wall if viewing own OR another profile */}
-        {(ownProfile || (!ownProfile && loggedInUser)) && (
-          <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
-            <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
-            <button type="submit">Post</button>
-          </form>
-        )}
+        {/* Always allow posting on wall */}
+        <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
+          <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
+          <button type="submit">Post</button>
+        </form>
         {!wallPosts.length && (
           <div className="empty-msg">No posts yet.</div>
         )}
@@ -663,7 +657,6 @@ const PubProfile: React.FC = () => {
         }
       `}</style>
       <div className="profile-card">
-
         {/* --- SEARCH BAR --- */}
         <div style={{ marginBottom: "1.3rem", position: "relative", zIndex: 20 }}>
           <input
@@ -718,7 +711,6 @@ const PubProfile: React.FC = () => {
             </div>
           )}
         </div>
-
         {/* --- Profile Content --- */}
         <div className="profile-header">
           <img
@@ -746,7 +738,6 @@ const PubProfile: React.FC = () => {
           <button className={`tab-btn${currentTab === "wall" ? " active" : ""}`} onClick={() => setCurrentTab("wall")}>
             <span role="img" aria-label="wall">📝</span> Wall
           </button>
-          {/* Only show other tabs if ownProfile */}
           {ownProfile && (
             <>
               <button className={`tab-btn${currentTab === "takes" ? " active" : ""}`} onClick={() => setCurrentTab("takes")}>
@@ -761,7 +752,6 @@ const PubProfile: React.FC = () => {
         <div className="tab-content">{tabContent}</div>
         {profileError && <div className="empty-msg">{profileError}</div>}
       </div>
-
       {/* Stats Modal */}
       {statsModalOpen && (
         <div className="modal-bg">
@@ -784,7 +774,6 @@ const PubProfile: React.FC = () => {
           </div>
         </div>
       )}
-
       {/* Settings Modal */}
       {settingsModalOpen && (
         <div className="modal-bg">
