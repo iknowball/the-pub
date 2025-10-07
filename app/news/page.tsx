@@ -316,44 +316,44 @@ const PubNewsstand: React.FC = () => {
               >
                 {data.title || "Untitled Story"}
               </button>
-              <div className="pub-story-meta">
-                {data.author && (
-                  <div className="pub-author">By {data.author}</div>
-                )}
-                {data.createdAt && (
-                  <div className="pub-date-posted">
-                    Posted: {formatDate(data.createdAt)}
+              {openStoryId === data.id && (
+                <>
+                  <div className="pub-story-meta">
+                    {data.author && (
+                      <div className="pub-author">By {data.author}</div>
+                    )}
+                    {data.createdAt && (
+                      <div className="pub-date-posted">
+                        Posted: {formatDate(data.createdAt)}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              {openStoryId === data.id && (
-                <div
-                  className="pub-story-content"
-                  id={`story-content-${data.id}`}
-                  dangerouslySetInnerHTML={{
-                    __html: simpleSanitize(data.content || ""),
-                  }}
-                />
-              )}
-              {openStoryId === data.id && (
-                <div className="share-links">
-                  <a
-                    className="share-link-btn"
-                    href={getSMSLink(data.title || "Untitled Story", data.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Share via SMS
-                  </a>
-                  <a
-                    className="share-link-btn"
-                    href={getTwitterLink(data.title || "Untitled Story", data.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Share on Twitter
-                  </a>
-                </div>
+                  <div
+                    className="pub-story-content"
+                    id={`story-content-${data.id}`}
+                    dangerouslySetInnerHTML={{
+                      __html: simpleSanitize(data.content || ""),
+                    }}
+                  />
+                  <div className="share-links">
+                    <a
+                      className="share-link-btn"
+                      href={getSMSLink(data.title || "Untitled Story", data.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Share via SMS
+                    </a>
+                    <a
+                      className="share-link-btn"
+                      href={getTwitterLink(data.title || "Untitled Story", data.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Share on Twitter
+                    </a>
+                  </div>
+                </>
               )}
             </div>
           ))
