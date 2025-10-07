@@ -269,7 +269,7 @@ const NewsStoryPage: React.FC = () => {
       `}</style>
       <header className="pub-header">
         <h1 className="pub-title">The Pub Times</h1>
-        <p className="pub-date" suppressHydrationWarning>  {/* Suppress for date mismatch */}
+        <p className="pub-date" suppressHydrationWarning>
           <span>{todayDate}</span>
         </p>
       </header>
@@ -306,7 +306,7 @@ const NewsStoryPage: React.FC = () => {
                 </div>
               )}
             </div>
-            {story && (  {/* Render shares only if story loaded */}
+            {story && (
               <div className="share-links">
                 <a
                   className="share-link-btn"
