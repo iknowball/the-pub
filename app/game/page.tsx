@@ -102,6 +102,14 @@ function getInitials(name: string) {
   );
 }
 
+// Helper to get current page URL for sharing
+function getShareUrl() {
+  if (typeof window !== "undefined") {
+    return window.location.origin + window.location.pathname;
+  }
+  return "https://thepub-sigma.web.app/game";
+}
+
 const GuessDailyPlayer: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -237,6 +245,10 @@ const GuessDailyPlayer: React.FC = () => {
     setShowHint(false);
     if (guessInputRef.current) guessInputRef.current.value = "";
   };
+
+  // SMS link for sharing score
+  const smsText = `I scored ${score} out of ${maxLevels} in Guess the Player! Try today's game: ${getShareUrl()}`;
+  const smsLink = `sms:?body=${encodeURIComponent(smsText)}`;
 
   return (
     <div className="gdp-bg">
@@ -376,6 +388,30 @@ const GuessDailyPlayer: React.FC = () => {
         .gdp-btn-green:hover {
           background: #16a34a;
         }
+        .gdp-share-btn {
+          width: 48%;
+          min-width: 90px;
+          max-width: 190px;
+          margin: 0.3rem auto 0 auto;
+          font-size: 1.04rem;
+          font-weight: bold;
+          padding: 0.72rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          background: #0ea5e9;
+          color: #fff;
+          text-align: center;
+          text-decoration: none;
+          display: block;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+        }
+        .gdp-share-btn:hover {
+          background: #2563eb;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
         .gdp-feedback {
           text-align: center;
           margin-top: 1rem;
@@ -403,7 +439,7 @@ const GuessDailyPlayer: React.FC = () => {
         @media (max-width: 600px) {
           .gdp-card { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
           .gdp-img-wrap { max-width: 98vw; height: 65vw; min-height: 220px;}
-          .gdp-input, .gdp-btn, .gdp-btn-green { width: 70vw; min-width: 70px; max-width: 160px; font-size: 0.98rem; padding: 0.55rem 0.6rem; }
+          .gdp-input, .gdp-btn, .gdp-btn-green, .gdp-share-btn { width: 70vw; min-width: 70px; max-width: 160px; font-size: 0.98rem; padding: 0.55rem 0.6rem; }
         }
       `}</style>
       <div className="gdp-card">
@@ -481,9 +517,14 @@ const GuessDailyPlayer: React.FC = () => {
           </>
         )}
         {gameOver && (
-          <button className="gdp-btn" onClick={handleRestart}>
-            Play Again
-          </button>
+          <>
+            <button className="gdp-btn" onClick={handleRestart}>
+              Play Again
+            </button>
+            <a className="gdp-share-btn" href={smsLink} target="_blank" rel="noopener noreferrer">
+              Share via SMS
+            </a>
+          </>
         )}
         {imageError && (
           <div className="gdp-feedback" style={{ color: "#ffb4b4" }}>
