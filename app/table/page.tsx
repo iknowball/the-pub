@@ -53,6 +53,7 @@ type Message = {
 
 function DebateTable() {
   const [user, setUser] = useState<User | null>(null);
+  const [pubUsername, setPubUsername] = useState<string | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [customTopic, setCustomTopic] = useState("");
   const [showCustom, setShowCustom] = useState(false);
@@ -113,9 +114,18 @@ function DebateTable() {
     loadTopics();
   }, []);
 
-  // Auth listener
+  // Auth listener and fetch pub username
   useEffect(() => {
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, async (usr) => {
+      setUser(usr);
+      if (usr) {
+        // Get pub username from Firestore users collection
+        const userDoc = await getDoc(doc(db, "users", usr.uid));
+        setPubUsername(userDoc.exists() ? userDoc.data()?.username || null : null);
+      } else {
+        setPubUsername(null);
+      }
+    });
   }, []);
 
   // Messages listener
@@ -186,13 +196,31 @@ function DebateTable() {
     setDebateTopic(e.target.value || "Enter your own debate topic!");
   };
 
-  // Send message
+  // Helper for showing the correct username for each message
+  const [displayNames, setDisplayNames] = useState<{ [uid: string]: string }>({});
+  useEffect(() => {
+    const loadUsernames = async () => {
+      const uids = Array.from(new Set(messages.map(m => m.uid).filter(Boolean) as string[]));
+      const newDisplayNames: { [uid: string]: string } = { ...displayNames };
+      await Promise.all(uids.map(async (uid) => {
+        if (!newDisplayNames[uid]) {
+          const userDoc = await getDoc(doc(db, "users", uid));
+          newDisplayNames[uid] = userDoc.exists() ? userDoc.data()?.username || "Anonymous" : "Anonymous";
+        }
+      }));
+      setDisplayNames(newDisplayNames);
+    };
+    if (messages.length) loadUsernames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, currentDebateId]);
+
+  // Send message (always uses pub username if available)
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
     const msg: Message = {
       text: message.trim(),
-      displayName: user?.displayName || "Anonymous",
+      displayName: pubUsername || "Anonymous",
       uid: user?.uid,
       timestamp: serverTimestamp(),
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -391,6 +419,8 @@ function DebateTable() {
               )}
               {messages.map((msg, idx) => {
                 const isMine = user && msg.uid === user.uid;
+                // Always show the Pub username from displayNames cache (never Google name/email)
+                const nameToShow = msg.uid && displayNames[msg.uid] ? displayNames[msg.uid] : msg.displayName;
                 return (
                   <div key={msg.id || idx}>
                     <div
@@ -400,7 +430,7 @@ function DebateTable() {
                           : "text-blue-900 text-left"
                       }`}
                     >
-                      {msg.displayName || "Anonymous"}{" "}
+                      {nameToShow}{" "}
                       <span className="text-blue-400">{msg.time || ""}</span>
                     </div>
                     <div
