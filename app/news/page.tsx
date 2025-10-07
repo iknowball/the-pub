@@ -78,6 +78,21 @@ const PubNewsstand: React.FC = () => {
           }
         });
         setNews(articles);
+
+        // Auto-scroll to anchor on initial load if present
+        setTimeout(() => {
+          if (typeof window !== "undefined") {
+            const hash = window.location.hash;
+            if (hash) {
+              const el = document.getElementById(hash.replace("#", ""));
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+                setOpenStoryId(hash.replace("#story-", ""));
+              }
+            }
+          }
+        }, 300);
+
       } catch (error) {
         console.error("Error loading news:", error);
       } finally {
