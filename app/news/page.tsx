@@ -283,7 +283,7 @@ const PubNewsstand: React.FC = () => {
               key={data.id}
               className="pub-story"
               id={`story-${data.id}`}
-              ref={el => storyRefs.current[data.id] = el}
+              ref={el => { storyRefs.current[data.id] = el; }}
             >
               <button
                 className="pub-story-title"
