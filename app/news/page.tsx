@@ -40,6 +40,14 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
+// Utility to get the current absolute URL
+function getBaseUrl() {
+  if (typeof window !== "undefined") {
+    return window.location.origin + window.location.pathname;
+  }
+  return "https://yourdomain.com/news";
+}
+
 const PubNewsstand: React.FC = () => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,12 +100,12 @@ const PubNewsstand: React.FC = () => {
     day: "numeric",
   });
 
-  // Create anchor links for sharing
-  const getStoryAnchor = (id: string) => `${window.location.pathname}#story-${id}`;
+  // Anchor links for sharing (get absolute URL with anchor)
+  const getStoryAnchorUrl = (id: string) => `${getBaseUrl()}#story-${id}`;
   const getSMSLink = (title: string, id: string) =>
-    `sms:?body=${encodeURIComponent(`${title}\n${getStoryAnchor(id)}`)}`;
+    `sms:?body=${encodeURIComponent(`${title}\n${getStoryAnchorUrl(id)}`)}`;
   const getTwitterLink = (title: string, id: string) =>
-    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${getStoryAnchor(id)}`)}`;
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${getStoryAnchorUrl(id)}`)}`;
 
   return (
     <div className="pub-root">
@@ -317,14 +325,14 @@ const PubNewsstand: React.FC = () => {
                   <a
                     className="share-link-btn"
                     href={getSMSLink(data.title || "Untitled Story", data.id)}
-                    onClick={e => { e.preventDefault(); window.location.hash = `story-${data.id}`; }}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Share via SMS
                   </a>
                   <a
                     className="share-link-btn"
                     href={getTwitterLink(data.title || "Untitled Story", data.id)}
-                    onClick={e => { e.preventDefault(); window.location.hash = `story-${data.id}`; }}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
