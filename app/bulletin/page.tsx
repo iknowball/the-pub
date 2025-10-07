@@ -10,6 +10,8 @@ import {
   orderBy,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -34,6 +36,7 @@ type Message = {
   displayName: string;
   uid?: string;
   timestamp?: any;
+  likes?: string[]; // array of user UIDs who liked this message
 };
 
 function BulletinPage() {
@@ -50,14 +53,15 @@ function BulletinPage() {
     const q = query(collection(db, "bulletin"), orderBy("timestamp", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const msgs: Message[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         msgs.push({
-          id: doc.id,
+          id: docSnap.id,
           message: data.message,
           displayName: data.displayName || "Anonymous",
           uid: data.uid,
           timestamp: data.timestamp,
+          likes: data.likes || [],
         });
       });
       setMessages(msgs);
@@ -77,6 +81,7 @@ function BulletinPage() {
       displayName: user?.displayName || user?.email || "Anonymous",
       uid: user?.uid,
       timestamp: serverTimestamp(),
+      likes: [],
     };
     await addDoc(collection(db, "bulletin"), msg);
     setInput("");
@@ -84,6 +89,16 @@ function BulletinPage() {
 
   const handleSignIn = () => {
     signInWithPopup(auth, new GoogleAuthProvider());
+  };
+
+  // Like a message (toggle like for signed-in user)
+  const handleLike = async (msg: Message) => {
+    if (!user || !msg.id) return;
+    const liked = msg.likes?.includes(user.uid);
+    const newLikes = liked
+      ? msg.likes!.filter((uid) => uid !== user.uid)
+      : [...(msg.likes || []), user.uid];
+    await updateDoc(doc(db, "bulletin", msg.id), { likes: newLikes });
   };
 
   useEffect(() => {
@@ -328,6 +343,33 @@ function BulletinPage() {
           color: #26221a;
           transform: scale(1.03);
         }
+        .like-btn {
+          background: #fbbf24;
+          color: #3f3f2e;
+          border: 1px solid #d4a827;
+          font-size: 1.05rem;
+          border-radius: 0.7rem;
+          font-weight: bold;
+          padding: 0.2rem 0.8rem;
+          margin-left: 0.4em;
+          margin-top: 0.5em;
+          cursor: pointer;
+          box-shadow: 0 1px 4px #d4a82722;
+          transition: background 0.16s, color 0.16s, transform 0.11s;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.32em;
+        }
+        .like-btn.liked {
+          background: #fde68a;
+          color: #b28704;
+        }
+        .like-count {
+          font-size: 0.93em;
+          color: #eab308;
+          font-weight: bold;
+          margin-left: 0.3em;
+        }
         @media (max-width: 500px) {
           .bulletin-bg {
             padding-left: 0;
@@ -447,6 +489,7 @@ function BulletinPage() {
                     minute: "2-digit",
                   })}`
                 : "";
+            const likedByUser = user && msg.likes?.includes(user.uid);
             return (
               <div
                 key={msg.id || idx}
@@ -460,6 +503,19 @@ function BulletinPage() {
                 </span>
                 <span className="timestamp">{timestamp}</span>
                 <span>{msg.message}</span>
+                <div>
+                  <button
+                    className={`like-btn${likedByUser ? " liked" : ""}`}
+                    onClick={() => handleLike(msg)}
+                    disabled={!user}
+                    aria-label="Like this message"
+                  >
+                    👍
+                    <span className="like-count">
+                      {msg.likes?.length ? msg.likes.length : 0}
+                    </span>
+                  </button>
+                </div>
               </div>
             );
           })}
