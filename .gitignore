@@ -1,1 +1,6 @@
+# Next.js build output
+.next
+
+# Other ignores...
 node_modules
+.env
