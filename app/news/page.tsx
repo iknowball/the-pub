@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "../firebase";
-import { collection, getDocs, query, orderBy, Timestamp, limit } from "firebase/firestore";  // Added limit
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";  // Removed limit
 
 // --- Types ---
 type NewsArticle = {
@@ -58,7 +58,7 @@ const PubNewsstand: React.FC = () => {
     const loadNewsArticles = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, "news"), orderBy("createdAt", "desc"), limit(50));  // Limit for perf
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));  // Removed limit(50) to load all
         const snapshot = await getDocs(q);
         const articles: NewsArticle[] = [];
         snapshot.forEach((doc) => {
