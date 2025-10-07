@@ -85,6 +85,7 @@ function DebateTable() {
       let allTopics: Topic[] = [];
       const snap = await getDocs(collection(db, "debateTopics"));
       if (snap.empty) {
+        // Populate defaults
         for (const t of defaultTopics) {
           await setDoc(doc(db, "debateTopics", t.id), { text: t.text });
         }
@@ -94,6 +95,7 @@ function DebateTable() {
           id: doc.id,
           text: doc.data().text,
         }));
+        // Ensure defaults
         for (const t of defaultTopics) {
           if (!allTopics.some((topic) => topic.id === t.id)) {
             await setDoc(doc(db, "debateTopics", t.id), { text: t.text });
@@ -101,6 +103,7 @@ function DebateTable() {
           }
         }
       }
+      // Sort topics by defaults first
       allTopics = defaultTopics.concat(
         allTopics.filter((t) => !defaultTopics.some((dt) => dt.id === t.id))
       );
@@ -116,6 +119,7 @@ function DebateTable() {
     return onAuthStateChanged(auth, async (usr) => {
       setUser(usr);
       if (usr) {
+        // Get pub username from Firestore users collection
         const userDoc = await getDoc(doc(db, "users", usr.uid));
         setPubUsername(userDoc.exists() ? userDoc.data()?.username || null : null);
       } else {
@@ -144,7 +148,8 @@ function DebateTable() {
           timestamp: data.timestamp,
           time: data.time,
         });
-        participants[data.uid || "Anonymous"] = data.displayName || "Anonymous";
+        participants[data.uid || "Anonymous"] =
+          data.displayName || "Anonymous";
       });
       setMessages(msgs);
       setParticipants(participants);
@@ -153,7 +158,45 @@ function DebateTable() {
     return () => unsub();
   }, [currentDebateId]);
 
-  // Lookup Pub usernames for all uids
+  // Add custom topic
+  const handleAddCustomTopic = async () => {
+    if (!customTopic.trim()) return;
+    const newId =
+      "custom-" + customTopic.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const topicRef = doc(db, "debateTopics", newId);
+    const topicSnap = await getDoc(topicRef);
+    if (!topicSnap.exists()) {
+      await setDoc(topicRef, { text: customTopic });
+      setTopics((ts) => [...ts, { id: newId, text: customTopic }]);
+    }
+    setCurrentDebateId(newId);
+    setDebateTopic(customTopic);
+    setShowCustom(false);
+    setCustomTopic("");
+  };
+
+  // Topic select change
+  const handleTopicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "custom") {
+      setShowCustom(true);
+      setDebateTopic(customTopic || "Enter your own debate topic!");
+    } else {
+      setShowCustom(false);
+      const topicText =
+        topics.find((t) => t.id === val)?.text || "Debate topic";
+      setCurrentDebateId(val);
+      setDebateTopic(topicText);
+    }
+  };
+
+  // Custom topic input change
+  const handleCustomInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomTopic(e.target.value);
+    setDebateTopic(e.target.value || "Enter your own debate topic!");
+  };
+
+  // Helper for showing the correct username for each message
   const [displayNames, setDisplayNames] = useState<{ [uid: string]: string }>({});
   useEffect(() => {
     const loadUsernames = async () => {
