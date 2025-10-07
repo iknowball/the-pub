@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "../firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";  // Removed limit
+import { useParams } from "next/navigation";
+import { db } from "../../firebase";
+import { doc, getDoc, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 
 // --- Types ---
 type NewsArticle = {
@@ -41,8 +42,15 @@ function formatDate(ts: NewsArticle["createdAt"]): string {
   return "";
 }
 
-const PubNewsstand: React.FC = () => {
-  const [news, setNews] = useState<NewsArticle[]>([]);
+// Helper to decode URL-encoded title (e.g., "drop%20ball" -> "drop ball")
+function decodeTitleSlug(slug: string): string {
+  return decodeURIComponent(slug).trim();
+}
+
+const NewsStoryPage: React.FC = () => {
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : "";
+  const [story, setStory] = useState<NewsArticle | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,31 +63,51 @@ const PubNewsstand: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const loadNewsArticles = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    const loadStory = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));  // Removed limit(50) to load all
-        const snapshot = await getDocs(q);
-        const articles: NewsArticle[] = [];
-        snapshot.forEach((doc) => {
-          const id = doc.id;
-          const data = doc.data();
-          // Filter: Skip if ID looks invalid (e.g., URL-encoded title slug)
-          if (id && data.title && !id.includes('%')) {  // Simple check; refine if needed
-            articles.push({ id, ...data });
-          }
-        });
-        setNews(articles);
-        console.log("Loaded news articles:", articles.map(a => ({ id: a.id, title: a.title })));  // Temp log for verification
+        // First, try direct fetch by ID
+        const docRef = doc(db, "news", id);
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          setStory({ id: snap.id, ...snap.data() } as NewsArticle);
+          setLoading(false);
+          return;
+        }
+
+        // If not found, assume it's a title slug: decode and search case-insensitively by title
+        const decodedTitle = decodeTitleSlug(id);
+        // Case-insensitive range query (assumes title index exists)
+        const lowerTitle = decodedTitle.toLowerCase();
+        const q = query(
+          collection(db, "news"),
+          where("title", ">=", lowerTitle),
+          where("title", "<=", lowerTitle + "\uf8ff")  // \uf8ff for end-of-string
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const matchingDoc = querySnapshot.docs[0];  // Take first match
+          setStory({ id: matchingDoc.id, ...matchingDoc.data() } as NewsArticle);
+        } else {
+          console.warn("No story found by title:", decodedTitle);  // Downgraded to warn
+        }
       } catch (error) {
-        console.error("Error loading news:", error);
+        console.error("Error loading story:", error);
       } finally {
         setLoading(false);
       }
     };
-    loadNewsArticles();
-  }, []);
+    loadStory();
+  }, [id]);
 
+  // Construct share text/urls (client-only safe)
+  const storyUrl = typeof window !== "undefined" ? window.location.href : "";
+  const smsText = encodeURIComponent(`${story?.title || ""}\n${storyUrl}`);
+  const twitterText = encodeURIComponent(`${story?.title || ""} ${storyUrl}`);
   const todayDate = new Date().toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -165,22 +193,24 @@ const PubNewsstand: React.FC = () => {
           to { opacity: 1; transform: translateY(0);}
         }
         .pub-story-title {
-          width: 100%;
-          font-size: 1.25rem;
+          font-size: 2rem;
           font-weight: bold;
           color: #1e3a8a;
           background: #fff;
           border: 1px solid #1e3a8a;
           border-radius: 7px;
           padding: 0.7em 1em;
-          cursor: pointer;
+          margin-bottom: 0.4em;
           text-align: left;
-          transition: background 0.2s, color 0.2s;
-          text-decoration: none;
-          display: block;
         }
-        .pub-story-title:hover, .pub-story-title:focus {
-          background: #f1f5f9;
+        .pub-story-content {
+          margin-top: 0.5em;
+          padding: 1em;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 7px;
+          color: #1f2937;
+          display: block;
         }
         .pub-story-meta {
           margin-top: 0.8em;
@@ -195,6 +225,28 @@ const PubNewsstand: React.FC = () => {
         .pub-date-posted {
           font-size: 0.85em;
           color: #9ca3af;
+        }
+        .share-links {
+          margin-top: 1em;
+          display: flex;
+          gap: 1em;
+          align-items: center;
+        }
+        .share-link-btn {
+          font-size: 1em;
+          color: #2563eb;
+          background: #e0e7ff;
+          border: 1px solid #2563eb;
+          border-radius: 6px;
+          padding: 0.4em 1em;
+          text-decoration: none;
+          font-weight: bold;
+          transition: background 0.18s, color 0.18s;
+          cursor: pointer;
+        }
+        .share-link-btn:hover, .share-link-btn:focus {
+          background: #2563eb;
+          color: #fff;
         }
         .pub-footer {
           width: 100%;
@@ -217,7 +269,7 @@ const PubNewsstand: React.FC = () => {
       `}</style>
       <header className="pub-header">
         <h1 className="pub-title">The Pub Times</h1>
-        <p className="pub-date">
+        <p className="pub-date" suppressHydrationWarning>  {/* Suppress for date mismatch */}
           <span>{todayDate}</span>
         </p>
       </header>
@@ -228,32 +280,53 @@ const PubNewsstand: React.FC = () => {
           <Link href="/index-nfl" className="pub-link">Games</Link>
         </div>
       </nav>
-      <main className="pub-main" id="news-list">
+      <main className="pub-main" id="news-story">
         {loading ? (
           <div style={{ textAlign: "center", color: "#6b7280" }}>Loading...</div>
-        ) : news.length === 0 ? (
-          <div style={{ textAlign: "center", color: "#6b7280" }}>No news found.</div>
+        ) : !story ? (
+          <div style={{ textAlign: "center", color: "#6b7280" }}>Not found.</div>
         ) : (
-          news.map((data) => (
-            <div key={data.id} className="pub-story">
-              <Link
-                className="pub-story-title"
-                href={`/news/${data.id}`}
-              >
-                {data.title || "Untitled Story"}
-              </Link>
-              <div className="pub-story-meta">
-                {data.author && (
-                  <div className="pub-author">By {data.author}</div>
-                )}
-                {data.createdAt && (
-                  <div className="pub-date-posted">
-                    Posted: {formatDate(data.createdAt)}
-                  </div>
-                )}
-              </div>
+          <div className="pub-story">
+            <div className="pub-story-title">
+              {story.title || "Untitled Story"}
             </div>
-          ))
+            <div
+              className="pub-story-content"
+              dangerouslySetInnerHTML={{
+                __html: simpleSanitize(story.content || ""),
+              }}
+            />
+            <div className="pub-story-meta">
+              {story.author && (
+                <div className="pub-author">By {story.author}</div>
+              )}
+              {story.createdAt && (
+                <div className="pub-date-posted">
+                  Posted: {formatDate(story.createdAt)}
+                </div>
+              )}
+            </div>
+            {story && (  {/* Render shares only if story loaded */}
+              <div className="share-links">
+                <a
+                  className="share-link-btn"
+                  href={`sms:?body=${smsText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share via SMS
+                </a>
+                <a
+                  className="share-link-btn"
+                  href={`https://twitter.com/intent/tweet?text=${twitterText}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Share on Twitter
+                </a>
+              </div>
+            )}
+          </div>
         )}
       </main>
       <footer className="pub-footer">
@@ -263,4 +336,4 @@ const PubNewsstand: React.FC = () => {
   );
 };
 
-export default PubNewsstand;
+export default NewsStoryPage;
