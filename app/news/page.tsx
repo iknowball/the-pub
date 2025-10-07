@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "../firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp, limit } from "firebase/firestore";  // Added limit
 
 // --- Types ---
 type NewsArticle = {
@@ -18,8 +18,8 @@ function simpleSanitize(html: string) {
     /<(?!\/?(p|br|b|i|em|strong|ul|ol|li|a)(\s|>|\/))/gi,
     "&lt;"
   )
-    .replace(/ on\w+="[^"]*"/gi, "")
-    .replace(/javascript:/gi, "");
+  .replace(/ on\w+="[^"]*"/gi, "")
+  .replace(/javascript:/gi, "");
 }
 
 function formatDate(ts: NewsArticle["createdAt"]): string {
@@ -58,15 +58,19 @@ const PubNewsstand: React.FC = () => {
     const loadNewsArticles = async () => {
       setLoading(true);
       try {
-        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"), limit(50));  // Limit for perf
         const snapshot = await getDocs(q);
         const articles: NewsArticle[] = [];
         snapshot.forEach((doc) => {
+          const id = doc.id;
           const data = doc.data();
-          articles.push({ id: doc.id, ...data });
+          // Filter: Skip if ID looks invalid (e.g., URL-encoded title slug)
+          if (id && data.title && !id.includes('%')) {  // Simple check; refine if needed
+            articles.push({ id, ...data });
+          }
         });
         setNews(articles);
-        console.log("Loaded news articles:", articles.map(a => ({ id: a.id, title: a.title }))); // Temporary log for debugging IDs
+        console.log("Loaded news articles:", articles.map(a => ({ id: a.id, title: a.title })));  // Temp log for verification
       } catch (error) {
         console.error("Error loading news:", error);
       } finally {
@@ -199,7 +203,7 @@ const PubNewsstand: React.FC = () => {
           border-top: 2px solid #1f2937;
           text-align: center;
           color: #4b5563;
-          padding: 1.2em 1.5rem;
+          padding: 1.2em 1.5em;
           box-sizing: border-box;
           font-size: 1.05em;
         }
