@@ -153,7 +153,6 @@ function emojiShareMessage(results: boolean[]) {
 function generateShareText(results: boolean[], score?: number) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/college-game" : "";
   const emojiMsg = emojiShareMessage(results);
-  // Update to new message as requested
   const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
   return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 25 in Guess their College! Try today's game: ${homepage}</a>`;
 }
