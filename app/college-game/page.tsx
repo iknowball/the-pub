@@ -150,20 +150,23 @@ function emojiShareMessage(results: boolean[]) {
   while (emojis.length < 5) emojis.push("❓");
   return emojis.join("");
 }
-function generateShareText(results: boolean[]) {
+function generateShareText(results: boolean[], score?: number) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/college-game" : "";
   const emojiMsg = emojiShareMessage(results);
-  return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">Do you know ball?</a>`;
+  // Update to new message as requested
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 25 in Guess their College! Try today's game: ${homepage}</a>`;
 }
-function generateClipboardText(results: boolean[]) {
+function generateClipboardText(results: boolean[], score?: number) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/college-game" : "";
   const emojiMsg = emojiShareMessage(results);
-  return `${emojiMsg} Do you know ball? ${homepage}`;
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} I scored ${scoreNum} out of 25 in Guess their College! Try today's game: ${homepage}`;
 }
-function generateSmsLink(results: boolean[]) {
+function generateSmsLink(results: boolean[], score?: number) {
   const homepage = typeof window !== "undefined" ? window.location.origin + "/college-game" : "";
-  const emojiMsg = emojiShareMessage(results);
-  const msg = `${emojiMsg} Do you know ball? ${homepage}`;
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  const msg = `I scored ${scoreNum} out of 25 in Guess their College! Try today's game: ${homepage}`;
   return "sms:?body=" + encodeURIComponent(msg);
 }
 
@@ -266,7 +269,7 @@ const CollegeGuess: React.FC = () => {
 
   // Clipboard share
   const handleClipboard = () => {
-    const textToCopy = generateClipboardText(answerResults);
+    const textToCopy = generateClipboardText(answerResults, score);
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => {
@@ -672,18 +675,24 @@ const CollegeGuess: React.FC = () => {
             </button>
           </>
         )}
-        <Link
-          href="/"
-          className={`trivia-btn red${gameOver ? "" : " hidden"}`}
-        >
-          Back to Home
-        </Link>
-        <button
-          className={`trivia-btn red${gameOver ? "" : " hidden"}`}
-          onClick={() => setShowStats(true)}
-        >
-          View Stats
-        </button>
+        {gameOver && (
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "1.1rem" }}>
+            <Link
+              href="/"
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%", marginBottom: 8 }}
+            >
+              Back to Home
+            </Link>
+            <button
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%" }}
+              onClick={() => setShowStats(true)}
+            >
+              View Stats
+            </button>
+          </div>
+        )}
         <div className="trivia-feedback">{feedback}</div>
         <div className="trivia-score-row">
           <div className="trivia-timer-box">{formatTime(elapsedTime)}</div>
@@ -693,14 +702,14 @@ const CollegeGuess: React.FC = () => {
           <button className="clipboard-btn" onClick={handleClipboard}>
             {clipboardMsg}
           </button>
-          <a className="sms-btn" href={generateSmsLink(answerResults)} target="_blank" rel="noopener noreferrer">
+          <a className="sms-btn" href={generateSmsLink(answerResults, score)} target="_blank" rel="noopener noreferrer">
             Send as SMS
           </a>
         </div>
         <div
           className="share-preview"
           style={{ display: showShare ? "block" : "none" }}
-          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults) }}
+          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults, score) }}
         />
       </div>
       {showStats && (
