@@ -639,7 +639,7 @@ const CollegeGuess: React.FC = () => {
           <Link href="/" className="trivia-nav-btn">Home</Link>
           <Link href="/news" className="trivia-nav-btn">News</Link>
           <Link href="/game" className="trivia-nav-btn">Players</Link>
-          <Link href="/college-game" className="trivia-nav-btn">College</Link>
+          <Link href="/trivia-game" className="trivia-nav-btn">Trivia</Link>
         </div>
         <div className="trivia-title">College Guess</div>
         <div className="trivia-level">Player: {currentLevel}/5</div>
