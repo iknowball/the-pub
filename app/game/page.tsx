@@ -114,6 +114,9 @@ const GuessDailyPlayer: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentLevel, setCurrentLevel] = useState(1);
+
+  // New: track correct answers only, and if each level was answered correct
+  const [correctAnswers, setCorrectAnswers] = useState<boolean[]>(Array(maxLevels).fill(false));
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [gameOver, setGameOver] = useState(false);
@@ -208,18 +211,32 @@ const GuessDailyPlayer: React.FC = () => {
     };
   }, [timerActive]);
 
+  // Track if user has already got this level correct
+  const [levelAnsweredCorrect, setLevelAnsweredCorrect] = useState<boolean>(false);
+
   const handleGuess = () => {
-    if (!player || guessed) return;
+    if (!player || guessed || levelAnsweredCorrect) return;
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctName = player.name.toLowerCase();
-    setGuessed(true);
+
     if (guess === correctName) {
+      // Only count the first correct guess for this level
       setScore((s) => s + 1);
+      setLevelAnsweredCorrect(true);
+      // Mark this level as answered correctly
+      setCorrectAnswers((arr) => {
+        const newArr = [...arr];
+        newArr[currentLevel - 1] = true;
+        return newArr;
+      });
       setFeedback("Correct! 🎉");
+      setGuessed(true);
+      setTimerActive(false);
     } else {
-      setFeedback(`Incorrect! It was ${player.name}.`);
+      setFeedback("Misspelled or incorrect! Try again.");
+      // Do not mark guessed as true, allow retry, but do NOT increment score.
+      // Do not move to next level unless the correct spelling is entered.
     }
-    setTimerActive(false);
   };
 
   const handleNext = () => {
@@ -227,6 +244,7 @@ const GuessDailyPlayer: React.FC = () => {
       setCurrentLevel(lvl => lvl + 1);
       setFeedback("");
       setGuessed(false);
+      setLevelAnsweredCorrect(false);
       setShowHint(false);
       if (guessInputRef.current) guessInputRef.current.value = "";
     } else {
@@ -242,11 +260,13 @@ const GuessDailyPlayer: React.FC = () => {
     setFeedback("");
     setGameOver(false);
     setGuessed(false);
+    setLevelAnsweredCorrect(false);
+    setCorrectAnswers(Array(maxLevels).fill(false));
     setShowHint(false);
     if (guessInputRef.current) guessInputRef.current.value = "";
   };
 
-  // SMS link for sharing score
+  // SMS link for sharing score (always uses exact # of correct answers)
   const smsText = `I scored ${score} out of ${maxLevels} in Guess the Player! Try today's game: ${getShareUrl()}`;
   const smsLink = `sms:?body=${encodeURIComponent(smsText)}`;
 
@@ -467,14 +487,14 @@ const GuessDailyPlayer: React.FC = () => {
               placeholder="Enter the player's name..."
               className="gdp-input"
               autoComplete="off"
-              disabled={guessed}
+              disabled={levelAnsweredCorrect}
               onKeyDown={e => {
                 if (e.key === "Enter") handleGuess();
               }}
             />
-            {!guessed && (
+            {!levelAnsweredCorrect && (
               <>
-                <button className="gdp-btn" onClick={handleGuess} disabled={guessed}>
+                <button className="gdp-btn" onClick={handleGuess} disabled={levelAnsweredCorrect}>
                   Submit Guess
                 </button>
                 {!showHint ? (
@@ -509,7 +529,7 @@ const GuessDailyPlayer: React.FC = () => {
                 )}
               </>
             )}
-            {guessed && (
+            {levelAnsweredCorrect && (
               <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
                 {currentLevel < maxLevels ? "Next Player" : "Finish"}
               </button>
