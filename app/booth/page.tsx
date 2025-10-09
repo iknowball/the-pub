@@ -35,21 +35,21 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const nflGames = [
-  { id: "49ers-rams", label: "San Francisco 49ers at Los Angeles Rams (Thu, 8:15 PM ET, Amazon Prime Video)" },
-  { id: "vikings-browns", label: "Minnesota Vikings vs. Cleveland Browns (London, Sun, 9:30 AM ET, NFL Network)" },
-  { id: "cowboys-jets", label: "Dallas Cowboys at New York Jets (Sun, 1:00 PM ET, FOX)" },
-  { id: "raiders-colts", label: "Las Vegas Raiders at Indianapolis Colts (Sun, 1:00 PM ET, FOX)" },
-  { id: "dolphins-panthers", label: "Miami Dolphins at Carolina Panthers (Sun, 1:00 PM ET, FOX)" },
-  { id: "broncos-eagles", label: "Denver Broncos at Philadelphia Eagles (Sun, 1:00 PM ET, CBS)" },
-  { id: "texans-ravens", label: "Houston Texans at Baltimore Ravens (Sun, 1:00 PM ET, CBS)" },
-  { id: "giants-saints", label: "New York Giants at New Orleans Saints (Sun, 1:00 PM ET, CBS)" },
-  { id: "titans-cardinals", label: "Tennessee Titans at Arizona Cardinals (Sun, 4:05 PM ET, CBS)" },
-  { id: "buccaneers-seahawks", label: "Tampa Bay Buccaneers at Seattle Seahawks (Sun, 4:05 PM ET, CBS)" },
-  { id: "lions-bengals", label: "Detroit Lions at Cincinnati Bengals (Sun, 4:25 PM ET, FOX)" },
-  { id: "commanders-chargers", label: "Washington Commanders at Los Angeles Chargers (Sun, 4:25 PM ET, FOX)" },
-  { id: "patriots-bills", label: "New England Patriots at Buffalo Bills (Sun, 8:20 PM ET, NBC)" },
-  { id: "chiefs-jaguars", label: "Kansas City Chiefs at Jacksonville Jaguars (Mon, 8:15 PM ET, ABC/ESPN)" }
-  // Teams on Bye: Atlanta Falcons, Chicago Bears, Green Bay Packers, Pittsburgh Steelers
+  { id: "eagles-giants", label: "Philadelphia Eagles (4-1) vs. New York Giants (1-4) — Sun, Oct 12, 8:15 PM EDT, Prime Video" },
+  { id: "broncos-jets", label: "Denver Broncos (3-2) vs. New York Jets (0-5) — Sun, Oct 12, 9:30 AM EDT, NFL Network" },
+  { id: "rams-ravens", label: "Los Angeles Rams (3-2) vs. Baltimore Ravens (1-4) — Sun, Oct 12, 1:00 PM EDT, FOX" },
+  { id: "cowboys-panthers", label: "Dallas Cowboys (2-2-1) vs. Carolina Panthers (2-3) — Sun, Oct 12, 1:00 PM EDT, FOX" },
+  { id: "cardinals-colts", label: "Arizona Cardinals (2-3) vs. Indianapolis Colts (4-1) — Sun, Oct 12, 1:00 PM EDT, FOX" },
+  { id: "seahawks-jaguars", label: "Seattle Seahawks (3-2) vs. Jacksonville Jaguars (4-1) — Sun, Oct 12, 1:00 PM EDT, FOX" },
+  { id: "chargers-dolphins", label: "Los Angeles Chargers (3-2) vs. Miami Dolphins (1-4) — Sun, Oct 12, 1:00 PM EDT, CBS" },
+  { id: "browns-steelers", label: "Cleveland Browns (1-4) vs. Pittsburgh Steelers (3-1) — Sun, Oct 12, 1:00 PM EDT, CBS" },
+  { id: "patriots-saints", label: "New England Patriots (3-2) vs. New Orleans Saints (1-4) — Sun, Oct 12, 1:00 PM EDT, CBS" },
+  { id: "titans-raiders", label: "Tennessee Titans (1-4) vs. Las Vegas Raiders (1-4) — Sun, Oct 12, 4:05 PM EDT, FOX" },
+  { id: "49ers-buccaneers", label: "San Francisco 49ers (4-1) vs. Tampa Bay Buccaneers (4-1) — Sun, Oct 12, 4:25 PM EDT, CBS" },
+  { id: "bengals-packers", label: "Cincinnati Bengals (2-3) vs. Green Bay Packers (2-1-1) — Sun, Oct 12, 4:25 PM EDT, CBS" },
+  { id: "lions-chiefs", label: "Detroit Lions (4-1) vs. Kansas City Chiefs (2-3) — Sun, Oct 12, 8:20 PM EDT, NBC, UNIVERSO" },
+  { id: "bills-falcons", label: "Buffalo Bills (4-1) vs. Atlanta Falcons (2-2) — Mon, Oct 13, 7:15 PM EDT, ESPN, ESPN DEPORTES" },
+  { id: "bears-commanders", label: "Chicago Bears (2-2) vs. Washington Commanders (3-2) — Mon, Oct 13, 8:15 PM EDT, ABC" }
 ];
 
 type Message = {
