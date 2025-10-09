@@ -33,7 +33,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// Helper: get ?user=username from URL
 function getQueryParam(name: string) {
   if (typeof window === "undefined") return null;
   const urlParams = new URLSearchParams(window.location.search);
@@ -52,7 +51,6 @@ type UserProfile = {
 };
 
 const PubProfile: React.FC = () => {
-  // STATE
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const [loggedInUsername, setLoggedInUsername] = useState<string | null>(null);
   const [loggedInUid, setLoggedInUid] = useState<string | null>(null);
@@ -77,7 +75,6 @@ const PubProfile: React.FC = () => {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
-  // STATS: Direct from Firebase
   const [stats, setStats] = useState<{ triviaAvg: string; playerAvg: string; collegeAvg: string }>({
     triviaAvg: "N/A",
     playerAvg: "N/A",
@@ -86,7 +83,6 @@ const PubProfile: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownUsers, setDropdownUsers] = useState<string[]>([]);
 
-  // STYLING
   useEffect(() => {
     document.body.style.background = "linear-gradient(135deg, #181c23 0%, #2c2e36 100%)";
     document.body.style.fontFamily = "'Montserrat', 'Segoe UI', Arial, sans-serif";
@@ -96,7 +92,6 @@ const PubProfile: React.FC = () => {
     };
   }, []);
 
-  // AUTH AND PROFILE LOADING
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       setLoggedInUser(user);
@@ -104,7 +99,6 @@ const PubProfile: React.FC = () => {
         setLoggedInUid(user.uid);
         const loggedInDoc = await getDoc(doc(db, "users", user.uid));
         setLoggedInUsername(loggedInDoc.data()?.username || null);
-        // Load correct profile (own or viewed)
         if (viewedUsername && viewedUsername !== loggedInDoc.data()?.username) {
           const q = query(collection(db, "users"), where("username", "==", viewedUsername));
           const snap = await getDocs(q);
@@ -144,7 +138,6 @@ const PubProfile: React.FC = () => {
     });
   }, [viewedUsername]);
 
-  // STATS MODAL LOADING - DIRECT FROM FIREBASE
   useEffect(() => {
     if (!statsModalOpen) return;
     const loadStats = async () => {
@@ -170,7 +163,6 @@ const PubProfile: React.FC = () => {
     loadStats();
   }, [statsModalOpen, viewedUid]);
 
-  // SETTINGS MODAL LOGIC
   const handleSignOut = async () => {
     await signOut(auth);
     window.location.href = "/";
@@ -201,7 +193,6 @@ const PubProfile: React.FC = () => {
       setUsernameError("Enter a username.");
       return;
     }
-    // Check if username taken
     const q = query(collection(db, "users"), where("username", "==", newUsername.trim()));
     const snap = await getDocs(q);
     if (!snap.empty) {
@@ -234,7 +225,6 @@ const PubProfile: React.FC = () => {
     }
   };
 
-  // Avatar upload logic
   const handleAvatarUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     setAvatarError("");
@@ -266,11 +256,11 @@ const PubProfile: React.FC = () => {
     setAvatarUploading(false);
   };
 
-  // --- SEARCH LOGIC ---
   const fetchAllUsernames = async () => {
     const snapshot = await getDocs(collection(db, "users"));
     return snapshot.docs.map((doc) => doc.data().username as string);
   };
+
   const handleSearchInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     if (!e.target.value.trim()) {
@@ -288,14 +278,13 @@ const PubProfile: React.FC = () => {
     setSearchTerm("");
   };
 
-  // WALL: always allow posting, never allow editing/removing others' posts
   const handleWallPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("wallInput") as HTMLInputElement;
     if (
       inputEl?.value.trim() &&
       loggedInUsername &&
-      viewedUid // always allow posting, regardless of profile
+      viewedUid
     ) {
       const newWall = [...wallPosts, { author: loggedInUsername, text: inputEl.value.trim() }];
       setWallPosts(newWall);
@@ -304,7 +293,6 @@ const PubProfile: React.FC = () => {
     }
   };
 
-  // TAKES: ONLY allow editing/removing/adding for own profile
   const handleTakePost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("takeInput") as HTMLInputElement;
@@ -323,7 +311,6 @@ const PubProfile: React.FC = () => {
     await updateDoc(doc(db, "users", viewedUid!), { takes: newTakes });
   };
 
-  // TEAMS: ONLY allow editing/removing/adding for own profile
   const handleAddTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("teamNameInput") as HTMLInputElement;
@@ -347,7 +334,6 @@ const PubProfile: React.FC = () => {
   if (currentTab === "wall") {
     tabContent = (
       <div>
-        {/* Always allow posting on wall */}
         <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
           <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
           <button type="submit">Post</button>
@@ -648,17 +634,36 @@ const PubProfile: React.FC = () => {
           padding: 0.5rem 1.1rem;
           cursor: pointer;
         }
+        /* --- SEARCH BAR --- */
         .search-users-bar {
-          margin-bottom: 0;
+          width: 260px;
+          max-width: 80vw;
+          display: block;
+          margin: 0 auto 0.6rem auto;
+          padding: 0.5rem 1rem;
+          border-radius: 0.7rem;
+          border: 2px solid #ffe146;
+          font-size: 1rem;
+          background: #181c23;
+          color: #ffe146;
+          box-sizing: border-box;
+          transition: box-shadow 0.14s;
+          box-shadow: 0 2px 12px #ffe14611;
         }
         @media (max-width: 600px) {
           .profile-card { padding: 1.2rem 0.3rem; }
           .modal { padding: 1.2rem 0.7rem; }
+          .search-users-bar {
+            width: 96vw;
+            font-size: 0.99rem;
+            padding: 0.5rem 0.6rem;
+            margin-bottom: 0.6rem;
+          }
         }
       `}</style>
       <div className="profile-card">
         {/* --- SEARCH BAR --- */}
-        <div style={{ marginBottom: "1.3rem", position: "relative", zIndex: 20 }}>
+        <div style={{ marginBottom: "1.2rem", position: "relative", zIndex: 20, display: "flex", justifyContent: "center" }}>
           <input
             type="text"
             className="search-users-bar"
@@ -667,14 +672,7 @@ const PubProfile: React.FC = () => {
             onChange={handleSearchInput}
             autoComplete="off"
             style={{
-              width: "100%",
-              padding: "0.7rem 1rem",
-              borderRadius: "0.9rem",
-              border: "2px solid #ffe146",
-              fontSize: "1.09rem",
-              background: "#181c23",
-              color: "#ffe146",
-              marginBottom: dropdownUsers.length ? 0 : "1.3rem"
+              marginBottom: dropdownUsers.length ? 0 : "1.2rem"
             }}
           />
           {/* Dropdown */}
@@ -684,11 +682,14 @@ const PubProfile: React.FC = () => {
                 background: "#222936",
                 border: "2px solid #ffe146",
                 borderTop: "none",
-                borderRadius: "0 0 0.9rem 0.9rem",
+                borderRadius: "0 0 0.7rem 0.7rem",
                 boxShadow: "0 4px 20px #ffe14622",
                 position: "absolute",
                 zIndex: 100,
                 width: "100%",
+                maxWidth: "260px",
+                left: "50%",
+                transform: "translateX(-50%)",
                 maxHeight: "210px",
                 overflowY: "auto"
               }}
@@ -697,7 +698,7 @@ const PubProfile: React.FC = () => {
                 <div
                   key={username}
                   style={{
-                    padding: "0.83rem 1.2rem",
+                    padding: "0.65rem 1rem",
                     color: "#ffe146",
                     fontWeight: 500,
                     cursor: "pointer",
@@ -847,75 +848,6 @@ const PubProfile: React.FC = () => {
       )}
     </div>
   );
-
-  // --- TABS CONTENT ---
-  // This block must stay inside the component and use only one declaration!
-  // (No duplicate function/variable for tabContent)
-  if (currentTab === "wall") {
-    tabContent = (
-      <div>
-        <form className="post-form" id="wallForm" onSubmit={handleWallPost}>
-          <input type="text" id="wallInput" placeholder="Post something on the wall..." maxLength={120} />
-          <button type="submit">Post</button>
-        </form>
-        {!wallPosts.length && (
-          <div className="empty-msg">No posts yet.</div>
-        )}
-        {wallPosts.slice().reverse().map((post, idx) => (
-          <div className="wall-post-card" key={idx}>
-            <span className="wall-post-author">{post.author}</span>
-            {post.text}
-          </div>
-        ))}
-      </div>
-    );
-  }
-  if (currentTab === "takes") {
-    tabContent = (
-      <div>
-        {ownProfile && (
-          <form className="take-form" id="takeForm" onSubmit={handleTakePost}>
-            <input type="text" id="takeInput" placeholder="Share your take..." maxLength={120} />
-            <button type="submit">Add Take</button>
-          </form>
-        )}
-        {!takes.length && <div className="empty-msg">No takes yet.</div>}
-        {takes.slice().reverse().map((take, i) => (
-          <div className="take-card" key={i}>
-            {take}
-            {ownProfile && (
-              <button className="remove-btn" onClick={() => handleRemoveTake(takes.length - 1 - i)}>
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  }
-  if (currentTab === "teams") {
-    tabContent = (
-      <div>
-        {ownProfile && (
-          <form className="team-form" id="teamForm" onSubmit={handleAddTeam}>
-            <input type="text" id="teamNameInput" placeholder="Team name..." maxLength={60} />
-            <button type="submit">Add Team</button>
-          </form>
-        )}
-        {!teams.length && <div className="empty-msg">No teams yet.</div>}
-        {teams.map((team, i) => (
-          <div className="team-card" key={i}>
-            <span>{team.name}</span>
-            {ownProfile && (
-              <button className="remove-btn" onClick={() => handleRemoveTeam(i)}>
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  }
 };
 
 export default PubProfile;
