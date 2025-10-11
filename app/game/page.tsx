@@ -220,10 +220,8 @@ const GuessDailyPlayer: React.FC = () => {
     const correctName = player.name.toLowerCase();
 
     if (guess === correctName) {
-      // Only count the first correct guess for this level
       setScore((s) => s + 1);
       setLevelAnsweredCorrect(true);
-      // Mark this level as answered correctly
       setCorrectAnswers((arr) => {
         const newArr = [...arr];
         newArr[currentLevel - 1] = true;
@@ -234,8 +232,6 @@ const GuessDailyPlayer: React.FC = () => {
       setTimerActive(false);
     } else {
       setFeedback("Misspelled or incorrect! Try again.");
-      // Do not mark guessed as true, allow retry, but do NOT increment score.
-      // Do not move to next level unless the correct spelling is entered.
     }
   };
 
@@ -295,25 +291,35 @@ const GuessDailyPlayer: React.FC = () => {
         .gdp-navbar {
           width: 100%;
           display: flex;
-          gap: 1.1rem;
-          justify-content: flex-start;
+          gap: 0.7rem;
+          justify-content: center;
+          align-items: center;
           margin-bottom: 1.2rem;
+          text-align: center;
         }
-        .gdp-home-btn {
+        .gdp-home-btn, .gdp-nav-btn {
           background: #ea9800;
           color: #fff;
           font-weight: bold;
-          font-size: 1.15rem;
+          font-size: 1.08rem;
           border: 2px solid #ffc233;
           border-radius: 14px;
-          padding: 0.6rem 1.8rem;
+          padding: 0.6rem 1.3rem;
           text-align: center;
           text-decoration: none;
           transition: background 0.13s, color 0.13s, transform 0.12s;
           box-shadow: 0 2px 10px #0002;
           min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 100px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .gdp-home-btn:hover {
+        .gdp-home-btn:hover, .gdp-nav-btn:hover {
           background: #e0a92b;
           color: #fffbe7;
           transform: scale(1.02);
@@ -464,7 +470,10 @@ const GuessDailyPlayer: React.FC = () => {
       `}</style>
       <div className="gdp-card">
         <div className="gdp-navbar">
-          <Link href="/" className="gdp-home-btn">Home</Link>
+          <Link href="/" className="gdp-nav-btn">Home</Link>
+          <Link href="/news" className="gdp-nav-btn">News</Link>
+          <Link href="/college-game" className="gdp-nav-btn">College</Link>
+          <Link href="/trivia-game" className="gdp-nav-btn">Trivia</Link>
         </div>
         <div className="gdp-title">Guess the Player</div>
         <div className="gdp-level">Level: {currentLevel}/{maxLevels}</div>
