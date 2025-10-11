@@ -153,8 +153,8 @@ const GuessDailyPlayer: React.FC = () => {
 
   const [showHint, setShowHint] = useState(false);
 
-  // Track answer state: "none" | "correct" | "typo" | "wrong"
-  const [answerState, setAnswerState] = useState<"none" | "correct" | "typo" | "wrong">("none");
+  // Track answer state: "none" | "correct" | "typo-correct" | "wrong"
+  const [answerState, setAnswerState] = useState<"none" | "correct" | "typo-correct" | "wrong">("none");
 
   useEffect(() => {
     document.body.style.backgroundImage =
@@ -234,15 +234,15 @@ const GuessDailyPlayer: React.FC = () => {
 
   const [levelAnsweredCorrect, setLevelAnsweredCorrect] = useState<boolean>(false);
 
-  function processGuess(guess: string, correctName: string): {type: "correct"|"typo"|"wrong", distance: number} {
+  function processGuess(guess: string, correctName: string): {type: "correct"|"typo-correct"|"wrong", distance: number} {
     if (guess === correctName) return { type: "correct", distance: 0 };
     const distance = levenshtein(guess, correctName);
-    if (distance <= 2) return { type: "typo", distance };
+    if (distance <= 2) return { type: "typo-correct", distance };
     return { type: "wrong", distance };
   }
 
   const handleGuess = () => {
-    if (!player || guessed || levelAnsweredCorrect || answerState === "wrong") return;
+    if (!player || guessed || levelAnsweredCorrect || answerState === "wrong" || answerState === "correct" || answerState === "typo-correct") return;
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctName = player.name.toLowerCase();
 
@@ -260,12 +260,21 @@ const GuessDailyPlayer: React.FC = () => {
       setGuessed(true);
       setTimerActive(false);
       setAnswerState("correct");
-    } else if (type === "typo") {
+    } else if (type === "typo-correct") {
+      setScore((s) => s + 1);
+      setLevelAnsweredCorrect(true);
+      setCorrectAnswers((arr) => {
+        const newArr = [...arr];
+        newArr[currentLevel - 1] = true;
+        return newArr;
+      });
       setFeedback(distance === 1
-        ? "Close! You're off by one letter. Try again."
-        : "Almost! You're off by two letters. Try again."
+        ? "Correct (with a slight misspelling)! You're off by one letter."
+        : "Correct (with a slight misspelling)! You're off by two letters."
       );
-      setAnswerState("typo");
+      setGuessed(true);
+      setTimerActive(false);
+      setAnswerState("typo-correct");
     } else {
       setFeedback("Incorrect! Click 'Next Level' to continue.");
       setAnswerState("wrong");
@@ -536,12 +545,12 @@ const GuessDailyPlayer: React.FC = () => {
               placeholder="Enter the player's name..."
               className="gdp-input"
               autoComplete="off"
-              disabled={levelAnsweredCorrect || answerState === "wrong" || answerState === "correct"}
+              disabled={levelAnsweredCorrect || answerState !== "none"}
               onKeyDown={e => {
-                if (e.key === "Enter" && answerState !== "wrong" && answerState !== "correct") handleGuess();
+                if (e.key === "Enter" && answerState === "none") handleGuess();
               }}
             />
-            {(answerState === "none" || answerState === "typo") && !levelAnsweredCorrect && (
+            {answerState === "none" && !levelAnsweredCorrect && (
               <>
                 <button className="gdp-btn" onClick={handleGuess} disabled={levelAnsweredCorrect}>
                   Submit Guess
@@ -578,7 +587,7 @@ const GuessDailyPlayer: React.FC = () => {
                 )}
               </>
             )}
-            {(answerState === "correct" || levelAnsweredCorrect) && (
+            {(answerState === "correct" || answerState === "typo-correct" || levelAnsweredCorrect) && (
               <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
                 {currentLevel < maxLevels ? "Next Player" : "Finish"}
               </button>
