@@ -60,7 +60,6 @@ function getCurrentUserId(user: User | null) {
   return anonId;
 }
 
-// Record score to gameScores and update average in userAverages
 async function recordGameScore(user: User | null, score: number, time: number) {
   try {
     const userId = getCurrentUserId(user);
@@ -70,7 +69,6 @@ async function recordGameScore(user: User | null, score: number, time: number) {
       time,
       playedAt: new Date().toISOString(),
     });
-    // Update user average
     const q = query(collection(db, "gameScores"), where("userId", "==", userId));
     const snap = await getDocs(q);
     let total = 0, count = 0;
@@ -102,7 +100,6 @@ function getInitials(name: string) {
   );
 }
 
-// Helper to get current page URL for sharing
 function getShareUrl() {
   if (typeof window !== "undefined") {
     return window.location.origin + window.location.pathname;
@@ -110,12 +107,37 @@ function getShareUrl() {
   return "https://thepub-sigma.web.app/game";
 }
 
+// Levenshtein distance for typo detection
+function levenshtein(a: string, b: string): number {
+  const matrix = [];
+  const lenA = a.length, lenB = b.length;
+  for (let i = 0; i <= lenA; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= lenB; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= lenA; i++) {
+    for (let j = 1; j <= lenB; j++) {
+      if (a[i - 1] === b[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1, // deletion
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j - 1] + 1 // substitution
+        );
+      }
+    }
+  }
+  return matrix[lenA][lenB];
+}
+
 const GuessDailyPlayer: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentLevel, setCurrentLevel] = useState(1);
 
-  // New: track correct answers only, and if each level was answered correct
   const [correctAnswers, setCorrectAnswers] = useState<boolean[]>(Array(maxLevels).fill(false));
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
@@ -129,10 +151,11 @@ const GuessDailyPlayer: React.FC = () => {
   const guessInputRef = useRef<HTMLInputElement>(null);
   const [imageError, setImageError] = useState(false);
 
-  // Hint logic
   const [showHint, setShowHint] = useState(false);
 
-  // Pub bar theme
+  // Track answer state: "none" | "correct" | "typo" | "wrong"
+  const [answerState, setAnswerState] = useState<"none" | "correct" | "typo" | "wrong">("none");
+
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -151,7 +174,6 @@ const GuessDailyPlayer: React.FC = () => {
     };
   }, []);
 
-  // Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -159,7 +181,6 @@ const GuessDailyPlayer: React.FC = () => {
     });
   }, []);
 
-  // Fetch daily players from Firestore
   useEffect(() => {
     const fetchDailyPlayers = async () => {
       const dateKey = getTodayEasternMidnight();
@@ -174,7 +195,6 @@ const GuessDailyPlayer: React.FC = () => {
     fetchDailyPlayers();
   }, []);
 
-  // Get image (Firebase Storage or direct URL)
   const player = players[currentLevel - 1];
   useEffect(() => {
     let isMounted = true;
@@ -191,13 +211,14 @@ const GuessDailyPlayer: React.FC = () => {
     return () => { isMounted = false; };
   }, [player]);
 
-  // Start timer on each level
   useEffect(() => {
     if (players.length > 0 && !gameOver) {
       setElapsedTime(0);
       setTimerActive(true);
     }
     setShowHint(false);
+    setAnswerState("none");
+    setGuessed(false);
     return () => {
       setTimerActive(false);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -211,15 +232,23 @@ const GuessDailyPlayer: React.FC = () => {
     };
   }, [timerActive]);
 
-  // Track if user has already got this level correct
   const [levelAnsweredCorrect, setLevelAnsweredCorrect] = useState<boolean>(false);
 
+  function processGuess(guess: string, correctName: string): {type: "correct"|"typo"|"wrong", distance: number} {
+    if (guess === correctName) return { type: "correct", distance: 0 };
+    const distance = levenshtein(guess, correctName);
+    if (distance <= 2) return { type: "typo", distance };
+    return { type: "wrong", distance };
+  }
+
   const handleGuess = () => {
-    if (!player || guessed || levelAnsweredCorrect) return;
+    if (!player || guessed || levelAnsweredCorrect || answerState === "wrong") return;
     const guess = guessInputRef.current?.value.trim().toLowerCase() || "";
     const correctName = player.name.toLowerCase();
 
-    if (guess === correctName) {
+    const { type, distance } = processGuess(guess, correctName);
+
+    if (type === "correct") {
       setScore((s) => s + 1);
       setLevelAnsweredCorrect(true);
       setCorrectAnswers((arr) => {
@@ -230,8 +259,18 @@ const GuessDailyPlayer: React.FC = () => {
       setFeedback("Correct! 🎉");
       setGuessed(true);
       setTimerActive(false);
+      setAnswerState("correct");
+    } else if (type === "typo") {
+      setFeedback(distance === 1
+        ? "Close! You're off by one letter. Try again."
+        : "Almost! You're off by two letters. Try again."
+      );
+      setAnswerState("typo");
     } else {
-      setFeedback("Misspelled or incorrect! Try again.");
+      setFeedback("Incorrect! Click 'Next Level' to continue.");
+      setAnswerState("wrong");
+      setTimerActive(false);
+      setGuessed(true);
     }
   };
 
@@ -242,6 +281,7 @@ const GuessDailyPlayer: React.FC = () => {
       setGuessed(false);
       setLevelAnsweredCorrect(false);
       setShowHint(false);
+      setAnswerState("none");
       if (guessInputRef.current) guessInputRef.current.value = "";
     } else {
       setGameOver(true);
@@ -259,10 +299,10 @@ const GuessDailyPlayer: React.FC = () => {
     setLevelAnsweredCorrect(false);
     setCorrectAnswers(Array(maxLevels).fill(false));
     setShowHint(false);
+    setAnswerState("none");
     if (guessInputRef.current) guessInputRef.current.value = "";
   };
 
-  // SMS link for sharing score (always uses exact # of correct answers)
   const smsText = `I scored ${score} out of ${maxLevels} in Guess the Player! Try today's game: ${getShareUrl()}`;
   const smsLink = `sms:?body=${encodeURIComponent(smsText)}`;
 
@@ -496,12 +536,12 @@ const GuessDailyPlayer: React.FC = () => {
               placeholder="Enter the player's name..."
               className="gdp-input"
               autoComplete="off"
-              disabled={levelAnsweredCorrect}
+              disabled={levelAnsweredCorrect || answerState === "wrong" || answerState === "correct"}
               onKeyDown={e => {
-                if (e.key === "Enter") handleGuess();
+                if (e.key === "Enter" && answerState !== "wrong" && answerState !== "correct") handleGuess();
               }}
             />
-            {!levelAnsweredCorrect && (
+            {(answerState === "none" || answerState === "typo") && !levelAnsweredCorrect && (
               <>
                 <button className="gdp-btn" onClick={handleGuess} disabled={levelAnsweredCorrect}>
                   Submit Guess
@@ -538,9 +578,14 @@ const GuessDailyPlayer: React.FC = () => {
                 )}
               </>
             )}
-            {levelAnsweredCorrect && (
+            {(answerState === "correct" || levelAnsweredCorrect) && (
               <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
                 {currentLevel < maxLevels ? "Next Player" : "Finish"}
+              </button>
+            )}
+            {answerState === "wrong" && (
+              <button className="gdp-btn-green" style={{marginTop: "0.3rem"}} onClick={handleNext}>
+                {currentLevel < maxLevels ? "Next Level" : "Finish"}
               </button>
             )}
           </>
