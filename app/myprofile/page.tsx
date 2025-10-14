@@ -18,6 +18,7 @@ import {
   getDocs,
   query,
   where,
+  addDoc,
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -278,6 +279,7 @@ const PubProfile: React.FC = () => {
     setSearchTerm("");
   };
 
+  // *** UPDATED: SendGrid Trigger Email Document after Wall Post ***
   const handleWallPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("wallInput") as HTMLInputElement;
@@ -289,6 +291,30 @@ const PubProfile: React.FC = () => {
       const newWall = [...wallPosts, { author: loggedInUsername, text: inputEl.value.trim() }];
       setWallPosts(newWall);
       await updateDoc(doc(db, "users", viewedUid), { wall: newWall });
+
+      // Send email via Firebase SendGrid extension
+      try {
+        // Get the profile owner's email from viewedUser or user doc
+        let recipientEmail: string | undefined = viewedUser?.email;
+        if (!recipientEmail && viewedUid) {
+          const userDoc = await getDoc(doc(db, "users", viewedUid));
+          recipientEmail = userDoc.data()?.email;
+        }
+        if (recipientEmail) {
+          await addDoc(collection(db, "mail"), {
+            to: [recipientEmail],
+            message: {
+              subject: "New post on your wall!",
+              text: `${loggedInUsername} posted: "${inputEl.value.trim()}"`,
+              html: `<p><strong>${loggedInUsername}</strong> posted on your wall:</p><p>${inputEl.value.trim()}</p>`
+            }
+          });
+        }
+      } catch (err) {
+        // Optionally handle/log error (but do not affect UI)
+        // console.error("Failed to send wall post email:", err);
+      }
+
       inputEl.value = "";
     }
   };
