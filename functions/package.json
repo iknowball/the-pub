@@ -1,0 +1,11 @@
+{
+  "name": "sendgrid-wallpost",
+  "description": "Cloud Function to send email when profile gets a post on wall",
+  "dependencies": {
+    "firebase-admin": "^11.0.0",
+    "firebase-functions": "^4.0.0"
+  },
+  "engines": {
+    "node": "18"
+  }
+}
