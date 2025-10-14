@@ -33,6 +33,12 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
+function getQueryParam(name: string) {
+  if (typeof window === "undefined") return null;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
 // --- EMAIL NOTIFICATION FUNCTION ---
 async function sendWallPostEmail(toEmail: string, postAuthor: string, postText: string, userName: string) {
   try {
@@ -45,15 +51,7 @@ async function sendWallPostEmail(toEmail: string, postAuthor: string, postText: 
         text: `Hi,\n\n${postAuthor} posted on your wall:\n\n"${postText}"\n\nLog in to see your wall: https://thepub-sigma.web.app/profile?user=${userName}`,
       }),
     });
-  } catch (err) {
-    // Optionally handle error/log
-  }
-}
-
-function getQueryParam(name: string) {
-  if (typeof window === "undefined") return null;
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(name);
+  } catch (err) {}
 }
 
 type WallPost = { author: string; text: string };
@@ -421,7 +419,7 @@ const PubProfile: React.FC = () => {
 
   return (
     <div className="profile-bg min-h-screen flex justify-center items-center py-10">
-      {/* --- CSS styles omitted for brevity --- */}
+      {/* ...CSS styles as before... */}
       <div className="profile-card">
         {/* --- SEARCH BAR --- */}
         <div style={{ marginBottom: "1.2rem", position: "relative", zIndex: 20, display: "flex", justifyContent: "center" }}>
