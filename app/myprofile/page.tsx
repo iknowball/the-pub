@@ -279,7 +279,7 @@ const PubProfile: React.FC = () => {
     setSearchTerm("");
   };
 
-  // *** UPDATED: SendGrid Trigger Email Document after Wall Post ***
+  // --- Firestore Trigger Email Extension ---
   const handleWallPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("wallInput") as HTMLInputElement;
@@ -292,9 +292,8 @@ const PubProfile: React.FC = () => {
       setWallPosts(newWall);
       await updateDoc(doc(db, "users", viewedUid), { wall: newWall });
 
-      // Send email via Firebase SendGrid extension
+      // Send email using Firebase Trigger Email extension (SMTP)
       try {
-        // Get the profile owner's email from viewedUser or user doc
         let recipientEmail: string | undefined = viewedUser?.email;
         if (!recipientEmail && viewedUid) {
           const userDoc = await getDoc(doc(db, "users", viewedUid));
@@ -311,7 +310,7 @@ const PubProfile: React.FC = () => {
           });
         }
       } catch (err) {
-        // Optionally handle/log error (but do not affect UI)
+        // Optionally log error
         // console.error("Failed to send wall post email:", err);
       }
 
