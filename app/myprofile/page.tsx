@@ -39,21 +39,6 @@ function getQueryParam(name: string) {
   return urlParams.get(name);
 }
 
-// --- EMAIL NOTIFICATION FUNCTION ---
-async function sendWallPostEmail(toEmail: string, postAuthor: string, postText: string, userName: string) {
-  try {
-    await fetch("/api/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: toEmail,
-        subject: `New Wall Post from ${postAuthor}`,
-        text: `Hi,\n\n${postAuthor} posted on your wall:\n\n"${postText}"\n\nLog in to see your wall: https://thepub-sigma.web.app/profile?user=${userName}`,
-      }),
-    });
-  } catch (err) {}
-}
-
 type WallPost = { author: string; text: string };
 type Team = { name: string };
 type UserProfile = {
@@ -293,7 +278,6 @@ const PubProfile: React.FC = () => {
     setSearchTerm("");
   };
 
-  // --- EMAIL NOTIFICATION ON WALL POST ---
   const handleWallPost = async (e: React.FormEvent) => {
     e.preventDefault();
     const inputEl = document.getElementById("wallInput") as HTMLInputElement;
@@ -305,10 +289,6 @@ const PubProfile: React.FC = () => {
       const newWall = [...wallPosts, { author: loggedInUsername, text: inputEl.value.trim() }];
       setWallPosts(newWall);
       await updateDoc(doc(db, "users", viewedUid), { wall: newWall });
-      // Send email if profile owner has an email address
-      if (viewedUser?.email && viewedUser?.username) {
-        await sendWallPostEmail(viewedUser.email, loggedInUsername, inputEl.value.trim(), viewedUser.username);
-      }
       inputEl.value = "";
     }
   };
@@ -419,7 +399,268 @@ const PubProfile: React.FC = () => {
 
   return (
     <div className="profile-bg min-h-screen flex justify-center items-center py-10">
-      {/* ...CSS styles as before... */}
+      <style>{`
+        .profile-bg {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #181c23 0%, #2c2e36 100%);
+        }
+        .profile-card {
+          background: #222936;
+          box-shadow: 0 8px 40px 8px #000d2f44;
+          border-radius: 2rem;
+          max-width: 560px;
+          width: 100%;
+          padding: 2.7rem 2rem;
+          margin: 1rem;
+          border: 3px solid #e1b40c;
+          position: relative;
+        }
+        .profile-header {
+          text-align: center;
+          margin-bottom: 1.5rem;
+        }
+        .profile-avatar {
+          width: 110px;
+          height: 110px;
+          border-radius: 50%;
+          object-fit: cover;
+          box-shadow: 0 2px 18px #e1b40c66;
+          border: 3.5px solid #e1b40c;
+          margin-bottom: 1rem;
+          background: #fffbe3;
+        }
+        .profile-username {
+          font-size: 2.2rem;
+          font-weight: bold;
+          color: #ffe146;
+          margin-bottom: 0.25rem;
+          letter-spacing: 1px;
+          text-shadow: 1px 2px 7px #000c;
+        }
+        .profile-email {
+          font-size: 1rem;
+          color: #ffc107b5;
+          margin-bottom: 1.4rem;
+        }
+        .profile-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+          margin-bottom: 1.8rem;
+        }
+        .profile-btn {
+          background: linear-gradient(90deg, #e1b40c 50%, #f8be37 100%);
+          color: #222936;
+          font-weight: bold;
+          border-radius: 1rem;
+          border: 2px solid #ffe146;
+          padding: 0.65rem 1.2rem;
+          transition: background 0.16s, color 0.14s, transform 0.14s;
+          box-shadow: 0 2px 12px #ffe14644;
+          text-shadow: 0 1px 5px #fffac0;
+        }
+        .profile-btn:hover {
+          background: #fffbe3;
+          color: #b28704;
+          transform: scale(1.06);
+        }
+        .profile-tabs {
+          display: flex;
+          gap: 1.2rem;
+          justify-content: center;
+          margin-bottom: 1.7rem;
+        }
+        .tab-btn {
+          background: transparent;
+          border: none;
+          font-size: 1.19rem;
+          font-weight: 600;
+          color: #ffe146a8;
+          padding: 0.48rem 1.05rem;
+          border-radius: 0.8rem 0.8rem 0 0;
+          cursor: pointer;
+          transition: background 0.19s, color 0.14s;
+          border-bottom: 3px solid transparent;
+          letter-spacing: 0.5px;
+        }
+        .tab-btn.active {
+          background: #ffe14618;
+          color: #ffe146;
+          font-weight: bold;
+          border-bottom: 3px solid #ffe146;
+        }
+        .tab-content {
+          margin-bottom: 1.2rem;
+        }
+        .wall-post-card, .take-card, .team-card {
+          background: linear-gradient(90deg, #222936 75%, #ffe1461a 100%);
+          border-radius: 1.1rem;
+          padding: 1rem 1.1rem;
+          margin-bottom: 0.8rem;
+          box-shadow: 0 2px 10px #ffe14628;
+          font-size: 1.11rem;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          color: #fffbe3;
+        }
+        .wall-post-author {
+          font-weight: bold;
+          color: #ffe146;
+          margin-right: 0.6rem;
+        }
+        .remove-btn {
+          background: #ffe146;
+          color: #222936;
+          font-size: 0.98rem;
+          border: none;
+          border-radius: 0.8rem;
+          padding: 0.3rem 0.8rem;
+          font-weight: bold;
+          cursor: pointer;
+          margin-left: 1rem;
+          box-shadow: 0 1px 4px #ffe14644;
+        }
+        .remove-btn:hover {
+          background: #fffbe3;
+        }
+        .post-form, .take-form, .team-form {
+          display: flex;
+          gap: 0.7rem;
+          margin-bottom: 1rem;
+        }
+        .post-form input, .take-form input, .team-form input {
+          flex: 1;
+          padding: 0.7rem 1rem;
+          border: 1.5px solid #ffe146;
+          border-radius: 0.9rem;
+          font-size: 1rem;
+          background: #181c23;
+          color: #ffe146;
+        }
+        .post-form button, .take-form button, .team-form button {
+          background: #ffe146;
+          color: #222936;
+          font-weight: bold;
+          border-radius: 0.9rem;
+          border: none;
+          padding: 0.7rem 1.1rem;
+          font-size: 1rem;
+          cursor: pointer;
+        }
+        .post-form button:hover, .take-form button:hover, .team-form button:hover {
+          background: #fffbe3;
+        }
+        .empty-msg {
+          color: #ffe146a0;
+          text-align: center;
+          font-size: 1.1rem;
+          margin-top: 0.7rem;
+        }
+        .modal-bg {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(40, 42, 46, 0.42);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .modal {
+          background: #222936;
+          border-radius: 1.3rem;
+          padding: 1.8rem 2.2rem;
+          box-shadow: 0 8px 36px 0 #ffe14633;
+          min-width: 320px;
+          max-width: 90vw;
+          position: relative;
+          border: 3px solid #ffe146;
+          color: #ffe146;
+        }
+        .close-btn {
+          position: absolute;
+          right: 1.3rem;
+          top: 1.3rem;
+          background: #ffe146;
+          color: #222936;
+          border: none;
+          border-radius: 1rem;
+          font-weight: bold;
+          font-size: 1rem;
+          padding: 0.4rem 1rem;
+          cursor: pointer;
+          box-shadow: 0 1px 4px #ffe14644;
+        }
+        .modal-list div {
+          margin-bottom: 0.9rem;
+        }
+        .settings-options {
+          display: flex;
+          flex-direction: column;
+          gap: 0.7rem;
+        }
+        .settings-btn {
+          background: #ffe146;
+          color: #222936;
+          font-weight: bold;
+          border-radius: 1rem;
+          border: 2px solid #ffe146;
+          padding: 0.65rem 1.2rem;
+          transition: background 0.16s, color 0.14s, transform 0.13s;
+          box-shadow: 0 2px 12px #ffe14644;
+        }
+        .settings-btn:hover {
+          background: #fffbe3;
+          color: #b28704;
+          transform: scale(1.04);
+        }
+        .modal-error {
+          color: #ff6868;
+          font-size: 0.98rem;
+          margin-top: 0.4rem;
+        }
+        label {
+          color: #ffe146b0;
+          font-weight: 500;
+        }
+        input[type="file"]::-webkit-file-upload-button {
+          background: #ffe146;
+          color: #222936;
+          font-weight: bold;
+          border-radius: 0.55rem;
+          border: none;
+          font-size: 1rem;
+          padding: 0.5rem 1.1rem;
+          cursor: pointer;
+        }
+        /* --- SEARCH BAR --- */
+        .search-users-bar {
+          width: 260px;
+          max-width: 80vw;
+          display: block;
+          margin: 0 auto 0.6rem auto;
+          padding: 0.5rem 1rem;
+          border-radius: 0.7rem;
+          border: 2px solid #ffe146;
+          font-size: 1rem;
+          background: #181c23;
+          color: #ffe146;
+          box-sizing: border-box;
+          transition: box-shadow 0.14s;
+          box-shadow: 0 2px 12px #ffe14611;
+        }
+        @media (max-width: 600px) {
+          .profile-card { padding: 1.2rem 0.3rem; }
+          .modal { padding: 1.2rem 0.7rem; }
+          .search-users-bar {
+            width: 96vw;
+            font-size: 0.99rem;
+            padding: 0.5rem 0.6rem;
+            margin-bottom: 0.6rem;
+          }
+        }
+      `}</style>
       <div className="profile-card">
         {/* --- SEARCH BAR --- */}
         <div style={{ marginBottom: "1.2rem", position: "relative", zIndex: 20, display: "flex", justifyContent: "center" }}>
@@ -508,7 +749,103 @@ const PubProfile: React.FC = () => {
         {profileError && <div className="empty-msg">{profileError}</div>}
       </div>
       {/* Stats Modal */}
-      {/* ...other modals unchanged... */}
+      {statsModalOpen && (
+        <div className="modal-bg">
+          <div className="modal">
+            <button className="close-btn" onClick={() => setStatsModalOpen(false)}>Close</button>
+            <h2 style={{ marginBottom: "16px" }}><span role="img" aria-label="stats">📊</span> My Stats</h2>
+            <div id="statsContent">
+              <div className="modal-list">
+                <div>
+                  <strong>Trivia Avg:</strong> {stats.triviaAvg}
+                </div>
+                <div>
+                  <strong>Name the Player Avg:</strong> {stats.playerAvg}
+                </div>
+                <div>
+                  <strong>College Avg:</strong> {stats.collegeAvg}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Settings Modal */}
+      {settingsModalOpen && (
+        <div className="modal-bg">
+          <div className="modal">
+            <button className="close-btn" onClick={() => setSettingsModalOpen(false)}>Close</button>
+            <h2 style={{ marginBottom: "16px" }}><span role="img" aria-label="settings">⚙️</span> Settings</h2>
+            {!editUsernameOpen && !editPasswordOpen && !editAvatarOpen && (
+              <div className="settings-options">
+                <button className="settings-btn" onClick={handleEditUsername}>
+                  Change Username
+                </button>
+                <button className="settings-btn" onClick={handleEditPassword}>
+                  Change Password
+                </button>
+                <button className="settings-btn" onClick={handleEditAvatar}>
+                  Change Profile Image
+                </button>
+                <button className="settings-btn" onClick={handleSignOut}>
+                  Sign Out
+                </button>
+              </div>
+            )}
+            {editUsernameOpen && (
+              <form onSubmit={handleUsernameSubmit}>
+                <label htmlFor="newUsername">New Username</label>
+                <input
+                  type="text"
+                  id="newUsername"
+                  autoComplete="off"
+                  style={{ width: "90%", padding: "7px", borderRadius: "6px" }}
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                />
+                <button type="submit" className="settings-btn" style={{ marginTop: "0.7rem" }}>Update Username</button>
+                <div className="modal-error">{usernameError}</div>
+              </form>
+            )}
+            {editPasswordOpen && (
+              <form onSubmit={handlePasswordSubmit}>
+                <label htmlFor="newPassword">New Password</label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  autoComplete="off"
+                  style={{ width: "90%", padding: "7px", borderRadius: "6px" }}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button type="submit" className="settings-btn" style={{ marginTop: "0.7rem" }}>Update Password</button>
+                <div className="modal-error">{passwordError}</div>
+              </form>
+            )}
+            {editAvatarOpen && (
+              <form onSubmit={handleAvatarUpload}>
+                <label htmlFor="avatarFile">Upload Profile Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="avatarFile"
+                  style={{ width: "90%", padding: "7px", borderRadius: "6px", background: "#222936", color: "#ffe146" }}
+                  disabled={avatarUploading}
+                />
+                <button
+                  type="submit"
+                  className="settings-btn"
+                  style={{ marginTop: "0.7rem", opacity: avatarUploading ? 0.7 : 1 }}
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? "Uploading..." : "Update Image"}
+                </button>
+                <div className="modal-error">{avatarError}</div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
