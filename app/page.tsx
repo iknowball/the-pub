@@ -1,40 +1,193 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  initializeApp
+} from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInAnonymously,
+  User,
+} from "firebase/auth";
 
-import React, { useState, useEffect } from 'react';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-
-// Firebase configuration
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
   authDomain: "thepub-sigma.firebaseapp.com",
   projectId: "thepub-sigma",
 };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+type TriviaQuestion = {
+  question: string;
+  answer: string;
+  imageUrl?: string;
+};
+type HistoryEntry = {
+  score: number;
+  time: number;
+  timestamp: string;
+};
+
+function getEasternMidnightDateKey() {
+  const now = new Date();
+  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+  const nyDate = new Date(nyString);
+  nyDate.setHours(0, 0, 0, 0);
+  return nyDate.toISOString().slice(0, 10);
 }
-const db = firebase.firestore();
 
-interface UserData {
-  username?: string;
-  email?: string;
-  avatar?: string;
-  provider?: string;
+const MAX_QUESTIONS = 4;
+
+async function getDailyQuestions() {
+  const dateKey = getEasternMidnightDateKey();
+  const docRef = doc(db, "dailyQuestions", dateKey);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists() && Array.isArray(docSnap.data().questions)) {
+    return docSnap.data().questions.slice(0, MAX_QUESTIONS) as TriviaQuestion[];
+  } else {
+    return [];
+  }
 }
 
-const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<firebase.User | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupUsername, setSignupUsername] = useState('');
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [signupMsg, setSignupMsg] = useState('');
+function getCurrentUserId(user: User | null) {
+  if (user) {
+    return user.uid;
+  }
+  let anonId = localStorage.getItem("anonUserId");
+  if (!anonId) {
+    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem("anonUserId", anonId);
+  }
+  return anonId;
+}
 
+async function recordRideBusGameScore(score: number, time: number, user: User | null) {
+  try {
+    const userId = getCurrentUserId(user);
+    await addDoc(collection(db, "rideBusGameScores"), {
+      userId: userId,
+      score: score,
+      time: time,
+      playedAt: new Date().toISOString(),
+    });
+    await updateRideBusAverageScore(userId);
+  } catch (err) {}
+}
+async function updateRideBusAverageScore(userId: string) {
+  try {
+    const q = query(collection(db, "rideBusGameScores"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    let total = 0, count = 0;
+    snap.forEach((doc) => {
+      total += doc.data().score;
+      count += 1;
+    });
+    const avg = count === 0 ? 0 : total / count;
+    await setDoc(doc(db, "rideBusAverages", userId), {
+      userId: userId,
+      averageScore: avg,
+      lastUpdated: new Date().toISOString(),
+      gamesPlayed: count,
+    });
+  } catch (err) {}
+}
+async function fetchRideBusAverageScore(userId: string) {
+  try {
+    const docRef = doc(db, "rideBusAverages", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().averageScore;
+    }
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function getLevenshteinDistance(a: string, b: string) {
+  const matrix = Array(b.length + 1)
+    .fill(null)
+    .map(() => Array(a.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j - 1][i] + 1,
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i - 1] + cost
+      );
+    }
+  }
+  return matrix[b.length][a.length];
+}
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${secs}`;
+}
+function emojiShareMessage(results: boolean[]) {
+  const emojis: string[] = results.map(r => r ? "✅" : "❌");
+  while (emojis.length < MAX_QUESTIONS) emojis.push("❓");
+  return emojis.join("");
+}
+function generateShareText(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const emojiMsg = emojiShareMessage(results);
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}</a>`;
+}
+function generateClipboardText(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const emojiMsg = emojiShareMessage(results);
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
+}
+function generateSmsLink(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  const msg = `I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
+  return "sms:?body=" + encodeURIComponent(msg);
+}
+
+const RideTheBus: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [score, setScore] = useState(0);
+  const [answerResults, setAnswerResults] = useState<boolean[]>([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [showStats, setShowStats] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [statsHistory, setStatsHistory] = useState<HistoryEntry[]>([]);
+  const [cloudAvg, setCloudAvg] = useState<number | null>(null);
+  const [clipboardMsg, setClipboardMsg] = useState("Copy to Clipboard");
+  const [showShare, setShowShare] = useState(false);
+
+  const guessInputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Styling
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -42,7 +195,7 @@ const App: React.FC = () => {
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundAttachment = "fixed";
     document.body.style.backgroundColor = "#451a03";
-    document.body.style.fontFamily = "'Montserrat', Arial, sans-serif";
+    document.body.style.fontFamily = "'Montserrat', sans-serif";
     return () => {
       document.body.style.backgroundImage = "";
       document.body.style.backgroundSize = "";
@@ -53,448 +206,589 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Auth state
   useEffect(() => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        const userRef = db.collection('users').doc(user.uid);
-        const doc = await userRef.get();
-        if (!doc.exists || !doc.data()?.username) {
-          let uname = '';
-          while (!uname || uname.length < 2) {
-            uname = prompt('Create a username for your account:') || '';
-            if (uname === null) break;
-          }
-          if (uname) {
-            await userRef.set(
-              {
-                username: uname,
-                avatar: user.photoURL || '',
-                email: user.email,
-                provider: user.providerData[0]?.providerId || 'google',
-              },
-              { merge: true }
-            );
-          }
-        }
-      }
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) signInAnonymously(auth);
     });
-    return () => unsubscribe();
   }, []);
 
-  const handleUserBtnClick = () => {
-    if (currentUser) {
-      window.location.href = 'myprofile';
-    } else {
-      setIsModalOpen(true);
-      setSignupMsg('');
-      setSignupEmail('');
-      setSignupPassword('');
-      setSignupUsername('');
-      setLoginEmail('');
-      setLoginPassword('');
-    }
+  // Load questions for today
+  useEffect(() => {
+    const loadQuestions = async () => {
+      const qs = await getDailyQuestions();
+      setQuestions(qs);
+    };
+    loadQuestions();
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    if (!timerActive) return;
+    timerRef.current = setInterval(() => {
+      setElapsedTime((t) => t + 1);
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive]);
+
+  // Stats history local
+  useEffect(() => {
+    const history =
+      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
+    setStatsHistory(history);
+  }, [showStats, gameOver]);
+
+  // Cloud average
+  useEffect(() => {
+    if (!user) return;
+    const fetchCloudAvg = async () => {
+      const userId = getCurrentUserId(user);
+      const avg = await fetchRideBusAverageScore(userId);
+      setCloudAvg(avg);
+    };
+    fetchCloudAvg();
+  }, [user, showStats]);
+
+  // Save game history locally
+  const saveScoreHistory = (score: number, time: number) => {
+    const history =
+      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
+    history.push({
+      score,
+      time,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("rideBusGameHistory", JSON.stringify(history));
+    setStatsHistory(history);
   };
 
-  const closeModal = () => setIsModalOpen(false);
-
-  const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) setIsModalOpen(false);
+  // Clipboard share
+  const handleClipboard = () => {
+    const textToCopy = generateClipboardText(answerResults, score);
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        setClipboardMsg("Copied!");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      })
+      .catch(() => {
+        setClipboardMsg("Copy Failed");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      });
   };
 
-  const handleSignup = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setSignupMsg('');
-    if (!signupUsername || signupUsername.length < 2) {
-      setSignupMsg('Username must be at least 2 characters.');
-      return;
+  // Initial timer start
+  useEffect(() => {
+    if (questions.length > 0 && !gameOver) {
+      setTimerActive(true);
+      setElapsedTime(0);
     }
-    try {
-      const cred = await firebase.auth().createUserWithEmailAndPassword(signupEmail, signupPassword);
-      await db.collection('users').doc(cred.user!.uid).set(
-        {
-          username: signupUsername,
-          email: signupEmail,
-          avatar: '',
-          provider: 'password',
-        },
-        { merge: true }
-      );
-      setSignupMsg('Account created successfully!');
-      setTimeout(() => setIsModalOpen(false), 1000);
-    } catch (err: any) {
-      setSignupMsg(err.message);
-    }
-  };
+  }, [questions, gameOver]);
 
-  const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setSignupMsg('');
-    try {
-      await firebase.auth().signInWithEmailAndPassword(loginEmail, loginPassword);
-      setSignupMsg('Logged in successfully!');
-      setTimeout(() => setIsModalOpen(false), 1000);
-    } catch (err: any) {
-      setSignupMsg(err.message);
-    }
-  };
+  // ---- ANSWER LOGIC ----
+  const handleSubmitGuess = () => {
+    if (!questions.length || !questions[currentLevel - 1]) return;
+    const guessRaw = guessInputRef.current?.value.trim() || "";
+    const guess = guessRaw.toLowerCase();
+    const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
+    setFeedback("");
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await firebase.auth().signInWithPopup(provider);
-      const user = result.user;
-      if (user) {
-        const userRef = db.collection('users').doc(user.uid);
-        const doc = await userRef.get();
-        if (!doc.exists || !doc.data()?.username) {
-          let uname = '';
-          while (!uname || uname.length < 2) {
-            uname = prompt('Create a username for your account:') || '';
-            if (uname === null) break;
-          }
-          if (uname) {
-            await userRef.set(
-              {
-                username: uname,
-                avatar: user.photoURL || '',
-                email: user.email,
-                provider: 'google',
-              },
-              { merge: true }
-            );
-          }
+    // For image question (last question), require full answer, otherwise partial word match
+    if (currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl) {
+      if (guess === correctAnswer) {
+        setScore((s) => s + 5);
+        setFeedback("Correct! +5 points! 🎉");
+        setAnswerResults((arr) => [...arr, true]);
+        setTimerActive(false);
+      } else {
+        const distance = getLevenshteinDistance(guess, correctAnswer);
+        if (distance <= 2 && guess.length > 0) {
+          setFeedback("Very close! Try again!");
+          if (guessInputRef.current) guessInputRef.current.value = "";
+          return;
+        } else {
+          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
+          setAnswerResults((arr) => [...arr, false]);
+          setTimerActive(false);
         }
-        setIsModalOpen(false);
       }
-    } catch (err: any) {
-      setSignupMsg(err.message);
+    } else {
+      // Partial match logic
+      const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
+      const guessWords = guess.split(/\s+/).filter(Boolean);
+
+      const wordMatch =
+        correctWords.some((cw) => guessWords.includes(cw)) ||
+        guessWords.some((gw) => correctWords.includes(gw));
+
+      if (wordMatch) {
+        setScore((s) => s + 5);
+        setFeedback("Correct! +5 points! 🎉");
+        setAnswerResults((arr) => [...arr, true]);
+        setTimerActive(false);
+      } else {
+        const distance = getLevenshteinDistance(guess, correctAnswer);
+        if (distance <= 2 && guess.length > 0) {
+          setFeedback("So close! Try again!");
+          if (guessInputRef.current) guessInputRef.current.value = "";
+          return;
+        } else {
+          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
+          setAnswerResults((arr) => [...arr, false]);
+          setTimerActive(false);
+        }
+      }
     }
+  };
+
+  const handleNextLevel = () => {
+    if (currentLevel < MAX_QUESTIONS) {
+      setCurrentLevel((lvl) => lvl + 1);
+      setFeedback("");
+      setTimerActive(true);
+      if (guessInputRef.current) guessInputRef.current.value = "";
+    } else {
+      setGameOver(true);
+      setShowShare(true);
+      setTimerActive(false);
+      saveScoreHistory(score, elapsedTime);
+      recordRideBusGameScore(score, elapsedTime, user);
+    }
+  };
+
+  // Reset game
+  const handlePlayAgain = () => {
+    setCurrentLevel(1);
+    setScore(0);
+    setAnswerResults([]);
+    setElapsedTime(0);
+    setFeedback("");
+    setGameOver(false);
+    setShowShare(false);
+    if (guessInputRef.current) guessInputRef.current.value = "";
   };
 
   return (
-    <div className="auth-container">
-      <style>
-        {`
-        .auth-container {
+    <div className="trivia-bg">
+      <style>{`
+        .trivia-bg {
           min-height: 100vh;
+          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
+          font-family: 'Montserrat', Arial, sans-serif;
           display: flex;
           flex-direction: column;
+          align-items: center;
+          padding-bottom: 3rem;
+        }
+        .trivia-card {
+          background: rgba(146, 84, 14, 0.93);
+          border: 3px solid #ffc233;
+          border-radius: 22px;
+          box-shadow: 0 8px 32px #0003;
+          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
+          max-width: 430px;
+          width: 95vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .trivia-navbar {
+          width: 100%;
+          display: flex;
+          gap: 0.7rem;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 1.2rem;
+          text-align: center;
+        }
+        .trivia-nav-btn {
+          background: #ea9800;
+          color: #fff;
+          font-weight: bold;
+          font-size: 0.93rem;
+          border: 2px solid #ffc233;
+          border-radius: 14px;
+          padding: 0.5rem 0.7rem;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+          box-shadow: 0 2px 10px #0002;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 80px;
+          box-sizing: border-box;
+          display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Montserrat', Arial, sans-serif;
-          padding-bottom: 4rem;
         }
-        .main-card {
-          width: 100%;
-          max-width: 430px;
+        .trivia-nav-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.02);
+        }
+        .trivia-title {
+          color: #ffe066;
+          font-size: 2.1rem;
+          font-weight: 900;
           text-align: center;
-          background: rgba(146, 64, 14, 0.93);
-          border: 2px solid #facc15;
-          border-radius: 16px;
-          padding: 2.5rem 1.3rem 2.5rem 1.3rem;
-          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-          position: relative;
+          margin-bottom: 0.6rem;
+          letter-spacing: 0.02em;
         }
-        .user-btn {
-          position: absolute;
-          top: 1.1rem;
-          right: 1.1rem;
-          background: #fde68a;
-          color: #92400e;
-          font-weight: bold;
-          padding: 0.7rem 1.1rem;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px #0001;
-          border: none;
-          transition: background 0.17s;
-          cursor: pointer;
+        .trivia-level {
+          color: #ffe066;
+          font-size: 1.08rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 1.2rem;
         }
-        .user-btn:hover {
-          background: #fef08a;
-        }
-        .main-card h1 {
+        .trivia-question-text {
           color: #fde68a;
-          font-size: 2.2rem;
-          font-weight: bold;
-          margin-bottom: 0.5rem;
+          font-size: 1.12rem;
+          margin-bottom: 1.5rem;
+          text-align: center;
         }
-        .main-card p {
-          color: #fde68a;
-          font-size: 1rem;
-          margin-bottom: 2rem;
-        }
-        .main-links {
-          margin-top: 1.2rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.7rem;
-        }
-        .main-link {
-          display: block;
-          width: 100%;
-          max-width: 200px;
+        .trivia-input {
+          width: 50%;
+          min-width: 120px;
+          background: #ad6e1b;
+          border: 2.5px solid #ffc233;
+          color: #ffe066;
+          border-radius: 14px;
+          font-size: 1.18rem;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.1rem;
+          font-weight: 500;
+          box-sizing: border-box;
           margin-left: auto;
           margin-right: auto;
+          display: block;
+        }
+        .trivia-input::placeholder {
+          color: #ffe066cc;
+          opacity: 1;
+        }
+        .trivia-btn {
+          width: 100%;
+          background: #ea9800;
+          color: #fff;
+          font-size: 1.18rem;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          margin-bottom: 0.7rem;
+          margin-top: 0.2rem;
+          transition: background 0.16s, transform 0.13s;
+        }
+        .trivia-btn.submit {
+          width: 50%;
+          min-width: 120px;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
+        .trivia-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
+        .trivia-btn.green {
+          background: #22c55e;
+          border-color: #16a34a;
+        }
+        .trivia-btn.green:hover {
+          background: #16a34a;
+        }
+        .trivia-btn.red {
+          background: #ef4444;
+          border-color: #b91c1c;
+        }
+        .trivia-btn.red:hover {
+          background: #b91c1c;
+        }
+        .trivia-btn.hidden {
+          display: none;
+        }
+        .trivia-feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .trivia-score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .trivia-timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-weight: bold;
+        }
+        .share-buttons-row {
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
+        }
+        .clipboard-btn, .sms-btn {
+          background: #f9e38f;
+          color: #533e1f;
+          font-weight: bold;
+          border-radius: 8px;
+          border: 2px solid #cfb467;
+          padding: 7px 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #cfb46733;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          transition: background 0.2s, color 0.2s;
+          display: inline-block;
+        }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe7;
+          color: #b88340;
+        }
+        .share-preview {
+          font-size: 1.15rem;
+          color: #f9e38f;
+          font-weight: bold;
+          margin-top: 10px;
+          margin-bottom: 6px;
+          text-align: center;
+          word-break: break-word;
+        }
+        .share-link-ball {
+          color: #ffd700;
+          text-decoration: underline;
+          font-size: 1.15rem;
+          font-weight: bold;
+          margin-left: 6px;
+          cursor: pointer;
+        }
+        .share-link-ball:hover {
+          color: #ffbb33;
+          text-decoration: underline;
+        }
+        .trivia-modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .trivia-modal-content {
+          background: rgba(146, 64, 14, 0.97);
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
+          width: 100%;
+          max-width: 430px;
+          border: 2px solid #facc15;
+          color: #fde68a;
+          position: relative;
+        }
+        .trivia-modal-content h2 {
+          color: #fde68a;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .trivia-table {
+          width: 100%;
+          color: #fde68a;
+          border-collapse: collapse;
+          font-size: 1rem;
+        }
+        .trivia-table th,
+        .trivia-table td {
+          border: 1.5px solid #facc15;
+          padding: 0.6rem 0.3rem;
+          text-align: center;
+        }
+        .trivia-table thead {
+          background: #b45309;
+        }
+        .trivia-table-row:hover {
+          background: #d97706;
+        }
+        .trivia-close-btn {
+          width: 100%;
           background: #d97706;
           color: #fff;
           font-weight: bold;
-          padding: 0.85rem 0.2rem 0.7rem 0.2rem;
+          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
           border-radius: 12px;
+          margin-top: 1.3rem;
           text-decoration: none;
           border: 2px solid #facc15;
           box-shadow: 0 2px 10px #0002;
           font-size: 1.1rem;
+          cursor: pointer;
           transition: background 0.16s, transform 0.12s;
-          text-align: center;
         }
-        .main-link:hover {
+        .trivia-close-btn:hover {
           background: #b45309;
           transform: scale(1.03);
         }
-        .main-link span {
-          font-size: 1.3rem;
-          font-weight: bold;
-          color: #fff;
-        }
-        .main-link p {
-          margin: 0.18rem 0 0 0;
-          font-size: 1.01rem;
-          color: #fff;
-          font-weight: normal;
-        }
-        /* Modal Styles */
-        .modal-bg {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.48);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-        }
-        .modal-content {
-          background: #fff;
-          border-radius: 18px;
-          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-          padding: 2.2rem 1.6rem 2.2rem 1.6rem;
-          width: 100%;
-          max-width: 370px;
-          position: relative;
-        }
-        .modal-close {
-          position: absolute;
-          top: 0.6rem;
-          right: 1.1rem;
-          background: none;
-          border: none;
-          color: #aaa;
-          font-size: 2.3rem;
-          font-weight: bold;
-          cursor: pointer;
-          transition: color 0.17s;
-        }
-        .modal-close:hover {
-          color: #ef4444;
-        }
-        .modal-title {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #92400e;
-          margin-bottom: 1.1rem;
-          text-align: center;
-        }
-        .google-btn {
-          width: 100%;
-          background: #2563eb;
-          color: #fff;
-          padding: 0.7rem 0;
-          border-radius: 8px;
-          font-weight: bold;
-          border: none;
-          margin-bottom: 0.6rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          font-size: 1.08rem;
-          cursor: pointer;
-          transition: background 0.17s;
-        }
-        .google-btn:hover {
-          background: #1d4ed8;
-        }
-        .modal-divider {
-          color: #aaa;
-          text-align: center;
-          font-size: 1rem;
-          margin: 0.8rem 0;
-        }
-        .modal-input {
-          width: 100%;
-          border: 2px solid #b45309;
-          border-radius: 8px;
-          padding: 0.7rem 1rem;
-          font-size: 1rem;
-          margin-bottom: 0.7rem;
-        }
-        .modal-action-btn {
-          width: 100%;
-          background: #d97706;
-          color: #fff;
-          padding: 0.7rem 0;
-          border-radius: 8px;
-          font-weight: bold;
-          border: none;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: background 0.17s;
-        }
-        .modal-action-btn:hover {
-          background: #b45309;
-        }
-        .modal-login-btn {
-          background: #fde68a;
-          color: #92400e;
-        }
-        .modal-login-btn:hover {
-          background: #fef08a;
-        }
-        .modal-msg {
-          margin-top: 1.1rem;
-          text-align: center;
-          font-size: 1.02rem;
-        }
-        .modal-msg.success {
-          color: #16a34a;
-        }
-        .modal-msg.error {
-          color: #b91c1c;
-        }
         @media (max-width: 600px) {
-          .main-card { padding: 1rem 0.3rem 1rem 0.3rem; }
-          .modal-content { padding: 1.2rem 0.5rem 1.2rem 0.5rem; }
-          .main-link { max-width: 90vw; font-size: 1rem; }
+          .trivia-card, .trivia-modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
         }
-        `}
-      </style>
-      <div className="main-card">
-        <button
-          onClick={handleUserBtnClick}
-          className="user-btn"
-        >
-          {currentUser ? 'My Profile' : 'Sign Up/Login'}
-        </button>
-        <h1>Welcome to the Pub</h1>
-        <p>Your ultimate sports bar and media experience. Grab a seat.</p>
-        <div className="main-links">
-          <a
-            href="index-nfl"
-            className="main-link"
-          >
-            <span>Games</span>
-            <p>Prove that you know ball.</p>
-          </a>
-          <a
-            href="news"
-            className="main-link"
-          >
-            <span>News</span>
-            <p>Pick up The Pub Times for the most ridiculous takes in sports.</p>
-          </a>
-          <a
-            href="index-bar"
-            className="main-link"
-          >
-            <span>Take a Seat</span>
-            <p>Sit at the Pub Bar, or join a table or booth.</p>
+      `}</style>
+      <div className="trivia-card">
+        <div className="trivia-navbar">
+          <Link href="/" className="trivia-nav-btn">Home</Link>
+          <Link href="/news" className="trivia-nav-btn">News</Link>
+          <Link href="/game" className="trivia-nav-btn">Players</Link>
+          <Link href="/ride-the-bus" className="trivia-nav-btn">Ride the Bus</Link>
+        </div>
+        <div className="trivia-title">Ride the Bus</div>
+        <div className="trivia-level">Question: {currentLevel}/{MAX_QUESTIONS}</div>
+        <div className="trivia-question-text">
+          {questions.length ? (
+            currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl ? (
+              <>
+                <img
+                  src={questions[currentLevel - 1].imageUrl}
+                  alt="Guess Who"
+                  style={{ maxWidth: "100%", borderRadius: 13, marginBottom: 13 }}
+                />
+                <br />
+                <span>Who is this?</span>
+              </>
+            ) : (
+              questions[currentLevel - 1]?.question
+            )
+          ) : "Loading..."}
+        </div>
+        {!gameOver && questions.length > 0 && (
+          <>
+            <input
+              ref={guessInputRef}
+              type="text"
+              placeholder={currentLevel === MAX_QUESTIONS ? "Enter name..." : "Enter answer..."}
+              className="trivia-input"
+              autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmitGuess();
+              }}
+              disabled={gameOver}
+            />
+            <button
+              className={`trivia-btn submit${answerResults.length === currentLevel ? " hidden" : ""}`}
+              onClick={handleSubmitGuess}
+              disabled={gameOver}
+            >
+              Submit Answer
+            </button>
+            <button
+              className={`trivia-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
+              onClick={handleNextLevel}
+            >
+              {currentLevel < MAX_QUESTIONS ? "Next Question" : "Finish"}
+            </button>
+          </>
+        )}
+        {gameOver && (
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "1.1rem" }}>
+            <Link
+              href="/"
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%", marginBottom: 8 }}
+            >
+              Back to Home
+            </Link>
+            <button
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%" }}
+              onClick={() => setShowStats(true)}
+            >
+              View Stats
+            </button>
+          </div>
+        )}
+        <div className="trivia-feedback">{feedback}</div>
+        <div className="trivia-score-row">
+          <div className="trivia-timer-box">{formatTime(elapsedTime)}</div>
+          <div className="score">Score: <span>{score}</span>/20</div>
+        </div>
+        <div className="share-buttons-row" style={{ marginTop: 16, display: showShare ? "flex" : "none" }}>
+          <button className="clipboard-btn" onClick={handleClipboard}>
+            {clipboardMsg}
+          </button>
+          <a className="sms-btn" href={generateSmsLink(answerResults, score)} target="_blank" rel="noopener noreferrer">
+            Send as SMS
           </a>
         </div>
-      </div>
-      {isModalOpen && (
         <div
-          className="modal-bg"
-          onClick={handleModalClick}
-        >
-          <div className="modal-content">
-            <button
-              onClick={closeModal}
-              className="modal-close"
-            >
-              &times;
-            </button>
-            <div className="modal-title">Sign Up / Login</div>
-            <button
-              onClick={handleGoogleSignIn}
-              className="google-btn"
-            >
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                style={{ width: 20, height: 20 }}
-                alt="Google logo"
-              />
-              Sign in with Google
-            </button>
-            <div className="modal-divider">or</div>
-            <input
-              type="email"
-              value={signupEmail}
-              onChange={(e) => setSignupEmail(e.target.value)}
-              required
-              placeholder="Email"
-              className="modal-input"
-            />
-            <input
-              type="password"
-              value={signupPassword}
-              onChange={(e) => setSignupPassword(e.target.value)}
-              required
-              placeholder="Password"
-              className="modal-input"
-            />
-            <input
-              type="text"
-              value={signupUsername}
-              onChange={(e) => setSignupUsername(e.target.value)}
-              required
-              placeholder="Choose a username"
-              className="modal-input"
-            />
-            <button
-              onClick={handleSignup}
-              className="modal-action-btn"
-            >
-              Create Account
-            </button>
-            <div className="modal-divider">or</div>
-            <input
-              type="email"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              required
-              placeholder="Email"
-              className="modal-input"
-            />
-            <input
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              required
-              placeholder="Password"
-              className="modal-input"
-            />
-            <button
-              onClick={handleLogin}
-              className="modal-action-btn modal-login-btn"
-            >
-              Log In
-            </button>
-            <div
-              className={`modal-msg ${signupMsg.includes('successfully') ? 'success' : signupMsg ? 'error' : ''}`}
-            >
-              {signupMsg}
+          className="share-preview"
+          style={{ display: showShare ? "block" : "none" }}
+          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults, score) }}
+        />
+      </div>
+      {showStats && (
+        <div className="trivia-modal-bg">
+          <div className="trivia-modal-content">
+            <h2>Your Ride the Bus Stats</h2>
+            <p style={{ textAlign: "center", marginBottom: "1.2rem", fontSize: "1.15rem" }}>
+              {cloudAvg !== null
+                ? `Average Score (cloud): ${cloudAvg.toFixed(1)}/20`
+                : `Average Score (local): ${
+                  statsHistory.length > 0
+                    ? (
+                        statsHistory.reduce((sum, e) => sum + e.score, 0) /
+                        statsHistory.length
+                      ).toFixed(1)
+                    : "0"
+                }/20`}
+            </p>
+            <div style={{ overflowX: "auto" }}>
+              <table className="trivia-table">
+                <thead>
+                  <tr>
+                    <th>Attempt</th>
+                    <th>Score</th>
+                    <th>Time</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statsHistory.map((entry, idx) => (
+                    <tr className="trivia-table-row" key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.score}/20</td>
+                      <td>{formatTime(entry.time)}</td>
+                      <td>{new Date(entry.timestamp).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            <button
+              className="trivia-close-btn"
+              onClick={() => setShowStats(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -502,4 +796,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default RideTheBus;
