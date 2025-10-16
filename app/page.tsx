@@ -659,7 +659,7 @@ const RideTheBus: React.FC = () => {
           <Link href="/" className="trivia-nav-btn">Home</Link>
           <Link href="/news" className="trivia-nav-btn">News</Link>
           <Link href="/game" className="trivia-nav-btn">Players</Link>
-          <Link href="/ride-the-bus" className="trivia-nav-btn">Ride the Bus</Link>
+          <Link href="/college-game" className="trivia-nav-btn">College</Link>
         </div>
         <div className="trivia-title">Ride the Bus</div>
         <div className="trivia-level">Question: {currentLevel}/{MAX_QUESTIONS}</div>
