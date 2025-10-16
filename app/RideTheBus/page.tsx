@@ -187,7 +187,7 @@ const RideTheBus: React.FC = () => {
   const guessInputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Styling (matches trivia)
+  // Styling (matches CollegeGuess)
   useEffect(() => {
     document.body.style.backgroundImage =
       "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
@@ -373,7 +373,287 @@ const RideTheBus: React.FC = () => {
 
   return (
     <div className="trivia-bg">
-      {/* ... same style tag as your original component ... */}
+      <style>{`
+        .trivia-bg {
+          min-height: 100vh;
+          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
+          font-family: 'Montserrat', Arial, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-bottom: 3rem;
+        }
+        .trivia-card {
+          background: rgba(146, 84, 14, 0.93);
+          border: 3px solid #ffc233;
+          border-radius: 22px;
+          box-shadow: 0 8px 32px #0003;
+          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
+          max-width: 430px;
+          width: 95vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .trivia-navbar {
+          width: 100%;
+          display: flex;
+          gap: 0.7rem;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 1.2rem;
+          text-align: center;
+        }
+        .trivia-nav-btn {
+          background: #ea9800;
+          color: #fff;
+          font-weight: bold;
+          font-size: 0.93rem;
+          border: 2px solid #ffc233;
+          border-radius: 14px;
+          padding: 0.5rem 0.7rem;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+          box-shadow: 0 2px 10px #0002;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 80px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .trivia-nav-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.02);
+        }
+        .trivia-title {
+          color: #ffe066;
+          font-size: 2.1rem;
+          font-weight: 900;
+          text-align: center;
+          margin-bottom: 0.6rem;
+          letter-spacing: 0.02em;
+        }
+        .trivia-level {
+          color: #ffe066;
+          font-size: 1.08rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 1.2rem;
+        }
+        .trivia-question-text {
+          color: #fde68a;
+          font-size: 1.12rem;
+          margin-bottom: 1.5rem;
+          text-align: center;
+        }
+        .trivia-input {
+          width: 50%;
+          min-width: 120px;
+          background: #ad6e1b;
+          border: 2.5px solid #ffc233;
+          color: #ffe066;
+          border-radius: 14px;
+          font-size: 1.18rem;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.1rem;
+          font-weight: 500;
+          box-sizing: border-box;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
+        .trivia-input::placeholder {
+          color: #ffe066cc;
+          opacity: 1;
+        }
+        .trivia-btn {
+          width: 100%;
+          background: #ea9800;
+          color: #fff;
+          font-size: 1.18rem;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          margin-bottom: 0.7rem;
+          margin-top: 0.2rem;
+          transition: background 0.16s, transform 0.13s;
+        }
+        .trivia-btn.submit {
+          width: 50%;
+          min-width: 120px;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
+        .trivia-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
+        .trivia-btn.green {
+          background: #22c55e;
+          border-color: #16a34a;
+        }
+        .trivia-btn.green:hover {
+          background: #16a34a;
+        }
+        .trivia-btn.red {
+          background: #ef4444;
+          border-color: #b91c1c;
+        }
+        .trivia-btn.red:hover {
+          background: #b91c1c;
+        }
+        .trivia-btn.hidden {
+          display: none;
+        }
+        .trivia-feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .trivia-score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .trivia-timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-weight: bold;
+        }
+        .share-buttons-row {
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
+        }
+        .clipboard-btn, .sms-btn {
+          background: #f9e38f;
+          color: #533e1f;
+          font-weight: bold;
+          border-radius: 8px;
+          border: 2px solid #cfb467;
+          padding: 7px 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #cfb46733;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          transition: background 0.2s, color 0.2s;
+          display: inline-block;
+        }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe7;
+          color: #b88340;
+        }
+        .share-preview {
+          font-size: 1.15rem;
+          color: #f9e38f;
+          font-weight: bold;
+          margin-top: 10px;
+          margin-bottom: 6px;
+          text-align: center;
+          word-break: break-word;
+        }
+        .share-link-ball {
+          color: #ffd700;
+          text-decoration: underline;
+          font-size: 1.15rem;
+          font-weight: bold;
+          margin-left: 6px;
+          cursor: pointer;
+        }
+        .share-link-ball:hover {
+          color: #ffbb33;
+          text-decoration: underline;
+        }
+        .trivia-modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .trivia-modal-content {
+          background: rgba(146, 64, 14, 0.97);
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
+          width: 100%;
+          max-width: 430px;
+          border: 2px solid #facc15;
+          color: #fde68a;
+          position: relative;
+        }
+        .trivia-modal-content h2 {
+          color: #fde68a;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .trivia-table {
+          width: 100%;
+          color: #fde68a;
+          border-collapse: collapse;
+          font-size: 1rem;
+        }
+        .trivia-table th,
+        .trivia-table td {
+          border: 1.5px solid #facc15;
+          padding: 0.6rem 0.3rem;
+          text-align: center;
+        }
+        .trivia-table thead {
+          background: #b45309;
+        }
+        .trivia-table-row:hover {
+          background: #d97706;
+        }
+        .trivia-close-btn {
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 1.3rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: background 0.16s, transform 0.12s;
+        }
+        .trivia-close-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        @media (max-width: 600px) {
+          .trivia-card, .trivia-modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
+        }
+      `}</style>
       <div className="trivia-card">
         <div className="trivia-navbar">
           <Link href="/" className="trivia-nav-btn">Home</Link>
