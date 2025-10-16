@@ -150,19 +150,19 @@ function emojiShareMessage(results: boolean[]) {
   return emojis.join("");
 }
 function generateShareText(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
   const emojiMsg = emojiShareMessage(results);
   const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
   return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}</a>`;
 }
 function generateClipboardText(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
   const emojiMsg = emojiShareMessage(results);
   const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
   return `${emojiMsg} I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
 }
 function generateSmsLink(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
   const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
   const msg = `I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
   return "sms:?body=" + encodeURIComponent(msg);
@@ -659,7 +659,7 @@ const RideTheBus: React.FC = () => {
           <Link href="/" className="trivia-nav-btn">Home</Link>
           <Link href="/news" className="trivia-nav-btn">News</Link>
           <Link href="/game" className="trivia-nav-btn">Players</Link>
-          <Link href="/ride-the-bus" className="trivia-nav-btn">Ride the Bus</Link>
+          <Link href="/RideTheBus" className="trivia-nav-btn">Ride the Bus</Link>
         </div>
         <div className="trivia-title">Ride the Bus</div>
         <div className="trivia-level">Question: {currentLevel}/{MAX_QUESTIONS}</div>
