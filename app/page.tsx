@@ -1,29 +1,28 @@
-import { useRouter } from "expo-router";
-import { initializeApp } from "firebase/app";
+"use client";
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
-  createUserWithEmailAndPassword,
+  initializeApp
+} from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import {
   getAuth,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
+  signInAnonymously,
+  User,
 } from "firebase/auth";
-import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
 
-// -- FIREBASE CONFIG --
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
   authDomain: "thepub-sigma.firebaseapp.com",
@@ -33,557 +32,768 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Fetch questions from a single document: 'triviaQuestions' collection, 'questions' document
-async function fetchAllQuestions() {
-  const docRef = doc(db, "triviaQuestions", "questions");
+type TriviaQuestion = {
+  question: string;
+  answer: string;
+  imageUrl?: string;
+};
+type HistoryEntry = {
+  score: number;
+  time: number;
+  timestamp: string;
+};
+
+function getEasternMidnightDateKey() {
+  const now = new Date();
+  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
+  const nyDate = new Date(nyString);
+  nyDate.setHours(0, 0, 0, 0);
+  return nyDate.toISOString().slice(0, 10);
+}
+
+const MAX_QUESTIONS = 4;
+
+async function getDailyQuestions() {
+  const dateKey = getEasternMidnightDateKey();
+  const docRef = doc(db, "dailyQuestions", dateKey);
   const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return docSnap.data().questions || [];
+  if (docSnap.exists() && Array.isArray(docSnap.data().questions)) {
+    return docSnap.data().questions.slice(0, MAX_QUESTIONS) as TriviaQuestion[];
   } else {
     return [];
   }
 }
 
-// Get trivia stats for the current user, or zeroed stats if not exist
-async function getStatsFromFirebase(userId: string) {
-  const statsRef = doc(db, "triviaStats", userId);
-  const statsSnap = await getDoc(statsRef);
-  if (statsSnap.exists()) {
-    return statsSnap.data();
-  } else {
-    return { totalAnswered: 0, totalCorrect: 0 };
+function getCurrentUserId(user: User | null) {
+  if (user) {
+    return user.uid;
+  }
+  let anonId = localStorage.getItem("anonUserId");
+  if (!anonId) {
+    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem("anonUserId", anonId);
+  }
+  return anonId;
+}
+
+async function recordRideBusGameScore(score: number, time: number, user: User | null) {
+  try {
+    const userId = getCurrentUserId(user);
+    await addDoc(collection(db, "rideBusGameScores"), {
+      userId: userId,
+      score: score,
+      time: time,
+      playedAt: new Date().toISOString(),
+    });
+    await updateRideBusAverageScore(userId);
+  } catch (err) {}
+}
+async function updateRideBusAverageScore(userId: string) {
+  try {
+    const q = query(collection(db, "rideBusGameScores"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    let total = 0, count = 0;
+    snap.forEach((doc) => {
+      total += doc.data().score;
+      count += 1;
+    });
+    const avg = count === 0 ? 0 : total / count;
+    await setDoc(doc(db, "rideBusAverages", userId), {
+      userId: userId,
+      averageScore: avg,
+      lastUpdated: new Date().toISOString(),
+      gamesPlayed: count,
+    });
+  } catch (err) {}
+}
+async function fetchRideBusAverageScore(userId: string) {
+  try {
+    const docRef = doc(db, "rideBusAverages", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().averageScore;
+    }
+    return null;
+  } catch (err) {
+    return null;
   }
 }
 
-// Save or update stats for this user
-async function setStatsToFirebase(userId: string, totalAnswered: number, totalCorrect: number) {
-  const statsRef = doc(db, "triviaStats", userId);
-  await setDoc(statsRef, { totalAnswered, totalCorrect }, { merge: true });
-}
-
-// -- Sign In Component --
-function SignInScreen({ onSuccess, onCancel }: { onSuccess: (user: any) => void; onCancel: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleAction = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (mode === "signin") {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        onSuccess(result.user);
-      } else {
-        const result = await createUserWithEmailAndPassword(auth, email, password);
-        onSuccess(result.user);
-      }
-    } catch (e: any) {
-      setError(e.message);
+function getLevenshteinDistance(a: string, b: string) {
+  const matrix = Array(b.length + 1)
+    .fill(null)
+    .map(() => Array(a.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j - 1][i] + 1,
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i - 1] + cost
+      );
     }
-    setLoading(false);
-  };
-
-  return (
-    <View style={styles.centered}>
-      <Text style={{ fontSize: 27, fontWeight: "bold", color: "#ffe066", marginBottom: 14 }}>
-        {mode === "signin" ? "Sign In" : "Create Account"}
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        placeholderTextColor="#ffefb6"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        secureTextEntry
-        onChangeText={setPassword}
-        placeholderTextColor="#ffefb6"
-      />
-      {error ? (
-        <Text style={{ color: "#ff4444", marginBottom: 8, textAlign: "center" }}>{error}</Text>
-      ) : null}
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleAction}
-        disabled={loading}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.buttonText}>
-          {loading
-            ? "Loading..."
-            : mode === "signin"
-            ? "Sign In"
-            : "Create Account"}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.nextButton, { backgroundColor: "#917300", marginTop: 12, paddingVertical: 10 }]}
-        onPress={() => setMode(mode === "signin" ? "signup" : "signin")}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.buttonText, { fontSize: 15 }]}>
-          {mode === "signin" ? "No account? Create one" : "Already have an account? Sign In"}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.nextButton, { backgroundColor: "#9f2f2f", marginTop: 10, paddingVertical: 9 }]}
-        onPress={onCancel}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.buttonText, { fontSize: 15 }]}>Cancel</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  }
+  return matrix[b.length][a.length];
+}
+function formatTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${secs}`;
+}
+function emojiShareMessage(results: boolean[]) {
+  const emojis: string[] = results.map(r => r ? "✅" : "❌");
+  while (emojis.length < MAX_QUESTIONS) emojis.push("❓");
+  return emojis.join("");
+}
+function generateShareText(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const emojiMsg = emojiShareMessage(results);
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}</a>`;
+}
+function generateClipboardText(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const emojiMsg = emojiShareMessage(results);
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  return `${emojiMsg} I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
+}
+function generateSmsLink(results: boolean[], score?: number) {
+  const homepage = typeof window !== "undefined" ? window.location.origin + "/ride-the-bus" : "";
+  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
+  const msg = `I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
+  return "sms:?body=" + encodeURIComponent(msg);
 }
 
-export default function HomeScreen() {
-  const [user, setUser] = useState<any>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [current, setCurrent] = useState<any>(null);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [result, setResult] = useState("");
-  const [totalAnswered, setTotalAnswered] = useState(0);
-  const [totalCorrect, setTotalCorrect] = useState(0);
-  const [showSignIn, setShowSignIn] = useState(false);
-  const router = useRouter();
+const RideTheBus: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [score, setScore] = useState(0);
+  const [answerResults, setAnswerResults] = useState<boolean[]>([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [showStats, setShowStats] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [statsHistory, setStatsHistory] = useState<HistoryEntry[]>([]);
+  const [cloudAvg, setCloudAvg] = useState<number | null>(null);
+  const [clipboardMsg, setClipboardMsg] = useState("Copy to Clipboard");
+  const [showShare, setShowShare] = useState(false);
 
-  // Listen for user sign in/out
+  const guessInputRef = useRef<HTMLInputElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Styling
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (user) setShowSignIn(false);
-    });
-    return () => unsub();
+    document.body.style.backgroundImage =
+      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.backgroundColor = "#451a03";
+    document.body.style.fontFamily = "'Montserrat', sans-serif";
+    return () => {
+      document.body.style.backgroundImage = "";
+      document.body.style.backgroundSize = "";
+      document.body.style.backgroundPosition = "";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.backgroundColor = "";
+      document.body.style.fontFamily = "";
+    };
   }, []);
 
-  // Fetch questions and stats on mount or on user change
+  // Auth state
+  useEffect(() => {
+    return onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) signInAnonymously(auth);
+    });
+  }, []);
+
+  // Load questions for today
+  useEffect(() => {
+    const loadQuestions = async () => {
+      const qs = await getDailyQuestions();
+      setQuestions(qs);
+    };
+    loadQuestions();
+  }, []);
+
+  // Timer logic
+  useEffect(() => {
+    if (!timerActive) return;
+    timerRef.current = setInterval(() => {
+      setElapsedTime((t) => t + 1);
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive]);
+
+  // Stats history local
+  useEffect(() => {
+    const history =
+      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
+    setStatsHistory(history);
+  }, [showStats, gameOver]);
+
+  // Cloud average
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const qs = await fetchAllQuestions();
-        setQuestions(qs);
-        if (qs.length) setCurrent(qs[Math.floor(Math.random() * qs.length)]);
-        // Fetch stats
-        const stats = await getStatsFromFirebase(user.uid);
-        setTotalAnswered(stats.totalAnswered || 0);
-        setTotalCorrect(stats.totalCorrect || 0);
-      } catch (err: any) {
-        Alert.alert("Error", err.message || String(err));
+    const fetchCloudAvg = async () => {
+      const userId = getCurrentUserId(user);
+      const avg = await fetchRideBusAverageScore(userId);
+      setCloudAvg(avg);
+    };
+    fetchCloudAvg();
+  }, [user, showStats]);
+
+  // Save game history locally
+  const saveScoreHistory = (score: number, time: number) => {
+    const history =
+      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
+    history.push({
+      score,
+      time,
+      timestamp: new Date().toISOString(),
+    });
+    localStorage.setItem("rideBusGameHistory", JSON.stringify(history));
+    setStatsHistory(history);
+  };
+
+  // Clipboard share
+  const handleClipboard = () => {
+    const textToCopy = generateClipboardText(answerResults, score);
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        setClipboardMsg("Copied!");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      })
+      .catch(() => {
+        setClipboardMsg("Copy Failed");
+        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+      });
+  };
+
+  // Initial timer start
+  useEffect(() => {
+    if (questions.length > 0 && !gameOver) {
+      setTimerActive(true);
+      setElapsedTime(0);
+    }
+  }, [questions, gameOver]);
+
+  // ---- ANSWER LOGIC ----
+  const handleSubmitGuess = () => {
+    if (!questions.length || !questions[currentLevel - 1]) return;
+    const guessRaw = guessInputRef.current?.value.trim() || "";
+    const guess = guessRaw.toLowerCase();
+    const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
+    setFeedback("");
+
+    // For image question (last question), require full answer, otherwise partial word match
+    if (currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl) {
+      if (guess === correctAnswer) {
+        setScore((s) => s + 5);
+        setFeedback("Correct! +5 points! 🎉");
+        setAnswerResults((arr) => [...arr, true]);
+        setTimerActive(false);
+      } else {
+        const distance = getLevenshteinDistance(guess, correctAnswer);
+        if (distance <= 2 && guess.length > 0) {
+          setFeedback("Very close! Try again!");
+          if (guessInputRef.current) guessInputRef.current.value = "";
+          return;
+        } else {
+          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
+          setAnswerResults((arr) => [...arr, false]);
+          setTimerActive(false);
+        }
       }
-      setLoading(false);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    } else {
+      // Partial match logic
+      const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
+      const guessWords = guess.split(/\s+/).filter(Boolean);
 
-  // Helper: typo-tolerance
-  function isCorrectAnswer(guess: string, correctAnswer: string) {
-    const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
-    const guessWords = guess.split(/\s+/).filter(Boolean);
+      const wordMatch =
+        correctWords.some((cw) => guessWords.includes(cw)) ||
+        guessWords.some((gw) => correctWords.includes(gw));
 
-    for (const cw of correctWords) {
-      for (const gw of guessWords) {
-        if (gw === cw || levenshtein(gw, cw) <= 2) {
-          return true;
+      if (wordMatch) {
+        setScore((s) => s + 5);
+        setFeedback("Correct! +5 points! 🎉");
+        setAnswerResults((arr) => [...arr, true]);
+        setTimerActive(false);
+      } else {
+        const distance = getLevenshteinDistance(guess, correctAnswer);
+        if (distance <= 2 && guess.length > 0) {
+          setFeedback("So close! Try again!");
+          if (guessInputRef.current) guessInputRef.current.value = "";
+          return;
+        } else {
+          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
+          setAnswerResults((arr) => [...arr, false]);
+          setTimerActive(false);
         }
       }
     }
-    if (levenshtein(guess, correctAnswer) <= 2) return true;
-    return false;
-  }
+  };
 
-  // Handle score and average updates
-  const handleSubmit = async () => {
-    if (!current) return;
-    const correct = (current.answer || "").trim().toLowerCase();
-    const guess = userAnswer.trim().toLowerCase();
-    let gotIt = false;
-    if (isCorrectAnswer(guess, correct)) {
-      gotIt = true;
-      setResult("✅ Correct!");
+  const handleNextLevel = () => {
+    if (currentLevel < MAX_QUESTIONS) {
+      setCurrentLevel((lvl) => lvl + 1);
+      setFeedback("");
+      setTimerActive(true);
+      if (guessInputRef.current) guessInputRef.current.value = "";
     } else {
-      setResult(`❌ Incorrect. The answer is: ${current.answer}`);
-    }
-
-    // Update state stats
-    setTotalAnswered((prev) => prev + 1);
-    setTotalCorrect((prev) => prev + (gotIt ? 1 : 0));
-    // Update Firestore stats
-    try {
-      const newTotalAnswered = totalAnswered + 1;
-      const newTotalCorrect = totalCorrect + (gotIt ? 1 : 0);
-      await setStatsToFirebase(user.uid, newTotalAnswered, newTotalCorrect);
-    } catch (err: any) {
-      console.error("Error saving stats:", err);
+      setGameOver(true);
+      setShowShare(true);
+      setTimerActive(false);
+      saveScoreHistory(score, elapsedTime);
+      recordRideBusGameScore(score, elapsedTime, user);
     }
   };
 
-  // Reset for next question, no stats update here
-  const handleNext = () => {
-    if (questions.length) {
-      let next;
-      do {
-        next = questions[Math.floor(Math.random() * questions.length)];
-      } while (current && next && next.question === current.question && questions.length > 1);
-      setCurrent(next);
-      setUserAnswer("");
-      setResult("");
-    }
+  // Reset game
+  const handlePlayAgain = () => {
+    setCurrentLevel(1);
+    setScore(0);
+    setAnswerResults([]);
+    setElapsedTime(0);
+    setFeedback("");
+    setGameOver(false);
+    setShowShare(false);
+    if (guessInputRef.current) guessInputRef.current.value = "";
   };
-
-  const handleSignOut = async () => {
-    await signOut(auth);
-    setUser(null);
-    setTotalAnswered(0);
-    setTotalCorrect(0);
-    setQuestions([]);
-    setCurrent(null);
-    setUserAnswer("");
-    setResult("");
-    setLoading(false);
-  };
-
-  const percentCorrect = totalAnswered > 0 ? ((totalCorrect / totalAnswered) * 100).toFixed(1) : "0.0";
-
-  // Show sign-in form as overlay/modal if requested
-  if (showSignIn) {
-    return <SignInScreen onSuccess={setUser} onCancel={() => setShowSignIn(false)} />;
-  }
-
-  if (loading)
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#ea9800" />
-      </View>
-    );
-
-  if (!current)
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.noQuestions}>No trivia questions found.</Text>
-      </View>
-    );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.barBackground}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <StatusBar style="light" />
-      <Image
-        source={{
-          uri: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
-        }}
-        style={styles.backgroundImage}
-        blurRadius={2}
-        resizeMode="cover"
-      />
-      <View style={styles.overlay} />
-      <View style={styles.container}>
-        <Text style={styles.appName}>🍺 The Pub Trivia 🍺</Text>
-        {/* Button Row for Daily Challenge, News, Stats, Sign In/Out */}
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={styles.smallButton}
-            onPress={() => router.push("/ridethebus")}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.smallButtonText}>🎯 Daily</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.smallButton}
-            onPress={() => router.push("/news")}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.smallButtonText}>📰 News</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.smallButton}
-            onPress={() => router.push("/stats")}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.smallButtonText}>📊 Stats</Text>
-          </TouchableOpacity>
-
-          {user ? (
-            <TouchableOpacity
-              style={[styles.smallButton, { backgroundColor: "#e35d31" }]}
-              onPress={handleSignOut}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.smallButtonText, { color: "#fff" }]}>🚪 Sign Out</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.smallButton, { backgroundColor: "#3b82f6" }]}
-              onPress={() => setShowSignIn(true)}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.smallButtonText, { color: "#fff" }]}>🔐 Sign In</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.heading}>NFL Trivia</Text>
-          <Text style={styles.question}>{current.question}</Text>
-          {(current.imageurl || current.imageUrl) ? (
-            <Image
-              source={{ uri: current.imageurl || current.imageUrl }}
-              style={styles.triviaImage}
-              resizeMode="contain"
+    <div className="trivia-bg">
+      <style>{`
+        .trivia-bg {
+          min-height: 100vh;
+          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
+          font-family: 'Montserrat', Arial, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-bottom: 3rem;
+        }
+        .trivia-card {
+          background: rgba(146, 84, 14, 0.93);
+          border: 3px solid #ffc233;
+          border-radius: 22px;
+          box-shadow: 0 8px 32px #0003;
+          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
+          max-width: 430px;
+          width: 95vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .trivia-navbar {
+          width: 100%;
+          display: flex;
+          gap: 0.7rem;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 1.2rem;
+          text-align: center;
+        }
+        .trivia-nav-btn {
+          background: #ea9800;
+          color: #fff;
+          font-weight: bold;
+          font-size: 0.93rem;
+          border: 2px solid #ffc233;
+          border-radius: 14px;
+          padding: 0.5rem 0.7rem;
+          text-align: center;
+          text-decoration: none;
+          transition: background 0.13s, color 0.13s, transform 0.12s;
+          box-shadow: 0 2px 10px #0002;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 80px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .trivia-nav-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.02);
+        }
+        .trivia-title {
+          color: #ffe066;
+          font-size: 2.1rem;
+          font-weight: 900;
+          text-align: center;
+          margin-bottom: 0.6rem;
+          letter-spacing: 0.02em;
+        }
+        .trivia-level {
+          color: #ffe066;
+          font-size: 1.08rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 1.2rem;
+        }
+        .trivia-question-text {
+          color: #fde68a;
+          font-size: 1.12rem;
+          margin-bottom: 1.5rem;
+          text-align: center;
+        }
+        .trivia-input {
+          width: 50%;
+          min-width: 120px;
+          background: #ad6e1b;
+          border: 2.5px solid #ffc233;
+          color: #ffe066;
+          border-radius: 14px;
+          font-size: 1.18rem;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.1rem;
+          font-weight: 500;
+          box-sizing: border-box;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
+        .trivia-input::placeholder {
+          color: #ffe066cc;
+          opacity: 1;
+        }
+        .trivia-btn {
+          width: 100%;
+          background: #ea9800;
+          color: #fff;
+          font-size: 1.18rem;
+          font-weight: bold;
+          padding: 1.1rem 0;
+          border-radius: 14px;
+          border: 2px solid #ffc233;
+          box-shadow: 0 2px 12px #0002;
+          cursor: pointer;
+          margin-bottom: 0.7rem;
+          margin-top: 0.2rem;
+          transition: background 0.16s, transform 0.13s;
+        }
+        .trivia-btn.submit {
+          width: 50%;
+          min-width: 120px;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+        }
+        .trivia-btn:hover {
+          background: #e0a92b;
+          color: #fffbe7;
+          transform: scale(1.04);
+        }
+        .trivia-btn.green {
+          background: #22c55e;
+          border-color: #16a34a;
+        }
+        .trivia-btn.green:hover {
+          background: #16a34a;
+        }
+        .trivia-btn.red {
+          background: #ef4444;
+          border-color: #b91c1c;
+        }
+        .trivia-btn.red:hover {
+          background: #b91c1c;
+        }
+        .trivia-btn.hidden {
+          display: none;
+        }
+        .trivia-feedback {
+          text-align: center;
+          margin-top: 1rem;
+          font-size: 1.18rem;
+          font-weight: bold;
+          color: #fde68a;
+          min-height: 1.3rem;
+        }
+        .trivia-score-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: center;
+          gap: 1.1rem;
+          margin-top: 1.2rem;
+        }
+        .trivia-timer-box {
+          background: rgba(146, 64, 14, 0.93);
+          color: #fde68a;
+          border: 2px solid #facc15;
+          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-weight: bold;
+        }
+        .share-buttons-row {
+          display: flex;
+          flex-direction: row;
+          gap: 14px;
+          justify-content: center;
+          align-items: center;
+        }
+        .clipboard-btn, .sms-btn {
+          background: #f9e38f;
+          color: #533e1f;
+          font-weight: bold;
+          border-radius: 8px;
+          border: 2px solid #cfb467;
+          padding: 7px 18px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px #cfb46733;
+          margin-top: 8px;
+          margin-bottom: 8px;
+          transition: background 0.2s, color 0.2s;
+          display: inline-block;
+        }
+        .clipboard-btn:hover, .sms-btn:hover {
+          background: #fffbe7;
+          color: #b88340;
+        }
+        .share-preview {
+          font-size: 1.15rem;
+          color: #f9e38f;
+          font-weight: bold;
+          margin-top: 10px;
+          margin-bottom: 6px;
+          text-align: center;
+          word-break: break-word;
+        }
+        .share-link-ball {
+          color: #ffd700;
+          text-decoration: underline;
+          font-size: 1.15rem;
+          font-weight: bold;
+          margin-left: 6px;
+          cursor: pointer;
+        }
+        .share-link-ball:hover {
+          color: #ffbb33;
+          text-decoration: underline;
+        }
+        .trivia-modal-bg {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .trivia-modal-content {
+          background: rgba(146, 64, 14, 0.97);
+          border-radius: 18px;
+          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
+          width: 100%;
+          max-width: 430px;
+          border: 2px solid #facc15;
+          color: #fde68a;
+          position: relative;
+        }
+        .trivia-modal-content h2 {
+          color: #fde68a;
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin-bottom: 1.1rem;
+          text-align: center;
+        }
+        .trivia-table {
+          width: 100%;
+          color: #fde68a;
+          border-collapse: collapse;
+          font-size: 1rem;
+        }
+        .trivia-table th,
+        .trivia-table td {
+          border: 1.5px solid #facc15;
+          padding: 0.6rem 0.3rem;
+          text-align: center;
+        }
+        .trivia-table thead {
+          background: #b45309;
+        }
+        .trivia-table-row:hover {
+          background: #d97706;
+        }
+        .trivia-close-btn {
+          width: 100%;
+          background: #d97706;
+          color: #fff;
+          font-weight: bold;
+          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
+          border-radius: 12px;
+          margin-top: 1.3rem;
+          text-decoration: none;
+          border: 2px solid #facc15;
+          box-shadow: 0 2px 10px #0002;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: background 0.16s, transform 0.12s;
+        }
+        .trivia-close-btn:hover {
+          background: #b45309;
+          transform: scale(1.03);
+        }
+        @media (max-width: 600px) {
+          .trivia-card, .trivia-modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
+        }
+      `}</style>
+      <div className="trivia-card">
+        <div className="trivia-navbar">
+          <Link href="/" className="trivia-nav-btn">Home</Link>
+          <Link href="/news" className="trivia-nav-btn">News</Link>
+          <Link href="/game" className="trivia-nav-btn">Players</Link>
+          <Link href="/college-game" className="trivia-nav-btn">College</Link>
+        </div>
+        <div className="trivia-title">Ride the Bus</div>
+        <div className="trivia-level">Question: {currentLevel}/{MAX_QUESTIONS}</div>
+        <div className="trivia-question-text">
+          {questions.length ? (
+            currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl ? (
+              <>
+                <img
+                  src={questions[currentLevel - 1].imageUrl}
+                  alt="Guess Who"
+                  style={{ maxWidth: "100%", borderRadius: 13, marginBottom: 13 }}
+                />
+                <br />
+                <span>Who is this?</span>
+              </>
+            ) : (
+              questions[currentLevel - 1]?.question
+            )
+          ) : "Loading..."}
+        </div>
+        {!gameOver && questions.length > 0 && (
+          <>
+            <input
+              ref={guessInputRef}
+              type="text"
+              placeholder={currentLevel === MAX_QUESTIONS ? "Enter name..." : "Enter answer..."}
+              className="trivia-input"
+              autoComplete="off"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmitGuess();
+              }}
+              disabled={gameOver}
             />
-          ) : null}
-          <TextInput
-            style={styles.input}
-            value={userAnswer}
-            onChangeText={setUserAnswer}
-            placeholder="Type your answer"
-            placeholderTextColor="#ffefb6"
-            editable={!result}
-          />
-          {!result ? (
-            <TouchableOpacity
-              style={[styles.button, !userAnswer && styles.buttonDisabled]}
-              onPress={handleSubmit}
-              disabled={!userAnswer}
-              activeOpacity={0.85}
+            <button
+              className={`trivia-btn submit${answerResults.length === currentLevel ? " hidden" : ""}`}
+              onClick={handleSubmitGuess}
+              disabled={gameOver}
             >
-              <Text style={styles.buttonText}>Submit</Text>
-            </TouchableOpacity>
-          ) : (
-            <>
-              <Text style={styles.result}>{result}</Text>
-              <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.85}>
-                <Text style={styles.buttonText}>Next Question</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-        {/* Show stats directly on the HomeScreen (optional!) */}
-        <View style={{ marginTop: 8, alignItems: "center" }}>
-          <Text style={{ color: "#ffe066", fontWeight: "bold", fontSize: 18 }}>
-            📊 Total: {totalAnswered} | ✅: {totalCorrect} | Avg: {percentCorrect}%
-          </Text>
-          <Text style={{ color: "#fffbe7", fontSize: 13 }}>Stats are saved to your profile.</Text>
-        </View>
-        <Text style={styles.footer}>
-          Powered by <Text style={{ fontWeight: "bold", color: "#fff" }}>The Pub</Text> • Enjoy responsibly!
-        </Text>
-      </View>
-    </KeyboardAvoidingView>
+              Submit Answer
+            </button>
+            <button
+              className={`trivia-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
+              onClick={handleNextLevel}
+            >
+              {currentLevel < MAX_QUESTIONS ? "Next Question" : "Finish"}
+            </button>
+          </>
+        )}
+        {gameOver && (
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "1.1rem" }}>
+            <Link
+              href="/"
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%", marginBottom: 8 }}
+            >
+              Back to Home
+            </Link>
+            <button
+              className="trivia-btn red"
+              style={{ textAlign: "center", width: "100%" }}
+              onClick={() => setShowStats(true)}
+            >
+              View Stats
+            </button>
+          </div>
+        )}
+        <div className="trivia-feedback">{feedback}</div>
+        <div className="trivia-score-row">
+          <div className="trivia-timer-box">{formatTime(elapsedTime)}</div>
+          <div className="score">Score: <span>{score}</span>/20</div>
+        </div>
+        <div className="share-buttons-row" style={{ marginTop: 16, display: showShare ? "flex" : "none" }}>
+          <button className="clipboard-btn" onClick={handleClipboard}>
+            {clipboardMsg}
+          </button>
+          <a className="sms-btn" href={generateSmsLink(answerResults, score)} target="_blank" rel="noopener noreferrer">
+            Send as SMS
+          </a>
+        </div>
+        <div
+          className="share-preview"
+          style={{ display: showShare ? "block" : "none" }}
+          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults, score) }}
+        />
+      </div>
+      {showStats && (
+        <div className="trivia-modal-bg">
+          <div className="trivia-modal-content">
+            <h2>Your Ride the Bus Stats</h2>
+            <p style={{ textAlign: "center", marginBottom: "1.2rem", fontSize: "1.15rem" }}>
+              {cloudAvg !== null
+                ? `Average Score (cloud): ${cloudAvg.toFixed(1)}/20`
+                : `Average Score (local): ${
+                  statsHistory.length > 0
+                    ? (
+                        statsHistory.reduce((sum, e) => sum + e.score, 0) /
+                        statsHistory.length
+                      ).toFixed(1)
+                    : "0"
+                }/20`}
+            </p>
+            <div style={{ overflowX: "auto" }}>
+              <table className="trivia-table">
+                <thead>
+                  <tr>
+                    <th>Attempt</th>
+                    <th>Score</th>
+                    <th>Time</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statsHistory.map((entry, idx) => (
+                    <tr className="trivia-table-row" key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.score}/20</td>
+                      <td>{formatTime(entry.time)}</td>
+                      <td>{new Date(entry.timestamp).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button
+              className="trivia-close-btn"
+              onClick={() => setShowStats(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
-}
+};
 
-// Levenshtein distance helper for typo-tolerance
-function levenshtein(a: string, b: string): number {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  const v0 = new Array(b.length + 1).fill(0);
-  const v1 = new Array(b.length + 1).fill(0);
-  for (let i = 0; i < v0.length; i++) v0[i] = i;
-  for (let i = 0; i < a.length; i++) {
-    v1[0] = i + 1;
-    for (let j = 0; j < b.length; j++) {
-      const cost = a[i] === b[j] ? 0 : 1;
-      v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
-    }
-    for (let j = 0; j < v0.length; j++) v0[j] = v1[j];
-  }
-  return v1[b.length];
-}
-
-const styles = StyleSheet.create({
-  barBackground: {
-    flex: 1,
-    backgroundColor: "#3c2200",
-    position: "relative",
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.27,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#3c2200",
-    opacity: 0.88,
-  },
-  container: {
-    flex: 1,
-    padding: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 2,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 18,
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  smallButton: {
-    backgroundColor: "#b45309",
-    borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.13,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 6,
-    marginHorizontal: 4,
-    marginVertical: 2,
-  },
-  smallButtonText: {
-    color: "#fffbe7",
-    fontSize: 15,
-    fontWeight: "bold",
-    letterSpacing: 0.2,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#351a05",
-  },
-  appName: {
-    fontSize: 30,
-    fontWeight: "900",
-    color: "#ffe066",
-    textAlign: "center",
-    marginBottom: 30,
-    letterSpacing: 1.5,
-    textShadowColor: "#000",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 6,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#ea9800",
-    marginBottom: 12,
-    letterSpacing: 0.5,
-    textShadowColor: "#fffbe755",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  card: {
-    backgroundColor: "rgba(255,255,210,0.95)",
-    borderRadius: 18,
-    padding: 26,
-    width: "100%",
-    maxWidth: 370,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.13,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-    marginBottom: 22,
-  },
-  question: {
-    fontSize: 19,
-    color: "#5a3200",
-    marginBottom: 18,
-    textAlign: "center",
-    fontWeight: "600",
-    letterSpacing: 0.2,
-  },
-  triviaImage: {
-    width: 210,
-    height: 180,
-    marginBottom: 13,
-    borderRadius: 13,
-    backgroundColor: "#ffe06633",
-    alignSelf: "center",
-  },
-  input: {
-    borderWidth: 1.8,
-    borderColor: "#eab308",
-    borderRadius: 11,
-    padding: 12,
-    fontSize: 17,
-    marginBottom: 13,
-    backgroundColor: "#fffbe7",
-    width: "100%",
-    color: "#7a4f00",
-  },
-  button: {
-    backgroundColor: "#ea9800",
-    paddingVertical: 13,
-    borderRadius: 14,
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 5,
-    marginTop: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  buttonDisabled: {
-    backgroundColor: "#e0a92b99",
-  },
-  buttonText: {
-    color: "#fffbe7",
-    fontWeight: "bold",
-    fontSize: 18,
-    letterSpacing: 0.5,
-    textShadowColor: "#00000033",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  nextButton: {
-    backgroundColor: "#22c55e",
-    paddingVertical: 13,
-    borderRadius: 14,
-    width: "100%",
-    alignItems: "center",
-    marginTop: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.09,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  result: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 12,
-    color: "#b45309",
-    textShadowColor: "#fffbe799",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 2,
-  },
-  noQuestions: {
-    color: "#fffbe7",
-    fontSize: 19,
-    fontWeight: "600",
-  },
-  footer: {
-    marginTop: 18,
-    fontSize: 14,
-    color: "#ffe066bb",
-    textAlign: "center",
-    fontWeight: "500",
-    textShadowColor: "#00000044",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
-});
+export default RideTheBus;
