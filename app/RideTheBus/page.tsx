@@ -1,799 +1,670 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { makeRedirectUri, ResponseType } from "expo-auth-session";
+import * as Google from "expo-auth-session/providers/google";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import {
-  initializeApp
-} from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  doc,
-  setDoc,
-  addDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInAnonymously,
-  User,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
+import { addDoc, collection, doc, getDoc, getFirestore, serverTimestamp, setDoc } from "firebase/firestore";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useUser } from "../_layout";
 
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyBtsOBlh52YZagsLXp9_dcCq4qhkHBSWnU",
-  authDomain: "thepub-sigma.firebaseapp.com",
-  projectId: "thepub-sigma",
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+WebBrowser.maybeCompleteAuthSession();
 
-type TriviaQuestion = {
-  question: string;
-  answer: string;
-  imageUrl?: string;
-};
-type HistoryEntry = {
-  score: number;
-  time: number;
-  timestamp: string;
-};
+const db = getFirestore();
 
-function getEasternMidnightDateKey() {
-  const now = new Date();
-  const nyString = now.toLocaleString("en-US", { timeZone: "America/New_York" });
-  const nyDate = new Date(nyString);
-  nyDate.setHours(0, 0, 0, 0);
-  return nyDate.toISOString().slice(0, 10);
-}
-
-const MAX_QUESTIONS = 4;
-
-async function getDailyQuestions() {
-  const dateKey = getEasternMidnightDateKey();
-  const docRef = doc(db, "dailyQuestions", dateKey);
+async function fetchAllQuestions() {
+  const docRef = doc(db, "triviaQuestions", "questions");
   const docSnap = await getDoc(docRef);
-  if (docSnap.exists() && Array.isArray(docSnap.data().questions)) {
-    return docSnap.data().questions.slice(0, MAX_QUESTIONS) as TriviaQuestion[];
+  if (docSnap.exists()) {
+    return docSnap.data().questions || [];
   } else {
     return [];
   }
 }
 
-function getCurrentUserId(user: User | null) {
-  if (user) {
-    return user.uid;
+async function getStatsFromFirebase(userId: string) {
+  const statsRef = doc(db, "triviaStats", userId);
+  const statsSnap = await getDoc(statsRef);
+  if (statsSnap.exists()) {
+    return statsSnap.data();
+  } else {
+    return { totalAnswered: 0, totalCorrect: 0, lastAnsweredDay: "", answeredToday: 0 };
   }
-  let anonId = localStorage.getItem("anonUserId");
-  if (!anonId) {
-    anonId = "anon-" + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem("anonUserId", anonId);
-  }
-  return anonId;
 }
 
-async function recordRideBusGameScore(score: number, time: number, user: User | null) {
-  try {
-    const userId = getCurrentUserId(user);
-    await addDoc(collection(db, "rideBusGameScores"), {
-      userId: userId,
-      score: score,
-      time: time,
-      playedAt: new Date().toISOString(),
-    });
-    await updateRideBusAverageScore(userId);
-  } catch (err) {}
+async function setStatsToFirebase(userId: string, totalAnswered: number, totalCorrect: number, todayAnswered: number, todayDate: string) {
+  const statsRef = doc(db, "triviaStats", userId);
+  await setDoc(
+    statsRef,
+    { totalAnswered, totalCorrect, lastAnsweredDay: todayDate, answeredToday: todayAnswered },
+    { merge: true }
+  );
 }
-async function updateRideBusAverageScore(userId: string) {
-  try {
-    const q = query(collection(db, "rideBusGameScores"), where("userId", "==", userId));
-    const snap = await getDocs(q);
-    let total = 0, count = 0;
-    snap.forEach((doc) => {
-      total += doc.data().score;
-      count += 1;
-    });
-    const avg = count === 0 ? 0 : total / count;
-    await setDoc(doc(db, "rideBusAverages", userId), {
-      userId: userId,
-      averageScore: avg,
-      lastUpdated: new Date().toISOString(),
-      gamesPlayed: count,
-    });
-  } catch (err) {}
+
+function getTodayDateStr() {
+  const now = new Date();
+  return now.toISOString().slice(0, 10);
 }
-async function fetchRideBusAverageScore(userId: string) {
-  try {
-    const docRef = doc(db, "rideBusAverages", userId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data().averageScore;
+
+export default function HomeScreen() {
+  const { user: globalUser, loading: authLoadingGlobal, signOutUser } = useUser();
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [current, setCurrent] = useState<any>(null);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [result, setResult] = useState("");
+  const [totalAnswered, setTotalAnswered] = useState(0);
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [answeredToday, setAnsweredToday] = useState(0);
+  const [lastAnsweredDay, setLastAnsweredDay] = useState("");
+  const router = useRouter();
+
+  // Daily trivia settings
+  const MAX_DAILY = 3;
+  const todayDate = getTodayDateStr();
+
+  // Auth modal states
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+
+  // Animation
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(cardAnim, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
+  }, []);
+
+  const EXPO_CLIENT_ID = "<EXPO_CLIENT_ID>";
+  const IOS_CLIENT_ID = "<IOS_CLIENT_ID>";
+  const ANDROID_CLIENT_ID = "<ANDROID_CLIENT_ID>";
+  const WEB_CLIENT_ID = "<WEB_CLIENT_ID>";
+
+  const redirectUri = makeRedirectUri({ useProxy: true });
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: EXPO_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
+    androidClientId: ANDROID_CLIENT_ID,
+    webClientId: WEB_CLIENT_ID,
+    scopes: ["profile", "email"],
+    redirectUri,
+    responseType: ResponseType.IdToken,
+  });
+
+  // Track today's questions and index for uniqueness
+  const [todaysQuestions, setTodaysQuestions] = useState<any[]>([]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+
+  useEffect(() => {
+    setLoading(true);
+    (async () => {
+      try {
+        const qs = await fetchAllQuestions();
+        // Shuffle and pick 3 unique questions for today
+        const shuffled = qs.sort(() => Math.random() - 0.5);
+        setTodaysQuestions(shuffled.slice(0, MAX_DAILY));
+        setQuestionIndex(0);
+        if (shuffled.length) setCurrent(shuffled[0]);
+        await loadStats();
+      } catch (err: any) {
+        Alert.alert("Error", err.message || String(err));
+      }
+      setLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      const id = globalUser?.uid ?? "anon_guest";
+      const stats = await getStatsFromFirebase(id);
+      setTotalAnswered(stats.totalAnswered || 0);
+      setTotalCorrect(stats.totalCorrect || 0);
+      // Track today's count and reset at new day
+      if (stats.lastAnsweredDay === todayDate) {
+        setAnsweredToday(stats.answeredToday ?? 0);
+        setLastAnsweredDay(todayDate);
+      } else {
+        setAnsweredToday(0);
+        setLastAnsweredDay(todayDate);
+      }
+    } catch (err) {
+      console.warn("Failed to load stats", err);
     }
-    return null;
-  } catch (err) {
-    return null;
-  }
-}
-
-function getLevenshteinDistance(a: string, b: string) {
-  const matrix = Array(b.length + 1)
-    .fill(null)
-    .map(() => Array(a.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-  for (let j = 1; j <= b.length; j++) {
-    for (let i = 1; i <= a.length; i++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j - 1][i] + 1,
-        matrix[j][i - 1] + 1,
-        matrix[j - 1][i - 1] + cost
-      );
-    }
-  }
-  return matrix[b.length][a.length];
-}
-function formatTime(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = (seconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${secs}`;
-}
-function emojiShareMessage(results: boolean[]) {
-  const emojis: string[] = results.map(r => r ? "✅" : "❌");
-  while (emojis.length < MAX_QUESTIONS) emojis.push("❓");
-  return emojis.join("");
-}
-function generateShareText(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
-  const emojiMsg = emojiShareMessage(results);
-  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
-  return `${emojiMsg} <a href="${homepage}" class="share-link-ball" target="_blank">I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}</a>`;
-}
-function generateClipboardText(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
-  const emojiMsg = emojiShareMessage(results);
-  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
-  return `${emojiMsg} I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
-}
-function generateSmsLink(results: boolean[], score?: number) {
-  const homepage = typeof window !== "undefined" ? window.location.origin + "/RideTheBus" : "";
-  const scoreNum = typeof score === "number" ? score : results.filter(r => r).length * 5;
-  const msg = `I scored ${scoreNum} out of 20 in Ride the Bus! Try today's game: ${homepage}`;
-  return "sms:?body=" + encodeURIComponent(msg);
-}
-
-const RideTheBus: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [score, setScore] = useState(0);
-  const [answerResults, setAnswerResults] = useState<boolean[]>([]);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const [showStats, setShowStats] = useState(false);
-  const [gameOver, setGameOver] = useState(false);
-  const [statsHistory, setStatsHistory] = useState<HistoryEntry[]>([]);
-  const [cloudAvg, setCloudAvg] = useState<number | null>(null);
-  const [clipboardMsg, setClipboardMsg] = useState("Copy to Clipboard");
-  const [showShare, setShowShare] = useState(false);
-
-  const guessInputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Styling (matches CollegeGuess)
-  useEffect(() => {
-    document.body.style.backgroundImage =
-      "url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500')";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundColor = "#451a03";
-    document.body.style.fontFamily = "'Montserrat', sans-serif";
-    return () => {
-      document.body.style.backgroundImage = "";
-      document.body.style.backgroundSize = "";
-      document.body.style.backgroundPosition = "";
-      document.body.style.backgroundAttachment = "";
-      document.body.style.backgroundColor = "";
-      document.body.style.fontFamily = "";
-    };
-  }, []);
-
-  // Auth state
-  useEffect(() => {
-    return onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      if (!firebaseUser) signInAnonymously(auth);
-    });
-  }, []);
-
-  // Load questions for today
-  useEffect(() => {
-    const loadQuestions = async () => {
-      const qs = await getDailyQuestions();
-      setQuestions(qs);
-    };
-    loadQuestions();
-  }, []);
-
-  // Timer logic
-  useEffect(() => {
-    if (!timerActive) return;
-    timerRef.current = setInterval(() => {
-      setElapsedTime((t) => t + 1);
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [timerActive]);
-
-  // Stats history local
-  useEffect(() => {
-    const history =
-      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
-    setStatsHistory(history);
-  }, [showStats, gameOver]);
-
-  // Cloud average
-  useEffect(() => {
-    if (!user) return;
-    const fetchCloudAvg = async () => {
-      const userId = getCurrentUserId(user);
-      const avg = await fetchRideBusAverageScore(userId);
-      setCloudAvg(avg);
-    };
-    fetchCloudAvg();
-  }, [user, showStats]);
-
-  // Save game history locally
-  const saveScoreHistory = (score: number, time: number) => {
-    const history =
-      JSON.parse(localStorage.getItem("rideBusGameHistory") || "[]") as HistoryEntry[];
-    history.push({
-      score,
-      time,
-      timestamp: new Date().toISOString(),
-    });
-    localStorage.setItem("rideBusGameHistory", JSON.stringify(history));
-    setStatsHistory(history);
   };
 
-  // Clipboard share
-  const handleClipboard = () => {
-    const textToCopy = generateClipboardText(answerResults, score);
-    navigator.clipboard
-      .writeText(textToCopy)
-      .then(() => {
-        setClipboardMsg("Copied!");
-        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
-      })
-      .catch(() => {
-        setClipboardMsg("Copy Failed");
-        setTimeout(() => setClipboardMsg("Copy to Clipboard"), 1200);
+  useEffect(() => {
+    if (!authLoadingGlobal) {
+      loadStats();
+    }
+    // eslint-disable-next-line
+  }, [globalUser, authLoadingGlobal]);
+
+  useEffect(() => {
+    if (request) {
+      try {
+        // console.log("Google auth request URL:", (request as any).url);
+      } catch (e) {}
+    }
+  }, [request, redirectUri]);
+
+  useEffect(() => {
+    (async () => {
+      if (response?.type === "success") {
+        setAuthLoading(true);
+        try {
+          const idToken = response.authentication?.idToken || response.params?.id_token;
+          if (!idToken) throw new Error("No idToken returned from Google auth response.");
+          const credential = GoogleAuthProvider.credential(idToken);
+          await signInWithCredential(auth, credential);
+          setShowSignIn(false);
+          setAuthEmail("");
+          setAuthPassword("");
+          setAuthError("");
+        } catch (err: any) {
+          setAuthError(err.message || String(err));
+        } finally {
+          setAuthLoading(false);
+        }
+      } else if (response?.type === "error") {
+        setAuthError("Google auth error: " + JSON.stringify(response));
+      }
+    })();
+  }, [response]);
+
+  function isCorrectAnswer(guess: string, correctAnswer: string) {
+    const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
+    const guessWords = guess.split(/\s+/).filter(Boolean);
+
+    for (const cw of correctWords) {
+      for (const gw of guessWords) {
+        if (gw === cw || levenshtein(gw, cw) <= 2) {
+          return true;
+        }
+      }
+    }
+    if (levenshtein(guess, correctAnswer) <= 2) return true;
+    return false;
+  }
+
+  // Handle answer submit and stats write
+  const handleSubmit = async () => {
+    if (!current) return;
+    if (answeredToday >= MAX_DAILY) return;
+    const correct = (current.answer || "").trim().toLowerCase();
+    const guess = userAnswer.trim().toLowerCase();
+    let gotIt = false;
+    if (isCorrectAnswer(guess, correct)) {
+      gotIt = true;
+      setResult("✅ Correct!");
+    } else {
+      setResult(`❌ Incorrect. The answer is: ${current.answer}`);
+    }
+
+    // Update state stats
+    const newTotalAnswered = totalAnswered + 1;
+    const newTotalCorrect = totalCorrect + (gotIt ? 1 : 0);
+    const newAnsweredToday = answeredToday + 1;
+    setTotalAnswered(newTotalAnswered);
+    setTotalCorrect(newTotalCorrect);
+    setAnsweredToday(newAnsweredToday);
+
+    try {
+      const id = globalUser?.uid ?? "anon_guest";
+      await setStatsToFirebase(id, newTotalAnswered, newTotalCorrect, newAnsweredToday, todayDate);
+    } catch (err: any) {
+      console.error("Error saving stats:", err);
+    }
+
+    try {
+      const id = globalUser?.uid ?? "anon_guest";
+      await addDoc(collection(db, "challengeStats"), {
+        userId: id,
+        correct: gotIt ? 1 : 0,
+        total: 1,
+        ts: serverTimestamp(),
       });
+    } catch (e) {}
   };
 
-  // Initial timer start
-  useEffect(() => {
-    if (questions.length > 0 && !gameOver) {
-      setTimerActive(true);
-      setElapsedTime(0);
-    }
-  }, [questions, gameOver]);
-
-  // ---- ANSWER LOGIC ----
-  const handleSubmitGuess = () => {
-    if (!questions.length || !questions[currentLevel - 1]) return;
-    const guessRaw = guessInputRef.current?.value.trim() || "";
-    const guess = guessRaw.toLowerCase();
-    const correctAnswer = questions[currentLevel - 1].answer.toLowerCase();
-    setFeedback("");
-
-    // For image question (last question), require full answer, otherwise partial word match
-    if (currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl) {
-      if (guess === correctAnswer) {
-        setScore((s) => s + 5);
-        setFeedback("Correct! +5 points! 🎉");
-        setAnswerResults((arr) => [...arr, true]);
-        setTimerActive(false);
-      } else {
-        const distance = getLevenshteinDistance(guess, correctAnswer);
-        if (distance <= 2 && guess.length > 0) {
-          setFeedback("Very close! Try again!");
-          if (guessInputRef.current) guessInputRef.current.value = "";
-          return;
-        } else {
-          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
-          setAnswerResults((arr) => [...arr, false]);
-          setTimerActive(false);
-        }
-      }
-    } else {
-      // Partial match logic
-      const correctWords = correctAnswer.split(/\s+/).filter(Boolean);
-      const guessWords = guess.split(/\s+/).filter(Boolean);
-
-      const wordMatch =
-        correctWords.some((cw) => guessWords.includes(cw)) ||
-        guessWords.some((gw) => correctWords.includes(gw));
-
-      if (wordMatch) {
-        setScore((s) => s + 5);
-        setFeedback("Correct! +5 points! 🎉");
-        setAnswerResults((arr) => [...arr, true]);
-        setTimerActive(false);
-      } else {
-        const distance = getLevenshteinDistance(guess, correctAnswer);
-        if (distance <= 2 && guess.length > 0) {
-          setFeedback("So close! Try again!");
-          if (guessInputRef.current) guessInputRef.current.value = "";
-          return;
-        } else {
-          setFeedback(`Incorrect. The answer was ${questions[currentLevel - 1].answer}.`);
-          setAnswerResults((arr) => [...arr, false]);
-          setTimerActive(false);
-        }
-      }
+  // Step through unique questions
+  const handleNext = () => {
+    if (answeredToday >= MAX_DAILY) return;
+    if (questionIndex < todaysQuestions.length - 1) {
+      const nextIdx = questionIndex + 1;
+      setQuestionIndex(nextIdx);
+      setCurrent(todaysQuestions[nextIdx]);
+      setUserAnswer("");
+      setResult("");
     }
   };
 
-  const handleNextLevel = () => {
-    if (currentLevel < MAX_QUESTIONS) {
-      setCurrentLevel((lvl) => lvl + 1);
-      setFeedback("");
-      setTimerActive(true);
-      if (guessInputRef.current) guessInputRef.current.value = "";
-    } else {
-      setGameOver(true);
-      setShowShare(true);
-      setTimerActive(false);
-      saveScoreHistory(score, elapsedTime);
-      recordRideBusGameScore(score, elapsedTime, user);
+  const percentCorrect = totalAnswered > 0 ? ((totalCorrect / totalAnswered) * 100).toFixed(1) : "0.0";
+
+  const handleEmailSignIn = async () => {
+    setAuthError("");
+    setAuthLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, authEmail, authPassword);
+      setShowSignIn(false);
+      setAuthEmail("");
+      setAuthPassword("");
+    } catch (err: any) {
+      setAuthError(err.message || String(err));
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  // Reset game
-  const handlePlayAgain = () => {
-    setCurrentLevel(1);
-    setScore(0);
-    setAnswerResults([]);
-    setElapsedTime(0);
-    setFeedback("");
-    setGameOver(false);
-    setShowShare(false);
-    if (guessInputRef.current) guessInputRef.current.value = "";
+  const handleCreateAccount = async () => {
+    setAuthError("");
+    setAuthLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, authEmail, authPassword);
+      setShowSignIn(false);
+      setAuthEmail("");
+      setAuthPassword("");
+    } catch (err: any) {
+      setAuthError(err.message || String(err));
+    } finally {
+      setAuthLoading(false);
+    }
   };
+
+  const handleGooglePress = async () => {
+    setAuthError("");
+    try {
+      await promptAsync({ useProxy: true });
+    } catch (err: any) {
+      setAuthError(err.message || String(err));
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutUser();
+      Alert.alert("Signed out");
+    } catch (err: any) {
+      Alert.alert("Sign out failed", err.message || String(err));
+    }
+  };
+
+  if (loading)
+    return (
+      <View style={feedStyles.centered}>
+        <ActivityIndicator size="large" color="#ea9800" />
+      </View>
+    );
 
   return (
-    <div className="trivia-bg">
-      <style>{`
-        .trivia-bg {
-          min-height: 100vh;
-          background: url('https://awolvision.com/cdn/shop/articles/sports_bar_awolvision.jpg?v=1713302733&width=1500') center/cover fixed no-repeat;
-          font-family: 'Montserrat', Arial, sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding-bottom: 3rem;
-        }
-        .trivia-card {
-          background: rgba(146, 84, 14, 0.93);
-          border: 3px solid #ffc233;
-          border-radius: 22px;
-          box-shadow: 0 8px 32px #0003;
-          padding: 2.2rem 1.2rem 2.4rem 1.2rem;
-          max-width: 430px;
-          width: 95vw;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .trivia-navbar {
-          width: 100%;
-          display: flex;
-          gap: 0.7rem;
-          justify-content: center;
-          align-items: center;
-          margin-bottom: 1.2rem;
-          text-align: center;
-        }
-        .trivia-nav-btn {
-          background: #ea9800;
-          color: #fff;
-          font-weight: bold;
-          font-size: 0.93rem;
-          border: 2px solid #ffc233;
-          border-radius: 14px;
-          padding: 0.5rem 0.7rem;
-          text-align: center;
-          text-decoration: none;
-          transition: background 0.13s, color 0.13s, transform 0.12s;
-          box-shadow: 0 2px 10px #0002;
-          min-width: 0;
-          white-space: normal;
-          overflow-wrap: break-word;
-          width: 100%;
-          max-width: 80px;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .trivia-nav-btn:hover {
-          background: #e0a92b;
-          color: #fffbe7;
-          transform: scale(1.02);
-        }
-        .trivia-title {
-          color: #ffe066;
-          font-size: 2.1rem;
-          font-weight: 900;
-          text-align: center;
-          margin-bottom: 0.6rem;
-          letter-spacing: 0.02em;
-        }
-        .trivia-level {
-          color: #ffe066;
-          font-size: 1.08rem;
-          font-weight: 700;
-          text-align: center;
-          margin-bottom: 1.2rem;
-        }
-        .trivia-question-text {
-          color: #fde68a;
-          font-size: 1.12rem;
-          margin-bottom: 1.5rem;
-          text-align: center;
-        }
-        .trivia-input {
-          width: 50%;
-          min-width: 120px;
-          background: #ad6e1b;
-          border: 2.5px solid #ffc233;
-          color: #ffe066;
-          border-radius: 14px;
-          font-size: 1.18rem;
-          padding: 1rem 1.2rem;
-          margin-bottom: 1.1rem;
-          font-weight: 500;
-          box-sizing: border-box;
-          margin-left: auto;
-          margin-right: auto;
-          display: block;
-        }
-        .trivia-input::placeholder {
-          color: #ffe066cc;
-          opacity: 1;
-        }
-        .trivia-btn {
-          width: 100%;
-          background: #ea9800;
-          color: #fff;
-          font-size: 1.18rem;
-          font-weight: bold;
-          padding: 1.1rem 0;
-          border-radius: 14px;
-          border: 2px solid #ffc233;
-          box-shadow: 0 2px 12px #0002;
-          cursor: pointer;
-          margin-bottom: 0.7rem;
-          margin-top: 0.2rem;
-          transition: background 0.16s, transform 0.13s;
-        }
-        .trivia-btn.submit {
-          width: 50%;
-          min-width: 120px;
-          margin-left: auto;
-          margin-right: auto;
-          display: block;
-        }
-        .trivia-btn:hover {
-          background: #e0a92b;
-          color: #fffbe7;
-          transform: scale(1.04);
-        }
-        .trivia-btn.green {
-          background: #22c55e;
-          border-color: #16a34a;
-        }
-        .trivia-btn.green:hover {
-          background: #16a34a;
-        }
-        .trivia-btn.red {
-          background: #ef4444;
-          border-color: #b91c1c;
-        }
-        .trivia-btn.red:hover {
-          background: #b91c1c;
-        }
-        .trivia-btn.hidden {
-          display: none;
-        }
-        .trivia-feedback {
-          text-align: center;
-          margin-top: 1rem;
-          font-size: 1.18rem;
-          font-weight: bold;
-          color: #fde68a;
-          min-height: 1.3rem;
-        }
-        .trivia-score-row {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          justify-content: center;
-          gap: 1.1rem;
-          margin-top: 1.2rem;
-        }
-        .trivia-timer-box {
-          background: rgba(146, 64, 14, 0.93);
-          color: #fde68a;
-          border: 2px solid #facc15;
-          border-radius: 8px;
-          padding: 0.5rem 1rem;
-          font-weight: bold;
-        }
-        .share-buttons-row {
-          display: flex;
-          flex-direction: row;
-          gap: 14px;
-          justify-content: center;
-          align-items: center;
-        }
-        .clipboard-btn, .sms-btn {
-          background: #f9e38f;
-          color: #533e1f;
-          font-weight: bold;
-          border-radius: 8px;
-          border: 2px solid #cfb467;
-          padding: 7px 18px;
-          cursor: pointer;
-          box-shadow: 0 2px 8px #cfb46733;
-          margin-top: 8px;
-          margin-bottom: 8px;
-          transition: background 0.2s, color 0.2s;
-          display: inline-block;
-        }
-        .clipboard-btn:hover, .sms-btn:hover {
-          background: #fffbe7;
-          color: #b88340;
-        }
-        .share-preview {
-          font-size: 1.15rem;
-          color: #f9e38f;
-          font-weight: bold;
-          margin-top: 10px;
-          margin-bottom: 6px;
-          text-align: center;
-          word-break: break-word;
-        }
-        .share-link-ball {
-          color: #ffd700;
-          text-decoration: underline;
-          font-size: 1.15rem;
-          font-weight: bold;
-          margin-left: 6px;
-          cursor: pointer;
-        }
-        .share-link-ball:hover {
-          color: #ffbb33;
-          text-decoration: underline;
-        }
-        .trivia-modal-bg {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        .trivia-modal-content {
-          background: rgba(146, 64, 14, 0.97);
-          border-radius: 18px;
-          box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-          padding: 2.2rem 1.2rem 2.2rem 1.2rem;
-          width: 100%;
-          max-width: 430px;
-          border: 2px solid #facc15;
-          color: #fde68a;
-          position: relative;
-        }
-        .trivia-modal-content h2 {
-          color: #fde68a;
-          font-size: 1.5rem;
-          font-weight: bold;
-          margin-bottom: 1.1rem;
-          text-align: center;
-        }
-        .trivia-table {
-          width: 100%;
-          color: #fde68a;
-          border-collapse: collapse;
-          font-size: 1rem;
-        }
-        .trivia-table th,
-        .trivia-table td {
-          border: 1.5px solid #facc15;
-          padding: 0.6rem 0.3rem;
-          text-align: center;
-        }
-        .trivia-table thead {
-          background: #b45309;
-        }
-        .trivia-table-row:hover {
-          background: #d97706;
-        }
-        .trivia-close-btn {
-          width: 100%;
-          background: #d97706;
-          color: #fff;
-          font-weight: bold;
-          padding: 0.9rem 0.2rem 0.7rem 0.2rem;
-          border-radius: 12px;
-          margin-top: 1.3rem;
-          text-decoration: none;
-          border: 2px solid #facc15;
-          box-shadow: 0 2px 10px #0002;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: background 0.16s, transform 0.12s;
-        }
-        .trivia-close-btn:hover {
-          background: #b45309;
-          transform: scale(1.03);
-        }
-        @media (max-width: 600px) {
-          .trivia-card, .trivia-modal-content { max-width: 97vw; padding-left: 0.15rem; padding-right: 0.15rem; }
-        }
-      `}</style>
-      <div className="trivia-card">
-        <div className="trivia-navbar">
-          <Link href="/" className="trivia-nav-btn">Home</Link>
-          <Link href="/news" className="trivia-nav-btn">News</Link>
-          <Link href="/game" className="trivia-nav-btn">Players</Link>
-          <Link href="/RideTheBus" className="trivia-nav-btn">Ride the Bus</Link>
-        </div>
-        <div className="trivia-title">Ride the Bus</div>
-        <div className="trivia-level">Question: {currentLevel}/{MAX_QUESTIONS}</div>
-        <div className="trivia-question-text">
-          {questions.length ? (
-            currentLevel === MAX_QUESTIONS && questions[currentLevel - 1].imageUrl ? (
-              <>
-                <img
-                  src={questions[currentLevel - 1].imageUrl}
-                  alt="Guess Who"
-                  style={{ maxWidth: "100%", borderRadius: 13, marginBottom: 13 }}
-                />
-                <br />
-                <span>Who is this?</span>
-              </>
-            ) : (
-              questions[currentLevel - 1]?.question
-            )
-          ) : "Loading..."}
-        </div>
-        {!gameOver && questions.length > 0 && (
-          <>
-            <input
-              ref={guessInputRef}
-              type="text"
-              placeholder={currentLevel === MAX_QUESTIONS ? "Enter name..." : "Enter answer..."}
-              className="trivia-input"
-              autoComplete="off"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmitGuess();
-              }}
-              disabled={gameOver}
-            />
-            <button
-              className={`trivia-btn submit${answerResults.length === currentLevel ? " hidden" : ""}`}
-              onClick={handleSubmitGuess}
-              disabled={gameOver}
-            >
-              Submit Answer
-            </button>
-            <button
-              className={`trivia-btn green${answerResults.length !== currentLevel ? " hidden" : ""}`}
-              onClick={handleNextLevel}
-            >
-              {currentLevel < MAX_QUESTIONS ? "Next Question" : "Finish"}
-            </button>
-          </>
-        )}
-        {gameOver && (
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "1.1rem" }}>
-            <Link
-              href="/"
-              className="trivia-btn red"
-              style={{ textAlign: "center", width: "100%", marginBottom: 8 }}
-            >
-              Back to Home
-            </Link>
-            <button
-              className="trivia-btn red"
-              style={{ textAlign: "center", width: "100%" }}
-              onClick={() => setShowStats(true)}
-            >
-              View Stats
-            </button>
-          </div>
-        )}
-        <div className="trivia-feedback">{feedback}</div>
-        <div className="trivia-score-row">
-          <div className="trivia-timer-box">{formatTime(elapsedTime)}</div>
-          <div className="score">Score: <span>{score}</span>/20</div>
-        </div>
-        <div className="share-buttons-row" style={{ marginTop: 16, display: showShare ? "flex" : "none" }}>
-          <button className="clipboard-btn" onClick={handleClipboard}>
-            {clipboardMsg}
-          </button>
-          <a className="sms-btn" href={generateSmsLink(answerResults, score)} target="_blank" rel="noopener noreferrer">
-            Send as SMS
-          </a>
-        </div>
-        <div
-          className="share-preview"
-          style={{ display: showShare ? "block" : "none" }}
-          dangerouslySetInnerHTML={{ __html: generateShareText(answerResults, score) }}
-        />
-      </div>
-      {showStats && (
-        <div className="trivia-modal-bg">
-          <div className="trivia-modal-content">
-            <h2>Your Ride the Bus Stats</h2>
-            <p style={{ textAlign: "center", marginBottom: "1.2rem", fontSize: "1.15rem" }}>
-              {cloudAvg !== null
-                ? `Average Score (cloud): ${cloudAvg.toFixed(1)}/20`
-                : `Average Score (local): ${
-                  statsHistory.length > 0
-                    ? (
-                        statsHistory.reduce((sum, e) => sum + e.score, 0) /
-                        statsHistory.length
-                      ).toFixed(1)
-                    : "0"
-                }/20`}
-            </p>
-            <div style={{ overflowX: "auto" }}>
-              <table className="trivia-table">
-                <thead>
-                  <tr>
-                    <th>Attempt</th>
-                    <th>Score</th>
-                    <th>Time</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {statsHistory.map((entry, idx) => (
-                    <tr className="trivia-table-row" key={idx}>
-                      <td>{idx + 1}</td>
-                      <td>{entry.score}/20</td>
-                      <td>{formatTime(entry.time)}</td>
-                      <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <button
-              className="trivia-close-btn"
-              onClick={() => setShowStats(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <KeyboardAvoidingView style={feedStyles.barBackground} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <StatusBar />
+      <ScrollView contentContainerStyle={{flexGrow:1, justifyContent:"center", alignItems:"center"}}>
+        <Image source={{ uri: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80" }} style={feedStyles.backgroundImage} blurRadius={2} resizeMode="cover" />
+        <View style={feedStyles.overlay} />
+        <Animated.View
+          style={[
+            feedStyles.slickCard,
+            {
+              transform: [
+                { scale: cardAnim.interpolate({ inputRange: [0,1], outputRange: [0.95,1] }) }
+              ]
+            },
+          ]}>
+          <View style={feedStyles.buttonRow}>
+            <TouchableOpacity style={feedStyles.smallButton} onPress={() => router.push("/ridethebus")} activeOpacity={0.85}>
+              <Text style={feedStyles.smallButtonText}>🎯 Daily</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={feedStyles.smallButton} onPress={() => router.push("/news")} activeOpacity={0.85}>
+              <Text style={feedStyles.smallButtonText}>📰 News</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={feedStyles.smallButton} onPress={() => router.push("/stats")} activeOpacity={0.85}>
+              <Text style={feedStyles.smallButtonText}>📊 Stats</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={feedStyles.smallButton} onPress={() => router.push("/socialbar")} activeOpacity={0.85}>
+              <Text style={feedStyles.smallButtonText}>🍻 Social</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={feedStyles.challengeTitle}>🍺 The Pub Trivia 🍺</Text>
+          <Text style={feedStyles.heading}>NFL Trivia</Text>
+          {(answeredToday >= MAX_DAILY || questionIndex >= todaysQuestions.length) ? (
+            <View style={{alignItems:"center",paddingVertical:32}}>
+              <Text style={feedStyles.noQuestions}>Swing by tomorrow for another shot!</Text>
+              <Text style={{ color: "#fae6c6", marginTop: 8, fontSize: 15, textAlign:"center" }}>
+                You’ve answered 3 questions today.{"\n"}Come back after midnight for more!
+              </Text>
+            </View>
+          ) : current ? (
+            <>
+              <Text style={feedStyles.feedQuestion}>{current?.question ?? "No trivia questions found."}</Text>
+              {(current?.imageurl || current?.imageUrl) ? (
+                <Image source={{ uri: current.imageurl || current.imageUrl }} style={feedStyles.feedImage} resizeMode="contain" />
+              ) : null}
+              <View style={{height:32}}/>
+              <TextInput
+                style={feedStyles.input}
+                value={userAnswer}
+                onChangeText={setUserAnswer}
+                placeholder="Type your answer"
+                placeholderTextColor="#775703"
+                editable={!result}
+              />
+              {!result ? (
+                <TouchableOpacity
+                  style={[feedStyles.actionButton, !userAnswer && feedStyles.actionDisabled]}
+                  onPress={handleSubmit}
+                  disabled={!userAnswer}
+                  activeOpacity={0.85}
+                >
+                  <Text style={feedStyles.actionText}>Submit</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <Text style={feedStyles.feedResultNoShadow}>{result}</Text>
+                  <TouchableOpacity style={feedStyles.nextButton} onPress={handleNext} activeOpacity={0.85}>
+                    <Text style={feedStyles.actionText}>Next Question</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </>
+          ) : (
+            <Text style={feedStyles.noQuestions}>No trivia questions found.</Text>
+          )}
+          <Text style={feedStyles.statsInfo}>
+            📊 Total: {totalAnswered} | ✅: {totalCorrect} | Avg: {percentCorrect}%
+          </Text>
+        </Animated.View>
+        <View style={{ marginTop: 8, alignItems: "center" }}>
+          <Text style={{ color: "#fffbe7", fontSize: 13 }}>Stats are saved to your profile.</Text>
+        </View>
+        <View style={{ marginTop: 12, alignItems: "center", width: "100%" }}>
+          {authLoadingGlobal ? (
+            <ActivityIndicator color="#ea9800" />
+          ) : globalUser ? (
+            <>
+              <Text style={{ color: "#fffbe7", fontWeight: "700", marginBottom: 8 }}>
+                Signed in as {globalUser.email || globalUser.displayName || globalUser.uid}
+                {globalUser?.isAnonymous ? " (anonymous)" : ""}
+              </Text>
+              <TouchableOpacity style={[feedStyles.actionButton, { backgroundColor: "#b91c1c" }]} onPress={handleSignOut}>
+                <Text style={feedStyles.actionText}>Sign Out</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={feedStyles.actionButton} onPress={() => setShowSignIn(true)}>
+                <Text style={feedStyles.actionText}>Sign in / Create account</Text>
+              </TouchableOpacity>
+              <Text style={{ color: "#ffe066", marginTop: 6 }}>Sign in to save scores & view your cloud stats.</Text>
+            </>
+          )}
+        </View>
+        <Text style={feedStyles.footer}>
+          Powered by <Text style={{ fontWeight: "bold", color: "#fff" }}>The Pub</Text> • Enjoy responsibly!
+        </Text>
+      </ScrollView>
+      <Modal visible={showSignIn} animationType="slide" transparent onRequestClose={() => { if (!authLoading) setShowSignIn(false); }}>
+        <View style={modalStyles.modalBg}>
+          <View style={modalStyles.modalContent}>
+            <Text style={modalStyles.modalTitle}>Sign in or Create Account</Text>
+            <TextInput style={modalStyles.authInput} placeholder="Email" placeholderTextColor="#ffd" value={authEmail} onChangeText={setAuthEmail} keyboardType="email-address" autoCapitalize="none" editable={!authLoading} />
+            <TextInput style={modalStyles.authInput} placeholder="Password" placeholderTextColor="#ffd" value={authPassword} onChangeText={setAuthPassword} secureTextEntry editable={!authLoading} />
+            <View style={{ flexDirection: "row", gap: 10, justifyContent: "center", marginTop: 6 }}>
+              <TouchableOpacity style={[modalStyles.authBtn, { backgroundColor: "#facc15" }]} onPress={handleEmailSignIn} disabled={authLoading || !authEmail || !authPassword}>
+                <Text style={{ fontWeight: "800" }}>{authLoading ? "Working..." : "Sign In"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[modalStyles.authBtn, { backgroundColor: "#b45309" }]} onPress={handleCreateAccount} disabled={authLoading || !authEmail || !authPassword}>
+                <Text style={{ fontWeight: "800" }}>{authLoading ? "Working..." : "Create"}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={{ textAlign: "center", marginVertical: 10, color: "#fffbe7" }}>— or —</Text>
+            <TouchableOpacity style={[modalStyles.authBtn, modalStyles.authGoogle]} onPress={handleGooglePress} disabled={!request || authLoading}>
+              <Text style={{ color: "#fff", fontWeight: "800" }}>{authLoading ? "Working..." : "Continue with Google"}</Text>
+            </TouchableOpacity>
+            {!!authError && <Text style={{ color: "#ffcccc", marginTop: 10, textAlign: "center" }}>{authError}</Text>}
+            <TouchableOpacity style={[modalStyles.triviaCloseBtn, { marginTop: 12 }]} onPress={() => { if (!authLoading) { setShowSignIn(false); setAuthError(""); } }}>
+              <Text style={{ color: "#fff", fontWeight: "800" }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
   );
-};
+}
 
-export default RideTheBus;
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const v0 = new Array(b.length + 1).fill(0);
+  const v1 = new Array(b.length + 1).fill(0);
+  for (let i = 0; i < v0.length; i++) v0[i] = i;
+  for (let i = 0; i < a.length; i++) {
+    v1[0] = i + 1;
+    for (let j = 0; j < b.length; j++) {
+      const cost = a[i] === b[j] ? 0 : 1;
+      v1[j + 1] = Math.min(v1[j] + 1, v0[j + 1] + 1, v0[j] + cost);
+    }
+    for (let j = 0; j < v0.length; j++) v0[j] = v1[j];
+  }
+  return v1[b.length];
+}
+
+const feedStyles = StyleSheet.create({
+  barBackground: {
+    flex: 1,
+    backgroundColor: "#190f03",
+    position: "relative",
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.19,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#190f03",
+    opacity: 0.91,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2b180e",
+  },
+  slickCard: {
+    backgroundColor: "#33200d",
+    borderWidth: 0,
+    borderRadius: 25,
+    paddingVertical: 33,
+    paddingHorizontal: 18,
+    maxWidth: 430,
+    width: "96%",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.33,
+    shadowRadius: 17,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 7,
+    zIndex:2,
+    minHeight: 0,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 8,
+    width: "100%"
+  },
+  smallButton: {
+    backgroundColor: "#b45309",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.13,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+    marginHorizontal: 4,
+  },
+  smallButtonText: {
+    color: "#fffbe7",
+    fontSize: 15,
+    fontWeight: "bold",
+    letterSpacing: 0.2,
+  },
+  challengeTitle: {
+    color: "#ffe066",
+    fontSize: 28,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 9,
+    marginTop: 5,
+    letterSpacing: 1,
+    width: "100%",
+  },
+  heading: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#ea9800",
+    marginBottom: 12,
+    letterSpacing: 0.5,
+    textShadowColor: "#fffbe755",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  feedQuestion: {
+    fontSize: 19,
+    color: "#fae6c6",
+    marginBottom: 16,
+    textAlign: "center",
+    fontWeight: "600",
+    letterSpacing: 0.2
+  },
+  feedImage: {
+    width: 272,
+    height: 244,
+    marginBottom: 13,
+    borderRadius: 14,
+    backgroundColor: "#ffe06633",
+    alignSelf: "center",
+  },
+  input: {
+    borderWidth: 1.8,
+    borderColor: "#eab308",
+    borderRadius: 11,
+    padding: 12,
+    fontSize: 17,
+    marginBottom: 13,
+    backgroundColor: "#fffbe7",
+    width: "100%",
+    color: "#60460c"
+  },
+  actionButton: {
+    backgroundColor: "#ea9800",
+    paddingVertical: 13,
+    borderRadius: 14,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 5,
+    marginTop: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 5,
+    elevation: 1,
+  },
+  actionDisabled: {
+    backgroundColor: "#e0a92b99"
+  },
+  actionText: {
+    color: "#fffbe7",
+    fontWeight: "bold",
+    fontSize: 18,
+    letterSpacing: 0.5,
+    textShadowColor: "#00000033",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  nextButton: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 13,
+    borderRadius: 14,
+    width: "100%",
+    alignItems: "center",
+    marginTop: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.09,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  feedResultNoShadow: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 12,
+    color: "#b45309",
+  },
+  statsInfo: {
+    color: "#ffe066",
+    fontWeight: "bold",
+    fontSize: 17,
+    marginTop: 16,
+    textAlign: "center",
+    letterSpacing: 0.3,
+  },
+  noQuestions: {
+    color: "#fffbe7",
+    fontSize: 19,
+    fontWeight: "600"
+  },
+  footer: {
+    marginTop: 18,
+    fontSize: 14,
+    color: "#ffe066bb",
+    textAlign: "center",
+    fontWeight: "500",
+    textShadowColor: "#00000044",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  }
+});
+
+const modalStyles = StyleSheet.create({
+  modalBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "center", alignItems: "center" },
+  modalContent: { width: "92%", maxWidth: 420, backgroundColor: "#7a4210", borderRadius: 14, padding: 18, alignItems: "center" },
+  modalTitle: { fontSize: 20, color: "#fde68a", fontWeight: "800", marginBottom: 10 },
+  authInput: { width: "100%", padding: 10, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.06)", color: "#fde68a", marginBottom: 8, borderWidth: 1, borderColor: "#facc15" },
+  authBtn: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10 },
+  authGoogle: { backgroundColor: "#4285F4", marginTop: 6 },
+  triviaCloseBtn: { backgroundColor: "#d97706", paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, marginTop: 12 },
+});
